@@ -1,13 +1,15 @@
 # Ignore everything by default
 *
-
-# Allow directories
-!*/
+!.gitignore
 
 # Allow specific directories
-!cmake/
-!module/
-!src/
+!/cmake/
+!/module/
+!/src/
+!/cmake/*
+!/module/*
+!/src/*
+
 
 # Allow specific files
 !CMakeLists.txt
