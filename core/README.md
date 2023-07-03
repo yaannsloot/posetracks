@@ -1,2 +1,2 @@
 # MotionEngine
-These are the original files used to experiment with OpenCV and Darknet. 
+This is an older version based on modular dlls

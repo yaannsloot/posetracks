@@ -1,1 +1,14 @@
-build/
+# Ignore everything by default
+*
+
+# Allow directories
+!*/
+
+# Allow specific directories
+!cmake/
+!module/
+!src/
+
+# Allow specific files
+!CMakeLists.txt
+!.gitattributes
