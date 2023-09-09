@@ -16,6 +16,8 @@
 !/cmake/*
 !/module/*
 !/src/*
+!/tool/*
+/tools/bin
 
 
 # Allow specific files

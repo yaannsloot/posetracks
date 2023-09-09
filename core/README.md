@@ -1,2 +1,7 @@
 # MotionEngine
-This is an older version based on modular dlls
+
+Core library for MotionEngine AI tracking tool
+
+Built as a compiled module for python
+
+More info to be added later...
