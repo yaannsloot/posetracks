@@ -24,8 +24,6 @@ if 'MotionEngine' in locals():
 else:
     from . import MotionEngine
     from .MotionEngine import MEPython
-    
-from enum import Enum
 
 bl_info = {
     "name": "MotionEngine",
@@ -33,18 +31,13 @@ bl_info = {
     "version": (0, 1, 0),
     "blender": (2, 93, 0),
     "location": "Clip Editor > UI",
-    "description": "AI based tracking system",
+    "description": "AI based motion tracking system for blender",
     "warning": "Pre-release software! Some features might not work as expected",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Motion Tracking"}
 
 me_global_register = {}
-
-me_model_load_state = Enum('me_model_load_state', ['UNLOADED', 'LOADING', 'WARMUP', 'COMPLETE'])
-
-me_tracking_state = Enum('me_tracking_state', ['INACTIVE', 'CACHING', 'WORKING', 'COMPLETE'])
-
 
 # Property groups for data storage
 class MEPointBlender(bpy.types.PropertyGroup):
@@ -147,6 +140,15 @@ def BlendToClipData(source: MEClipData):
         data.set_pose_frame(s_frame.id, BlendToFrame(s_frame))
     return data
 
+def RawToFrames(source, start_index):
+    frames = MEPython.dnn.PoseFrames()
+    for f, frame in enumerate(source):
+        collection = MEPython.dnn.PoseCollection()
+        for p, pose in enumerate(frame):
+            collection.set_pose(p, pose)
+        frames.set_pose_frame(f + start_index, collection)
+    return frames  
+        
 
 # Data removal functions
 def ClearBlendJoint(source: MEJointBlender):
@@ -181,31 +183,120 @@ def ClearBlendClipData(source: bpy.types.MovieClip):
 
 # UI Code
 
-def check_model_ready():
-    
-    # load process control logic
-    if me_global_register["me_load_future"] != None:
-        state = me_global_register["me_load_future"].wait_for(0)
-        if state != MEPython.future_status.ready:
-            return False
-        me_global_register["me_load_future"] = None
-        
-        if me_global_register["me_load_state"] == me_model_load_state.LOADING:
-            me_global_register["me_load_future"] = MEPython.mt.RTMDP_warmup_async(me_global_register["me_detectpose_model"])
-            me_global_register["me_load_state"] = me_model_load_state.WARMUP
-            return False
-        elif me_global_register["me_load_state"] == me_model_load_state.WARMUP:
-            me_global_register["me_load_state"] = me_model_load_state.COMPLETE
-    
-    
-    return me_global_register["me_detectpose_model"].is_ready()
+def force_redraw(self, context):
+    if context.area != None:
+        for region in context.area.regions:
+            if region.type == "UI":
+                region.tag_redraw()
+    return None
 
-def update_analysis_task():
-    print("wow")
-    return True
-    
+def det_thresh_mode_update(self, context):
+    scene = context.scene
+    properties = scene.motion_engine_ui_properties
+    if properties.me_ui_prop_det_thresholding_enum == "AUTO":
+        properties.me_ui_prop_det_conf = 0.5
+        properties.me_ui_prop_det_iou = 0.5
+    return None
+
+def cache_method_update(self, context):
+    scene = context.scene
+    properties = scene.motion_engine_ui_properties
+    if properties.me_ui_prop_cache_method_enum == "AUTO":
+        properties.me_ui_prop_cache_size = 256
+    return None
+
+class MotionEngineRunStatistics(bpy.types.PropertyGroup):
+    clip: bpy.props.PointerProperty(type=bpy.types.MovieClip)
+    valid_frames: bpy.props.IntProperty()
+    total_poses: bpy.props.IntProperty()
+    mean_confidence: bpy.props.FloatProperty()
+    mean50_conf: bpy.props.FloatProperty()
+
+def check_data_for_clip(me_data, movie_clip):
+    clip_data = None
+    for entry in me_data.items:
+        if entry.clip == movie_clip:
+            clip_data = entry
+            break
+    return clip_data
+
+def check_stats_for_clip(stats_data, movie_clip):
+    stat_prop = None
+    for entry in stats_data:
+        if entry.clip == movie_clip:
+            stat_prop = entry
+            break
+    return stat_prop
+
+def calculate_statistics(clip_data, stat_prop):
+    print("[MotionEngine] Calculating run statistics...")
+    stat_prop.clip = clip_data.clip
+    frame_total = 0
+    pose_total = 0
+    confidence_sum = 0
+    mean50_list = []
+    for frame in clip_data.frames:
+        if frame.poses is not None and len(frame.poses) > 0:
+            frame_total = frame_total + 1
+            if len(frame.poses) > pose_total:
+                pose_total = len(frame.poses)
+            frame_sum = 0
+            frame50_list = []
+            for pose in frame.poses:
+                pose_sum = 0
+                pose50_list = []
+                for joint in pose.joints:
+                    pose_sum = pose_sum + joint.prob
+                    if joint.prob > 0.5:
+                        pose50_list.append(joint.prob)
+                frame_sum = frame_sum + pose_sum / len(pose.joints)
+                if pose50_list:
+                    frame50_list.append(sum(pose50_list) / len(pose50_list))
+            confidence_sum = confidence_sum + frame_sum / len(frame.poses)
+            if frame50_list:
+                mean50_list.append(sum(frame50_list) / len(frame50_list))
+    stat_prop.valid_frames = frame_total
+    stat_prop.total_poses = pose_total
+    stat_prop.mean_confidence = confidence_sum / frame_total
+    stat_prop.mean50_conf = sum(mean50_list) / len(mean50_list)
+
+def get_run_statistics(me_data, stats_data, movie_clip):
+    clip_data = check_data_for_clip(me_data, movie_clip)
+    stat_prop = check_stats_for_clip(stats_data, movie_clip)
+    if clip_data is not None and stat_prop is not None:
+        return stat_prop
+    return None
+
+def write_data_callback(raw_data):
+    clip_data = me_global_register["properties_tracker"]
+    target_clip = me_global_register["clip_tracker"]
+    stats_data = me_global_register["stats_tracker"]
+    if clip_data is not None and target_clip is not None:
+        print("[MotionEngine] Collecting results...")
+        frames = RawToFrames(raw_data, 0)
+        clip_dict = {}
+        for clip in clip_data.items:
+            clip_dict[clip.clip] = clip
+        target_clip_data = None
+        if target_clip in clip_dict:
+            target_clip_data = clip_dict[target_clip]
+        else:
+            target_clip_data = clip_data.items.add()
+            target_clip_data.clip = target_clip
+        print("[MotionEngine] Writing results to scene data...")
+        ClipDataToBlend(frames, target_clip_data)
+        stat_prop = check_stats_for_clip(stats_data, target_clip)
+        if stat_prop is None:
+            stat_prop = stats_data.add()
+        calculate_statistics(target_clip_data, stat_prop)
 
 class MotionEngineUIProperties(bpy.types.PropertyGroup):
+    me_ui_redraw_prop: bpy.props.BoolProperty(
+        name="Update property",
+        description="Hidden prop",
+        default=False,
+        update=force_redraw
+    )
     me_ui_prop_remove_poses: bpy.props.BoolProperty(
         name="Remove existing poses",
         description="Delete existing poses on new analysis",
@@ -244,14 +335,39 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         min=1,
         max=256
     )
+    me_ui_prop_det_conf: bpy.props.FloatProperty(
+        name="Confidence threshold",
+        description="Sets the minimum acceptable confidence score for detections",
+        default=0.5,
+        min=0,
+        max=1
+    )
+    me_ui_prop_det_iou: bpy.props.FloatProperty(
+        name="IoU threshold",
+        description="Sets the maximum acceptable overlap between detections. Non-maximum suppression will be used on boxes with overlap values higher than this",
+        default=0.5,
+        min=0,
+        max=1
+    )
+    me_ui_prop_det_thresholding_enum: bpy.props.EnumProperty(
+        name="Thresholding mode",
+        description="Lets you decide whether to set threshold values automatically or manually",
+        items=[
+            ("AUTO", "Auto", "Set threshold values automatically"),
+            ("MANUAL", "Manual", "Set threshold values manually"),
+        ],
+        default="AUTO",
+        update=det_thresh_mode_update
+    )
     me_ui_prop_cache_method_enum: bpy.props.EnumProperty(
-        name="Cache configuration method",
+        name="Cache configuration mode",
         description="Lets you decide whether to set image cache size automatically or manually",
         items=[
             ("AUTO", "Auto", "Set image cache automatically"),
             ("MANUAL", "Manual", "Set image cache size manually"),
         ],
-        default="AUTO"
+        default="AUTO",
+        update=cache_method_update
     )
     me_ui_prop_cache_size: bpy.props.IntProperty(
         name="Pre-inference cache size",
@@ -260,6 +376,21 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         min=1,
         max=1024
     )
+    me_ui_prop_stats_collection: bpy.props.CollectionProperty(type=MotionEngineRunStatistics)
+
+def ui_draw_toggle():
+    properties = bpy.context.scene.motion_engine_ui_properties
+    if properties.me_ui_redraw_prop == True:
+        properties.me_ui_redraw_prop = False
+    else:
+        properties.me_ui_redraw_prop = True
+
+def display_warmup_state(value):
+    me_global_register["warmup_state"] = value    
+
+def ui_lock(value):
+    me_global_register["ui_lock_state"] = value
+    
 
 class ModelManagerUIPanel(bpy.types.Panel):
     bl_label = "Model Manager"
@@ -272,6 +403,9 @@ class ModelManagerUIPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         properties = scene.motion_engine_ui_properties
+        warmup = me_global_register["warmup_state"]
+        ui_lock = me_global_register["ui_lock_state"]
+        model_ready = me_global_register["me_detectpose_model"].is_ready()
 
         column = layout.column()
         
@@ -281,9 +415,27 @@ class ModelManagerUIPanel(bpy.types.Panel):
         row = column.row()
         row.label(text="Executor:")
         row.prop(properties, "me_ui_prop_exe_det_enum", text='')
+        row.enabled = not ui_lock
         row = column.row()
         row.label(text="Batch size:")
         row.prop(properties, "me_ui_prop_det_batch_size", text='')
+        row.enabled = not ui_lock
+        row = column.row()
+        row.label(text="Thresholding:")
+        row.prop(properties, "me_ui_prop_det_thresholding_enum", text='')
+        row.enabled = not ui_lock
+        if properties.me_ui_prop_det_thresholding_enum == "MANUAL":
+            row = column.row()
+            row.alignment = 'RIGHT'
+            row.label(text="Confidence:")
+            row.prop(properties, "me_ui_prop_det_conf", text="")
+            row.enabled = not ui_lock
+            row = column.row()
+            row.alignment = 'RIGHT'
+            row.label(text="IoU:")
+            row.prop(properties, "me_ui_prop_det_iou", text="")
+            row.enabled = not ui_lock
+            
         
         column = layout.column()
         
@@ -293,30 +445,26 @@ class ModelManagerUIPanel(bpy.types.Panel):
         row = column.row()
         row.label(text="Executor:")
         row.prop(properties, "me_ui_prop_exe_pose_enum", text='')
+        row.enabled = not ui_lock
         row = column.row()
         row.label(text="Batch size:")
         row.prop(properties, "me_ui_prop_pose_batch_size", text='')
+        row.enabled = not ui_lock
         
         row = layout.row()
         b_text = "Load Models"
         
-        readystate = check_model_ready()
-        loadstate = me_global_register["me_load_state"]
-        
-        if loadstate == me_model_load_state.COMPLETE:
+        if model_ready and not warmup:
             b_text = "Reload Models"
-        elif loadstate == me_model_load_state.LOADING:
+        elif not model_ready and warmup:
             b_text = "Loading Models..."
-        elif loadstate == me_model_load_state.WARMUP:
+        elif model_ready and warmup:
             b_text = "Warming Up..."
-        b_enabled = False
-        if loadstate == me_model_load_state.UNLOADED or loadstate == me_model_load_state.COMPLETE:
-            b_enabled = True
-        row.enabled = b_enabled
+        row.enabled = not ui_lock
         row.operator("motionengine.model_load_operator", text=b_text)
         
         row = layout.row()
-        row.enabled = readystate
+        row.enabled = model_ready and not ui_lock
         row.operator("motionengine.model_unload_operator")
 
 class ModelLoadOperator(bpy.types.Operator):
@@ -324,56 +472,46 @@ class ModelLoadOperator(bpy.types.Operator):
     bl_idname = "motionengine.model_load_operator"
     bl_label = "Load Models"
     
-    _timer = None
-    
-    def modal(self, context, event):
-        check_model_ready()
-        loadstate = me_global_register["me_load_state"]
-        if loadstate == me_model_load_state.UNLOADED or loadstate == me_model_load_state.COMPLETE:
-            self.cancel(context)
-            for area in bpy.context.screen.areas:
-                if area.type == 'CLIP_EDITOR':
-                    area.tag_redraw()
-            return {'CANCELLED'}
-
-        if event.type == 'TIMER':
-            for area in bpy.context.screen.areas:
-                if area.type == 'CLIP_EDITOR':
-                    area.tag_redraw()
-
-        return {'PASS_THROUGH'}
-    
     def execute(self, context):
-        wm = context.window_manager
-        self._timer = wm.event_timer_add(0.2, window=context.window)
-        wm.modal_handler_add(self)
-        
-        scene = context.scene
-        properties = scene.motion_engine_ui_properties
-        
-        selected_exec_det = MEPython.dnn.Executor.CPU
-        if properties.me_ui_prop_exe_det_enum == "CUDA":
-            selected_exec_det = MEPython.dnn.Executor.CUDA
-        elif properties.me_ui_prop_exe_det_enum == "TENSORRT":
-            selected_exec_det = MEPython.dnn.Executor.TENSORRT
+        if not me_global_register["ui_lock_state"]:
+            scene = context.scene
+            properties = scene.motion_engine_ui_properties
             
-        selected_exec_pose = MEPython.dnn.Executor.CPU
-        if properties.me_ui_prop_exe_pose_enum == "CUDA":
-            selected_exec_pose = MEPython.dnn.Executor.CUDA
-        elif properties.me_ui_prop_exe_pose_enum == "TENSORRT":
-            selected_exec_pose = MEPython.dnn.Executor.TENSORRT
+            selected_exec_det = MEPython.dnn.Executor.CPU
+            if properties.me_ui_prop_exe_det_enum == "CUDA":
+                selected_exec_det = MEPython.dnn.Executor.CUDA
+            elif properties.me_ui_prop_exe_det_enum == "TENSORRT":
+                selected_exec_det = MEPython.dnn.Executor.TENSORRT
+                
+            selected_exec_pose = MEPython.dnn.Executor.CPU
+            if properties.me_ui_prop_exe_pose_enum == "CUDA":
+                selected_exec_pose = MEPython.dnn.Executor.CUDA
+            elif properties.me_ui_prop_exe_pose_enum == "TENSORRT":
+                selected_exec_pose = MEPython.dnn.Executor.TENSORRT
+            
+            det_path = MotionEngine.model_path("rtmdet-nano/end2end320.onnx")
+            pose_path = MotionEngine.model_path("rtmpose-m/end2end.onnx")
         
-        det_path = MotionEngine.model_path("rtmdet-nano/end2end320.onnx")
-        pose_path = MotionEngine.model_path("rtmpose-m/end2end.onnx")
-    
-        me_global_register["me_load_future"] = MEPython.mt.RTMDP_load_async(me_global_register["me_detectpose_model"], det_path, selected_exec_det, pose_path, selected_exec_pose)
-        me_global_register["me_load_state"] = me_model_load_state.LOADING
+            me_global_register["me_detectpose_model"].unload_all()
+            
+            me_global_register["context_tracker"] = context
+            
+            ui_lock(True)
+            display_warmup_state(True)
+            ui_draw_toggle()
         
-        return {'RUNNING_MODAL'}
-    
-    def cancel(self, context):
-        wm = context.window_manager
-        wm.event_timer_remove(self._timer)
+            MEPython.mt.rtm_load_async(
+                me_global_register["me_detectpose_model"], 
+                det_path, 
+                selected_exec_det, 
+                pose_path, 
+                selected_exec_pose,
+                ui_draw_toggle,
+                ui_lock,
+                display_warmup_state
+            )
+            
+        return {'FINISHED'}
     
 class ModelUnloadOperator(bpy.types.Operator):
     """Unload models"""
@@ -381,14 +519,10 @@ class ModelUnloadOperator(bpy.types.Operator):
     bl_label = "Unload Models"
     
     def execute(self, context):
-        
-        me_global_register["me_detectpose_model"].unload_all()
-        if me_global_register["me_load_future"] != None:
-            me_global_register["me_load_future"].wait()
-        me_global_register["me_load_future"] = None
-        me_global_register["me_load_state"] = me_model_load_state.UNLOADED
-        
-        return {'FINISHED'}
+        if not me_global_register["ui_lock_state"]:
+            me_global_register["me_detectpose_model"].unload_all()
+            print("[MotionEngine] Unloaded models.")
+            return {'FINISHED'}
         
 
 class PoseEstimationUIPanel(bpy.types.Panel):
@@ -402,6 +536,9 @@ class PoseEstimationUIPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         properties = scene.motion_engine_ui_properties
+        warmup = me_global_register["warmup_state"]
+        ui_lock = me_global_register["ui_lock_state"]
+        model_ready = me_global_register["me_detectpose_model"].is_ready()
         
         column = layout.column()
         
@@ -412,17 +549,50 @@ class PoseEstimationUIPanel(bpy.types.Panel):
         row = row.grid_flow(columns=2, align=True)
         r = row.row(align=True)
         r.prop(properties, "me_ui_prop_cache_method_enum", text='')
+        r.enabled = not ui_lock
         r = row.row(align=True)
-        r.enabled = properties.me_ui_prop_cache_method_enum == "MANUAL"
+        r.enabled = properties.me_ui_prop_cache_method_enum == "MANUAL" and not ui_lock
         r.prop(properties, "me_ui_prop_cache_size", text='')
         
         row = layout.row()
-        
-        loadstate = me_global_register["me_load_state"]
-        trackingstate = me_global_register["me_tracking_state"]
-        row.enabled = (loadstate == me_model_load_state.UNLOADED or loadstate == me_model_load_state.COMPLETE) and (trackingstate == me_tracking_state.INACTIVE or trackingstate == me_tracking_state.COMPLETE)
+        row.enabled = not ui_lock
         row.operator("motionengine.pose_estimation_task_operator")
         
+        run_stats = get_run_statistics(scene.motion_engine_data, properties.me_ui_prop_stats_collection, context.edit_movieclip)
+        
+        stats_ui_string_frames = "Valid frames: "
+        if run_stats is not None and run_stats.valid_frames > 0:
+            stats_ui_string_frames += str(run_stats.valid_frames) + " / " + str(context.edit_movieclip.frame_duration)
+        else:
+            stats_ui_string_frames += "n/a"
+        
+        stats_ui_string_poses = "Total poses: "
+        if run_stats is not None and run_stats.valid_frames > 0:
+            stats_ui_string_poses += str(run_stats.total_poses)
+        else:
+            stats_ui_string_poses += "n/a"
+        
+        stats_ui_string_conf = "Mean confidence: "
+        if run_stats is not None and run_stats.valid_frames > 0:
+            stats_ui_string_conf += f"{run_stats.mean_confidence:.0%}"
+        else:
+            stats_ui_string_conf += "n/a"
+            
+        stats_ui_string_conf50 = "Mean conf. > 50: "
+        if run_stats is not None and run_stats.valid_frames > 0 and run_stats.mean50_conf >= 0.5:
+            stats_ui_string_conf50 += f"{run_stats.mean50_conf:.0%}"
+        else:
+            stats_ui_string_conf50 += "n/a"
+            
+        column = layout.column()
+        row = column.row()
+        row.label(text=stats_ui_string_frames)
+        row = column.row()
+        row.label(text=stats_ui_string_poses)
+        row = column.row()
+        row.label(text=stats_ui_string_conf)
+        row = column.row()
+        row.label(text=stats_ui_string_conf50)
         
 
 class PoseEstimationTaskOperator(bpy.types.Operator):
@@ -430,44 +600,71 @@ class PoseEstimationTaskOperator(bpy.types.Operator):
     bl_idname = "motionengine.pose_estimation_task_operator"
     bl_label = "Detect poses"
     
-    _timer = None
-    
-    def modal(self, context, event):
-        update_analysis_task()
-        trackingstate = me_global_register["me_tracking_state"]
-        if trackingstate == me_tracking_state.INACTIVE or trackingstate == me_tracking_state.COMPLETE:
-            self.cancel(context)
-            for area in bpy.context.screen.areas:
-                if area.type == 'CLIP_EDITOR':
-                    area.tag_redraw()
-            return {'CANCELLED'}
-        
-        if event.type == 'TIMER':
-            for area in bpy.context.screen.areas:
-                if area.type == 'CLIP_EDITOR':
-                    area.tag_redraw()
-
-        return {'PASS_THROUGH'}
-    
     def execute(self, context):
-        wm = context.window_manager
-        self._timer = wm.event_timer_add(0.2, window=context.window)
-        wm.modal_handler_add(self)
+        if not me_global_register["ui_lock_state"]:
+            scene = context.scene
+            properties = scene.motion_engine_ui_properties
+            
+            selected_exec_det = MEPython.dnn.Executor.CPU
+            if properties.me_ui_prop_exe_det_enum == "CUDA":
+                selected_exec_det = MEPython.dnn.Executor.CUDA
+            elif properties.me_ui_prop_exe_det_enum == "TENSORRT":
+                selected_exec_det = MEPython.dnn.Executor.TENSORRT
+                
+            selected_exec_pose = MEPython.dnn.Executor.CPU
+            if properties.me_ui_prop_exe_pose_enum == "CUDA":
+                selected_exec_pose = MEPython.dnn.Executor.CUDA
+            elif properties.me_ui_prop_exe_pose_enum == "TENSORRT":
+                selected_exec_pose = MEPython.dnn.Executor.TENSORRT
+            
+            det_path = MotionEngine.model_path("rtmdet-nano/end2end320.onnx")
+            pose_path = MotionEngine.model_path("rtmpose-m/end2end.onnx")
+            
+            me_global_register["context_tracker"] = context
+            
+            me_global_register["clip_tracker"] = context.edit_movieclip
+            
+            me_global_register["properties_tracker"] = scene.motion_engine_data
+            
+            me_global_register["stats_tracker"] = scene.motion_engine_ui_properties.me_ui_prop_stats_collection
+            
+            cache_size = properties.me_ui_prop_cache_size
+            
+            det_batch_size = properties.me_ui_prop_det_batch_size
+            
+            pose_batch_size = properties.me_ui_prop_pose_batch_size
+            
+            det_conf_thresh = properties.me_ui_prop_det_conf
+            
+            det_iou_thresh = properties.me_ui_prop_det_iou
+            
+            ui_lock(True)
+            display_warmup_state(False)
+            ui_draw_toggle()
         
-        scene = context.scene
-        properties = scene.motion_engine_ui_properties
-        
-        # Task setup and execution code here
-        
-        return {'RUNNING_MODAL'}
-    
-    def cancel(self, context):
-        wm = context.window_manager
-        wm.event_timer_remove(self._timer)
-         
-
+            MEPython.mt.infer_async(
+                me_global_register["me_detectpose_model"], 
+                det_path, 
+                selected_exec_det, 
+                pose_path, 
+                selected_exec_pose,
+                cache_size,
+                det_batch_size,
+                pose_batch_size,
+                det_conf_thresh,
+                det_iou_thresh,
+                me_global_register["clip_tracker"],
+                bpy.path.abspath,
+                ui_draw_toggle,
+                ui_lock,
+                display_warmup_state,
+                write_data_callback
+            )
+            
+        return {'FINISHED'}
 
 def register():
+    gc.collect()
     bpy.utils.register_class(MEPointBlender)
     bpy.utils.register_class(MEJointBlender)
     bpy.utils.register_class(MEPoseBlender)
@@ -476,6 +673,7 @@ def register():
     bpy.utils.register_class(MEClipDataCollection)
     bpy.types.Scene.motion_engine_data = bpy.props.PointerProperty(type=MEClipDataCollection)
     
+    bpy.utils.register_class(MotionEngineRunStatistics)
     bpy.utils.register_class(MotionEngineUIProperties)
     bpy.types.Scene.motion_engine_ui_properties = bpy.props.PointerProperty(type=MotionEngineUIProperties)
     bpy.utils.register_class(ModelLoadOperator)
@@ -487,10 +685,16 @@ def register():
 
     # Global vars
     me_global_register["me_detectpose_model"] = MEPython.dnn.RTMDetPoseBundleModel()
-    me_global_register["me_load_future"] = None
-    me_global_register["me_load_state"] = me_model_load_state.UNLOADED
-    me_global_register["me_cache_futures"] = None
-    me_global_register["me_tracking_state"] = me_tracking_state.INACTIVE
+    me_global_register["context_tracker"] = None
+    me_global_register["properties_tracker"] = None
+    me_global_register["clip_tracker"] = None
+    me_global_register["stats_tracker"] = None
+    me_global_register["warmup_state"] = False
+    me_global_register["ui_lock_state"] = False
+   
+    gc.collect()
+    
+    print("[MotionEngine] Registration complete.")
     
 
 def unregister():
@@ -502,15 +706,13 @@ def unregister():
     bpy.utils.unregister_class(ModelLoadOperator)
     del bpy.types.Scene.motion_engine_ui_properties
     bpy.utils.unregister_class(MotionEngineUIProperties)
+    bpy.utils.unregister_class(MotionEngineRunStatistics)
 
     me_global_register["me_detectpose_model"].unload_all()
-    if me_global_register["me_load_future"] != None:
-        me_global_register["me_load_future"].wait()
-    me_global_register["me_load_future"] = None
-    if me_global_register["me_cache_futures"] != None:
-        for future in me_global_register["me_cache_futures"]:
-            future.wait()
-    me_global_register["me_cache_futures"] = None
+    me_global_register["context_tracker"] = None
+    me_global_register["properties_tracker"] = None
+    me_global_register["clip_tracker"] = None
+    me_global_register["stats_tracker"] = None
     me_global_register.clear()
     
     del bpy.types.Scene.motion_engine_data
@@ -520,6 +722,10 @@ def unregister():
     bpy.utils.unregister_class(MEPoseBlender)
     bpy.utils.unregister_class(MEJointBlender)
     bpy.utils.unregister_class(MEPointBlender)
+    
+    gc.collect()
+    
+    print("[MotionEngine] Unregistration complete.")
 
 
 if __name__ == "__main__":
