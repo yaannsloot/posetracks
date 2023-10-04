@@ -27,10 +27,284 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me_dnn_detectpose_model.hpp>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <filesystem>
 
 namespace py = pybind11;
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
+
+void load_models(
+	me::dnn::DetectPoseModel* model,
+	const std::string det_model_path,
+	me::dnn::Executor det_model_executor,
+	const std::string pose_model_path,
+	me::dnn::Executor pose_model_executor
+) {
+	try {
+		std::filesystem::path det_path(det_model_path);
+		std::filesystem::path pose_path(pose_model_path);
+		std::cout << "[MotionEngine] Loading model \"" << det_path.string() << "\"" << std::endl;
+		model->detection_model.load(det_model_path, det_model_executor);
+		std::cout << "[MotionEngine] Loading model \"" << pose_path.string() << "\"" << std::endl;
+		model->pose_model.load(pose_model_path, pose_model_executor);
+	}
+	catch (const std::exception& ex) {
+		std::cout << "An error occurred on asynchronous task while loading models: " << ex.what() << std::endl;
+	}
+	catch (const std::string& ex) {
+		std::cout << "An error occurred on asynchronous task while loading models: " << ex << std::endl;
+	}
+	catch (...) {
+		std::cout << "An unknown error occurred on asynchronous task while loading models" << std::endl;
+	}
+}
+
+void warmup_models(
+	me::dnn::DetectPoseModel* model
+) {
+	try {
+		if (model->is_ready()) {
+			cv::Mat wu_det(model->detection_model.net_size(), CV_8UC3);
+			cv::Mat wu_pose(model->pose_model.net_size(), CV_8UC3);
+			cv::randn(wu_det, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
+			cv::randn(wu_pose, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
+			std::cout << "[MotionEngine] Starting warmup phase of detection model..." << std::endl;
+			model->detection_model.infer(wu_det, std::vector<me::dnn::Detection>(), 0, 0);
+			std::cout << "[MotionEngine] Starting warmup phase of pose model..." << std::endl;
+			model->pose_model.infer(wu_pose, me::dnn::Pose());
+			std::cout << "[MotionEngine] Warmup phase complete." << std::endl;
+		}
+	}
+	catch (const std::exception& ex) {
+		std::cout << "An error occurred on asyncronous task during model warmup: " << ex.what() << std::endl;
+	}
+	catch (const std::string& ex) {
+		std::cout << "An error occurred on asyncronous task during model warmup: " << ex << std::endl;
+	}
+	catch (...) {
+		std::cout << "An unknown error occurred on asyncronous task during model warmup" << std::endl;
+	}
+}
+
+void rtm_load_async_func(
+	me::dnn::DetectPoseModel* model,
+	const std::string det_model_path,
+	me::dnn::Executor det_model_executor,
+	const std::string pose_model_path,
+	me::dnn::Executor pose_model_executor,
+	py::function redraw_callback,
+	py::function ui_lock_callback,
+	py::function display_warmup_callback
+) {
+
+	py::gil_scoped_acquire aquire;
+
+	try {
+
+		ui_lock_callback(true);
+		display_warmup_callback(true);
+		redraw_callback();
+
+		{
+			py::gil_scoped_release release;
+			load_models(model, det_model_path, det_model_executor, pose_model_path, pose_model_executor);
+		}
+
+		redraw_callback();
+
+		{
+			py::gil_scoped_release release;
+			warmup_models(model);
+		}
+
+	}
+	catch (const std::exception& ex) {
+		std::cout << "An error occurred on asynchronous task: " << ex.what() << std::endl;
+	}
+	catch (const std::string& ex) {
+		std::cout << "An error occurred on asynchronous task: " << ex << std::endl;
+	}
+	catch (...) {
+		std::cout << "An unknown error occurred on asynchronous task" << std::endl;
+	}
+
+
+	// Return state to normal
+	ui_lock_callback(false);
+	display_warmup_callback(false);
+	redraw_callback();
+
+	// Dereference python objects
+	ui_lock_callback.dec_ref();
+	display_warmup_callback.dec_ref();
+	redraw_callback.dec_ref();
+	ui_lock_callback.release();
+	display_warmup_callback.release();
+	redraw_callback.release();
+
+}
+
+void cache_frames(me::core::Transcoder &transcoder, std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size) {
+	auto futures = transcoder.next_frames(frames, success, batch_size);
+	for (auto& future : futures) {
+		future.wait();
+	}
+}
+
+void cache_frames_single_threaded(me::core::Transcoder& transcoder, std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size) {
+
+	const int current_frame = transcoder.current_frame();
+	const int total_frames = transcoder.frame_count();
+
+	if (current_frame >= total_frames)
+		return;
+
+	const int diff = total_frames - current_frame;
+	if (diff < batch_size)
+		batch_size = diff;
+
+	success.resize(batch_size);
+	frames.resize(batch_size);
+
+	for (auto it = success.begin(); it != success.end(); ++it) {
+		*it = false;
+	}
+
+	for (int f = 0; f < batch_size; ++f) {
+		cv::Mat &frame = frames[f];
+		bool s = transcoder.next_frame(frame);
+		success[f] = s;
+		if (!s)
+			break;
+	}
+
+}
+
+void infer_async_func(
+	me::dnn::DetectPoseModel* model, 
+	const std::string det_model_path,
+	me::dnn::Executor det_model_executor,
+	const std::string pose_model_path,
+	me::dnn::Executor pose_model_executor,
+	int batch_size,
+	int det_batch_size,
+	int pose_batch_size,
+	double conf_thresh,
+	double iou_thresh,
+	py::object target_clip,
+	py::function abspath_func,
+	py::function redraw_callback,
+	py::function ui_lock_callback,
+	py::function display_warmup_callback,
+	py::function write_callback
+) {
+
+	py::gil_scoped_acquire aquire;
+
+	try {
+
+		ui_lock_callback(true);
+
+		if (!model->is_ready()) {
+			display_warmup_callback(true);
+			redraw_callback();
+
+			{
+				py::gil_scoped_release release;
+				load_models(model, det_model_path, det_model_executor, pose_model_path, pose_model_executor);
+			}
+
+			redraw_callback();
+
+			{
+				py::gil_scoped_release release;
+				warmup_models(model);
+			}
+
+			display_warmup_callback(false);
+			redraw_callback();
+
+		}
+
+		std::string clip_name = py::str(target_clip.attr("name"));
+		std::string clip_path = py::str(abspath_func(target_clip.attr("filepath")));
+		me::core::Transcoder transcoder;
+		transcoder.load(clip_path);
+
+		if (model->is_ready() && transcoder.is_open()) { // This logic is a little weird. Please rearrange it later
+
+			int total_frames = transcoder.frame_count();
+			std::vector<std::vector<me::dnn::Pose>> all_poses;
+
+			{
+
+				py::gil_scoped_release release;
+
+				while (transcoder.current_frame() < total_frames) {
+
+					std::vector<std::vector<me::dnn::Pose>> poses;
+
+					// Cache frames
+					int current_frame = transcoder.current_frame();
+
+					std::cout << "[MotionEngine] Reading frames from \"" << clip_name << "\"" << std::endl;
+
+					std::vector<cv::Mat> frames;
+					std::vector<bool> success;
+
+					cache_frames_single_threaded(transcoder, frames, success, batch_size);
+
+					for (const bool &s : success) {
+						if (!s)
+							throw std::runtime_error("Encountered read failure on file \"" + clip_name + "\"");
+					}
+
+					std::cout << "[MotionEngine] Running inference on frames " << current_frame << " to " << current_frame + frames.size() - 1 << std::endl;
+
+					// Run inference
+					model->infer(frames, poses, det_batch_size, pose_batch_size, conf_thresh, iou_thresh);
+
+					all_poses.insert(all_poses.end(), poses.begin(), poses.end());
+
+				}
+
+			}
+
+			write_callback(all_poses);
+
+		}
+
+	}
+	catch (const std::exception& ex) {
+		std::cout << "An error occurred on asynchronous task: " << ex.what() << std::endl;
+	}
+	catch (const std::string& ex) {
+		std::cout << "An error occurred on asynchronous task: " << ex << std::endl;
+	}
+	catch (...) {
+		std::cout << "An unknown error occurred on asynchronous task" << std::endl;
+	}
+
+	// Return state to normal
+	ui_lock_callback(false);
+	display_warmup_callback(false);
+	redraw_callback();
+
+	// Dereference python objects
+	target_clip.dec_ref();
+	abspath_func.dec_ref();
+	ui_lock_callback.dec_ref();
+	display_warmup_callback.dec_ref();
+	redraw_callback.dec_ref();
+	write_callback.dec_ref();
+	target_clip.release();
+	abspath_func.release();
+	ui_lock_callback.release();
+	display_warmup_callback.release();
+	redraw_callback.release();
+	write_callback.release();
+
+}
 
 PYBIND11_MODULE(MEPython, m)
 {
@@ -84,18 +358,6 @@ PYBIND11_MODULE(MEPython, m)
 		.def("load", &me::core::Transcoder::load, py::arg("path"), py::arg("use_hw_accel") = false)
 		.def("next_frame", &me::core::Transcoder::next_frame, py::arg("frame"), py::arg("retry_count") = 100)
 		.def("grab_frame", &me::core::Transcoder::grab_frame, py::arg("frame"), py::arg("frame_id"), py::arg("retry_count") = 100)
-		.def("next_frames", [](me::core::Transcoder& self, int batch_size, int retry_count) {
-			std::vector<cv::Mat> frames;
-			std::vector<bool> success;
-			std::vector<std::shared_future<void>> futures = self.next_frames(frames, success, batch_size, retry_count);
-			return py::make_tuple(futures, frames, success);
-		}, py::arg("batch_size"), py::arg("retry_count") = 100)
-		.def("grab_frames", [](me::core::Transcoder& self, int start_frame, int batch_size, int retry_count) {
-			std::vector<cv::Mat> frames;
-			std::vector<bool> success;
-			std::vector<std::shared_future<void>> futures = self.grab_frames(frames, success, start_frame, batch_size, retry_count);
-			return py::make_tuple(futures, frames, success);
-		}, py::arg("start_frame"), py::arg("batch_size"), py::arg("retry_count") = 100)
 		.def("set_frame", &me::core::Transcoder::set_frame, py::arg("frame_id"))
 		.def("current_frame", &me::core::Transcoder::current_frame)
 		.def("frame_count", &me::core::Transcoder::frame_count)
@@ -286,69 +548,126 @@ PYBIND11_MODULE(MEPython, m)
 		})
 		;
 
+	py::class_<std::shared_future<std::tuple<bool, std::vector<cv::Mat>>>>(m, "future_frames")
+		.def(py::init<>())
+		.def("get", &std::shared_future<std::tuple<bool, std::vector<cv::Mat>>>::get)
+		.def("valid", &std::shared_future<std::tuple<bool, std::vector<cv::Mat>>>::valid)
+		.def("wait", &std::shared_future<std::tuple<bool, std::vector<cv::Mat>>>::wait)
+		.def("wait_for", [](std::shared_future<std::tuple<bool, std::vector<cv::Mat>>>& self, int timeout) {
+		return self.wait_for(std::chrono::milliseconds(timeout));
+			})
+		;
+
 	// Async functions (MT module)
-	m_mt.def("RTMDP_load_async", [](me::dnn::DetectPoseModel& model, const std::string det_model_path, me::dnn::Executor det_model_executor, const std::string pose_model_path, me::dnn::Executor pose_model_executor) {
-		if (!me::core::global_pool.Running())
-			me::core::global_pool.Start();
-		auto future = me::core::global_pool.QueueJob([](me::dnn::DetectPoseModel* model, const std::string det_model_path, me::dnn::Executor det_model_executor, const std::string pose_model_path, me::dnn::Executor pose_model_executor) {
+	m_mt.def("rtm_load_async", [](
+		me::dnn::DetectPoseModel& model, 
+		const std::string det_model_path, 
+		me::dnn::Executor det_model_executor, 
+		const std::string pose_model_path, 
+		me::dnn::Executor pose_model_executor, 
+		py::function redraw_callback,
+		py::function ui_lock_callback,
+		py::function display_warmup_callback
+	) {
 			try {
-				std::cout << "[MotionEngine] Loading model \"" << det_model_path << "\"" << std::endl;
-				model->detection_model.load(det_model_path, det_model_executor);
-				std::cout << "[MotionEngine] Loading model \"" << pose_model_path << "\"" << std::endl;
-				model->pose_model.load(pose_model_path, pose_model_executor);
+				std::thread thread(rtm_load_async_func,
+					&model,
+					det_model_path,
+					det_model_executor,
+					pose_model_path,
+					pose_model_executor,
+					redraw_callback,
+					ui_lock_callback,
+					display_warmup_callback
+				);
+				thread.detach();
 			}
 			catch (const std::exception& ex) {
-				std::cout << "An error occurred on asyncronous task while loading models: " << ex.what() << std::endl;
+				std::cout << "An error occurred while attempting to execute an asynchronous task: " << ex.what() << std::endl;
 			}
 			catch (const std::string& ex) {
-				std::cout << "An error occurred on asyncronous task while loading models: " << ex << std::endl;
+				std::cout << "An error occurred while attempting to execute an asynchronous task: " << ex << std::endl;
 			}
 			catch (...) {
-				std::cout << "An unknown error occurred on asyncronous task while loading models" << std::endl;
+				std::cout << "An unknown error occurred while attempting to execute an asynchronous task" << std::endl;
 			}
-		}, &model, det_model_path, det_model_executor, pose_model_path, pose_model_executor);
-		
-		return future.share();
 	});
-	m_mt.def("RTMDP_warmup_async", [](me::dnn::DetectPoseModel& model) {
-		if (!me::core::global_pool.Running())
-			me::core::global_pool.Start();
-		auto future = me::core::global_pool.QueueJob([](me::dnn::DetectPoseModel* model) {
+	m_mt.def("infer_async", [](
+		me::dnn::DetectPoseModel& model,
+		const std::string det_model_path,
+		me::dnn::Executor det_model_executor,
+		const std::string pose_model_path,
+		me::dnn::Executor pose_model_executor,
+		int batch_size,
+		int det_batch_size,
+		int pose_batch_size,
+		double conf_thresh,
+		double iou_thresh,
+		py::object target_clip,
+		py::function abspath_func,
+		py::function redraw_callback,
+		py::function ui_lock_callback,
+		py::function display_warmup_callback,
+		py::function write_callback
+		) {
 			try {
-				if (model->is_ready()) {
-					cv::Mat wu_det(model->detection_model.net_size(), CV_8UC3);
-					cv::Mat wu_pose(model->pose_model.net_size(), CV_8UC3);
-					cv::randn(wu_det, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
-					cv::randn(wu_pose, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
-					std::cout << "[MotionEngine] Starting warmup phase of detection model..." << std::endl;
-					model->detection_model.infer(wu_det, std::vector<me::dnn::Detection>(), 0, 0);
-					std::cout << "[MotionEngine] Starting warmup phase of pose model..." << std::endl;
-					model->pose_model.infer(wu_pose, me::dnn::Pose());
-					std::cout << "[MotionEngine] Warmup phase complete." << std::endl;
-				}
+				std::thread thread(infer_async_func,
+					&model,
+					det_model_path,
+					det_model_executor,
+					pose_model_path,
+					pose_model_executor,
+					batch_size,
+					det_batch_size,
+					pose_batch_size,
+					conf_thresh,
+					iou_thresh,
+					target_clip,
+					abspath_func,
+					redraw_callback,
+					ui_lock_callback,
+					display_warmup_callback,
+					write_callback
+				);
+				thread.detach();
 			}
 			catch (const std::exception& ex) {
-				std::cout << "An error occurred on asyncronous task during model warmup: " << ex.what() << std::endl;
+				std::cout << "An error occurred while attempting to execute an asynchronous task: " << ex.what() << std::endl;
 			}
 			catch (const std::string& ex) {
-				std::cout << "An error occurred on asyncronous task during model warmup: " << ex << std::endl;
+				std::cout << "An error occurred while attempting to execute an asynchronous task: " << ex << std::endl;
 			}
 			catch (...) {
-				std::cout << "An unknown error occurred on asyncronous task during model warmup" << std::endl;
+				std::cout << "An unknown error occurred while attempting to execute an asynchronous task" << std::endl;
 			}
-		}, &model);
-		return future.share();
-	});
+		});
 	m_mt.def("RTMDP_infer_async", [](me::dnn::DetectPoseModel& model, const std::vector<cv::Mat>& images, int max_detection_batches = 1, int max_pose_batches = 1, float conf_thresh = 0.5, float iou_thresh = 0.5) {
 		if (!me::core::global_pool.Running())
 			me::core::global_pool.Start();
-		auto future = me::core::global_pool.QueueJob([](me::dnn::DetectPoseModel* model, const std::vector<cv::Mat>* images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
+		auto future = me::core::global_pool.QueueJob([](me::dnn::DetectPoseModel* model, const std::shared_ptr<std::vector<cv::Mat>> images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
 			std::vector<std::vector<me::dnn::Pose>> poses;
 			if (model->is_ready())
 				model->infer(*images, poses, max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
 			return poses;
 
-		}, &model, &images, max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
+		}, &model, std::make_shared<std::vector<cv::Mat>>(images), max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
+		return future.share();
+	});
+	m_mt.def("Transcoder_read_async", [](me::core::Transcoder& transcoder, int num_frames) {
+		if (!me::core::global_pool.Running())
+			me::core::global_pool.Start();
+		auto future = me::core::global_pool.QueueJob([](me::core::Transcoder* transcoder, int num_frames) {
+			bool success = true;
+			std::vector<cv::Mat> frames;
+			for (int i = 0; i < num_frames; i++) {
+				cv::Mat frame;
+				success = transcoder->next_frame(frame);
+				if (!success)
+					break;
+				frames.push_back(frame);
+			}
+			return std::make_tuple(success, frames);
+		}, &transcoder, num_frames);
 		return future.share();
 	});
 

@@ -176,10 +176,7 @@ namespace me {
 					}
 				}
 
-				auto startd = std::chrono::high_resolution_clock::now();
 				pose_model.infer(ROIs, chunk_poses);
-				auto endd = std::chrono::high_resolution_clock::now();
-				std::cout << "Pose inference: " << std::chrono::duration_cast<std::chrono::milliseconds>(endd - startd).count() << "ms. ROIs: " << ROIs.size() << std::endl;
 
 				// Post-infer trimming
 				chunk_poses.resize(chunk_poses.size() - diff);

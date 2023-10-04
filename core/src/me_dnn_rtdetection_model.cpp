@@ -24,7 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me_dnn_rtdetection_model.hpp>
 #include <cpu_provider_factory.h>
 #include <opencv2/dnn.hpp>
-#include <filesystem>
 
 namespace me {
 
@@ -47,8 +46,6 @@ namespace me {
 			// For systems without an NVIDIA GPU, the GPU device option will default to the CPU provider.
 			this->session_options = Ort::SessionOptions();
 			if (target_executor == Executor::TENSORRT && checkForProvider("TensorrtExecutionProvider")) {
-				std::filesystem::path filePath(model_path);
-				auto dir = filePath.parent_path();
 				OrtTensorRTProviderOptionsV2* trt_options = nullptr;
 				const OrtApi* ort = OrtGetApiBase()->GetApi(12);
 				ort->CreateTensorRTProviderOptions(&trt_options);
@@ -69,7 +66,7 @@ namespace me {
 					"5",
 					"1",
 					"1",
-					dir.string().c_str(),
+					"motionengine_trt_cache",
 					"1"
 				};
 				ort->UpdateTensorRTProviderOptions(trt_options, keys.data(), values.data(), 8);
@@ -181,7 +178,6 @@ namespace me {
 		}
 
 		void RTDetectionModel::infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) {
-			auto start = std::chrono::high_resolution_clock::now();
 
 			// Check if session is loaded
 			if (this->session == nullptr)
@@ -203,7 +199,6 @@ namespace me {
 			cv::Scalar mean(123.675, 116.28, 103.53);
 
 			// Prepare tensor input data
-			auto start_blob = std::chrono::high_resolution_clock::now();
 
 			cv::Mat blob;
 			if (images.size() > 1) {
@@ -213,8 +208,6 @@ namespace me {
 				cv::dnn::blobFromImage(images[0], blob, 1.0 / 57.63, cv::Size(net_width, net_height), mean);
 			}
 
-			auto end_blob = std::chrono::high_resolution_clock::now();
-			std::cout << "Blob time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end_blob - start_blob).count() << "ms" << std::endl;
 
 			// Convert to ORT tensor
 			std::array<int64_t, 4> input_shape{ (int64_t)images.size(), 3, net_height, net_width };
@@ -234,18 +227,10 @@ namespace me {
 			binding.BindOutput("dets", output_mem_info);
 			binding.BindOutput("labels", output_mem_info);
 
-			auto end = std::chrono::high_resolution_clock::now();
-			std::cout << "Preprocessing time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
 			// Run inference
 			// Test runtime
-			start = std::chrono::high_resolution_clock::now();
 			this->session->Run(Ort::RunOptions{ nullptr }, binding);
-			end = std::chrono::high_resolution_clock::now();
-			std::cout << "Run time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-
-			start = std::chrono::high_resolution_clock::now();
 
 			// Get the output tensors
 			std::vector<Ort::Value> output_tensors = binding.GetOutputValues();
@@ -304,8 +289,6 @@ namespace me {
 					}
 				}
 			}
-			end = std::chrono::high_resolution_clock::now();
-			std::cout << "Postprocessing time: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 			binding.ClearBoundInputs();
 			binding.ClearBoundOutputs();
 		}

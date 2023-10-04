@@ -24,7 +24,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me_dnn_pose_model.hpp>
 #include <cpu_provider_factory.h>
 #include <opencv2/dnn.hpp>
-#include <filesystem>
 
 namespace me {
 
@@ -47,8 +46,6 @@ namespace me {
 			// For systems without an NVIDIA GPU, the GPU device option will default to the CPU provider.
 			this->session_options = Ort::SessionOptions();
 			if (target_executor == Executor::TENSORRT && checkForProvider("TensorrtExecutionProvider")) {
-				std::filesystem::path filePath(model_path);
-				auto dir = filePath.parent_path();
 				OrtTensorRTProviderOptionsV2* trt_options = nullptr;
 				const OrtApi* ort = OrtGetApiBase()->GetApi(12);
 				ort->CreateTensorRTProviderOptions(&trt_options);
@@ -69,7 +66,7 @@ namespace me {
 					"5",
 					"1",
 					"1",
-					dir.string().c_str(),
+					"motionengine_trt_cache",
 					"1"
 				};
 				ort->UpdateTensorRTProviderOptions(trt_options, keys.data(), values.data(), 8);
@@ -231,10 +228,7 @@ namespace me {
 			binding.BindOutput("simcc_y", output_mem_info);
 
 			// Run inference
-			auto start = std::chrono::high_resolution_clock::now();
 			this->session->Run(Ort::RunOptions{ nullptr }, binding);
-			auto end = std::chrono::high_resolution_clock::now();
-			std::cout << "Runtime: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
 			// Get the output tensors
 			std::vector<Ort::Value> output_tensors = binding.GetOutputValues();

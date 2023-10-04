@@ -26,6 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me_core_transcoder.hpp>
 #include <opencv2/opencv.hpp>
 #include <me_core_simplepool.hpp>
+#include <filesystem>
 
 void performance_experiments() {
 	// Accessor vs true N dimensionsal heap memory structure performance
@@ -392,6 +393,7 @@ void detectpose_test() {
 
 int main() {
 	try {
+		std::cout << std::filesystem::temp_directory_path().string() << std::endl;
 		std::vector<std::string> providers = Ort::GetAvailableProviders();
 		for (auto& provider : providers) {
 			std::cout << provider << std::endl;
