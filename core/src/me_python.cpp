@@ -192,6 +192,7 @@ void infer_async_func(
 	double conf_thresh,
 	double iou_thresh,
 	py::object target_clip,
+	py::object info_str,
 	py::function abspath_func,
 	py::function redraw_callback,
 	py::function ui_lock_callback,
@@ -236,25 +237,27 @@ void infer_async_func(
 			int total_frames = transcoder.frame_count();
 			std::vector<std::vector<me::dnn::Pose>> all_poses;
 
-			{
+			info_str.attr("msg") = py::str("Detecting poses: 0%");
 
-				py::gil_scoped_release release;
+			while (transcoder.current_frame() < total_frames) {
 
-				while (transcoder.current_frame() < total_frames) {
+				int current_frame = 0;
+				std::vector<std::vector<me::dnn::Pose>> poses;
+				std::vector<cv::Mat> frames;
+				std::vector<bool> success;
 
-					std::vector<std::vector<me::dnn::Pose>> poses;
+				{
+
+					py::gil_scoped_release release;
 
 					// Cache frames
-					int current_frame = transcoder.current_frame();
+					current_frame = transcoder.current_frame();
 
 					std::cout << "[MotionEngine] Reading frames from \"" << clip_name << "\"" << std::endl;
 
-					std::vector<cv::Mat> frames;
-					std::vector<bool> success;
-
 					cache_frames_single_threaded(transcoder, frames, success, batch_size);
 
-					for (const bool &s : success) {
+					for (const bool& s : success) {
 						if (!s)
 							throw std::runtime_error("Encountered read failure on file \"" + clip_name + "\"");
 					}
@@ -268,7 +271,13 @@ void infer_async_func(
 
 				}
 
+				int percentage = (int)(((double)current_frame + (double)frames.size()) / (double)total_frames * 100);
+				std::stringstream ss;
+				ss << "Detecting poses: " << percentage << "%";
+				info_str.attr("msg") = py::str(ss.str());
+
 			}
+
 
 			write_callback(all_poses);
 
@@ -292,12 +301,14 @@ void infer_async_func(
 
 	// Dereference python objects
 	target_clip.dec_ref();
+	info_str.dec_ref();
 	abspath_func.dec_ref();
 	ui_lock_callback.dec_ref();
 	display_warmup_callback.dec_ref();
 	redraw_callback.dec_ref();
 	write_callback.dec_ref();
 	target_clip.release();
+	info_str.release();
 	abspath_func.release();
 	ui_lock_callback.release();
 	display_warmup_callback.release();
@@ -604,6 +615,7 @@ PYBIND11_MODULE(MEPython, m)
 		double conf_thresh,
 		double iou_thresh,
 		py::object target_clip,
+		py::object info_str,
 		py::function abspath_func,
 		py::function redraw_callback,
 		py::function ui_lock_callback,
@@ -623,6 +635,7 @@ PYBIND11_MODULE(MEPython, m)
 					conf_thresh,
 					iou_thresh,
 					target_clip,
+					info_str,
 					abspath_func,
 					redraw_callback,
 					ui_lock_callback,

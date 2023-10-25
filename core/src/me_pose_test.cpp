@@ -359,8 +359,8 @@ void detectpose_test() {
 	cap3.read(mat);
 	std::cout << video_reader2.get(cv::CAP_PROP_POS_FRAMES) << " " << cap3.get(cv::CAP_PROP_POS_FRAMES) << std::endl;
 	me::dnn::DetectPoseModel detectpose_model;
-	detectpose_model.detection_model.load("rtmdet-m.onnx", me::dnn::Executor::CUDA);
-	detectpose_model.pose_model.load("end2end.onnx", me::dnn::Executor::TENSORRT);
+	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody26-m.onnx", me::dnn::Executor::CUDA);
 	std::vector<me::dnn::Pose> poses;
 	while (video_reader2.isOpened()) {
 		bool success = false;
