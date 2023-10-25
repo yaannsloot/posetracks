@@ -16,8 +16,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
+from .. import utils
 from ..MotionEngine import MEPython
-from ..utils import set_select_tracks
 
 
 def point_to_blend(source, target):
@@ -145,7 +145,7 @@ def clear_blend_clip_data(source: bpy.types.MovieClip):
 
 
 def get_track_tag(pose_tracks, joint_id):
-    return pose_tracks.name + "." + str(joint_id)
+    return pose_tracks.track_prefix + "." + str(joint_id)
 
 
 def get_track_dict(clip, pose_tracks):
@@ -159,41 +159,52 @@ def get_track_dict(clip, pose_tracks):
 
 
 def create_pose_tracks(name, joint_num, clip, pose_tracks_list):
+    # Needs to have a conflict check for new names
+
+    names_list = []
+    prefix_list = []
+    for entry in pose_tracks_list:
+        names_list.append(entry.name)
+        prefix_list.append(entry.track_prefix)
+
+    max_tries = 65536
+
+    if name in names_list:
+        for i in range(max_tries):
+            n = "Pose " + str(i)
+            if n not in names_list:
+                name = n
+                break
+
+    prefix = "Pose 0"
+    if prefix in prefix_list:
+        for i in range(max_tries):
+            n = "Pose " + str(i)
+            if n not in prefix_list:
+                prefix = n
+                break
+
     pose_tracks = pose_tracks_list.add()
     pose_tracks.name = name
+    pose_tracks.track_prefix = prefix
     pose_tracks.tracks = joint_num
     pose_tracks.keep_on_regen = False
+    new_track_list = []
     for j in range(joint_num):
-        clip.tracking.tracks.new(name=get_track_tag(pose_tracks, j))
+        new_track_list.append(clip.tracking.tracks.new(name=get_track_tag(pose_tracks, j)))
+    utils.set_lock_on_tracks(new_track_list, True)
     return pose_tracks
 
 
-def get_pose_tracks_clip(clip, properties):
-    pose_tracks_clip = None
-    clip_collection = properties.me_ui_prop_pose_clip_collection
-    for entry in clip_collection:
-        if entry.clip == clip:
-            pose_tracks_clip = entry
-    return pose_tracks_clip
-
-
-def ensure_pose_tracks_clip(clip, properties):
-    pose_tracks_clip = get_pose_tracks_clip(clip, properties)
-    clip_collection = properties.me_ui_prop_pose_clip_collection
-    if pose_tracks_clip is None:
-        pose_tracks_clip = clip_collection.add()
-        pose_tracks_clip.clip = clip
-    return pose_tracks_clip
-
-
-def clear_tracks(clip, pose_tracks_list):
+def clear_tracks(clip, pose_tracks_list, ignore_keep=False):
     target_tracks = []
     for pose_tracks in pose_tracks_list:
-        if not pose_tracks.keep_on_regen:
+        if not pose_tracks.keep_on_regen or ignore_keep:
             track_dict = get_track_dict(clip, pose_tracks)
             target_tracks.extend(list(track_dict.values()))
-    set_select_tracks(clip.tracking.tracks, False)
-    set_select_tracks(target_tracks, True)
+    utils.set_hidden_on_tracks(target_tracks, False)
+    utils.set_select_tracks(clip.tracking.tracks, False)
+    utils.set_select_tracks(target_tracks, True)
 
     bpy.ops.clip.delete_track()
 
@@ -201,11 +212,40 @@ def clear_tracks(clip, pose_tracks_list):
     while current_index < len(pose_tracks_list):
         increment = True
         pose_tracks = pose_tracks_list[current_index]
-        if not pose_tracks.keep_on_regen:
+        if not pose_tracks.keep_on_regen or ignore_keep:
             pose_tracks_list.remove(current_index)
             increment = False
         if increment:
             current_index = current_index + 1
+
+
+def pose_tracks_name_check(self, value):
+    if value != "":
+        scene = bpy.context.scene
+        properties = scene.motion_engine_ui_properties
+        current_clip = bpy.context.edit_movieclip
+
+        pose_clip_collection = properties.me_ui_prop_pose_clip_collection
+
+        pose_tracks_list = None
+
+        for entry in pose_clip_collection:
+            if entry.clip == current_clip:
+                pose_tracks_list = entry.pose_tracks_list
+
+        pose_names = []
+        if pose_tracks_list is not None:
+            for entry in pose_tracks_list:
+                pose_names.append(entry.name)
+            if value not in pose_names:
+                self.name = value
+                self.keep_on_regen = True
+
+    return None
+
+
+def pose_tracks_name_get(self):
+    return self.name
 
 
 class MEPointBlender(bpy.types.PropertyGroup):
@@ -239,9 +279,12 @@ class MEClipDataCollection(bpy.types.PropertyGroup):
 
 
 class MEPoseTracks(bpy.types.PropertyGroup):
-    name: bpy.props.StringProperty()
+    name: bpy.props.StringProperty()  # can be changed by the user
+    track_prefix: bpy.props.StringProperty()  # will be kept throughout property's lifetime
+    mutable_name: bpy.props.StringProperty(get=pose_tracks_name_get, set=pose_tracks_name_check)
     tracks: bpy.props.IntProperty()
     keep_on_regen: bpy.props.BoolProperty()
+    mark_as_hidden: bpy.props.BoolProperty()
 
 
 class MEPoseTracksClip(bpy.types.PropertyGroup):

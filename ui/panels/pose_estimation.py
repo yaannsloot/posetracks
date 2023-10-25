@@ -33,7 +33,7 @@ class PoseEstimationUIPanel(bpy.types.Panel):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
         current_clip = context.edit_movieclip
-        me_data = scene.motion_engine_data
+        me_scene_data = scene.motion_engine_data
         stats_data = scene.motion_engine_ui_properties.me_ui_prop_stats_collection
         warmup = global_vars.warmup_state
         ui_lock = global_vars.ui_lock_state
@@ -59,19 +59,19 @@ class PoseEstimationUIPanel(bpy.types.Panel):
         row.operator("motionengine.pose_estimation_task_operator")
         split = row.split(align=True)
         row = split.row(align=True)
-        clip_data = me_data.check_data_for_clip(me_data, current_clip)
+        clip_data = me_data.check_data_for_clip(me_scene_data, current_clip)
         row.enabled = not ui_lock and clip_data is not None and len(clip_data.frames) > 0
         row.operator("motionengine.clear_current_operator")
         row = split.row(align=True)
         data_exists = False
-        for entry in me_data.items:
+        for entry in me_scene_data.items:
             if len(entry.frames) > 0:
                 data_exists = True
                 break
         row.enabled = not ui_lock and data_exists
         row.operator("motionengine.clear_all_operator")
 
-        run_stats = me_stats.get_run_statistics(me_data, stats_data, current_clip)
+        run_stats = me_stats.get_run_statistics(me_scene_data, stats_data, current_clip)
 
         stats_ui_string_frames = "Valid frames: "
         if run_stats is not None and run_stats.valid_frames > 0:

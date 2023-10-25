@@ -44,7 +44,7 @@ def write_data_callback(raw_data):
         if stat_prop is None:
             stat_prop = stats_data.add()
         print("[MotionEngine] Calculating run statistics...")
-        me_stats.calculate_statistics(target_clip_data, stat_prop)
+        bpy.ops.motionengine.calculate_statistics_operator()
 
 
 def ui_draw_callback():

@@ -1,4 +1,6 @@
 /MotionEngine/bin/
+/motionengine_trt_cache
 /.idea
 /*.zip
 /*.txt
+/*.onnx

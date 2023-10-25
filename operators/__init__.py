@@ -19,5 +19,11 @@ from . import model_load
 from . import prune_data
 from . import pose_estimation
 from . import create_tracks
+from . import calculate_statistics
+from . import report_status
+from . import clear_temp_tracks
+from . import clear_all_tracks
 
-ALL_CLASSES = model_load.CLASSES + prune_data.CLASSES + pose_estimation.CLASSES + create_tracks.CLASSES
+ALL_CLASSES = (model_load.CLASSES + prune_data.CLASSES + pose_estimation.CLASSES + create_tracks.CLASSES
+               + calculate_statistics.CLASSES + report_status.CLASSES + clear_temp_tracks.CLASSES
+               + clear_all_tracks.CLASSES)

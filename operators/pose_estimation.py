@@ -24,6 +24,8 @@ from ..property_groups import me_stats
 from ..property_groups import me_data
 
 
+info_str = {'INFO'}
+
 class PoseEstimationTaskOperator(bpy.types.Operator):
     """Start pose estimation analysis"""
     bl_idname = "motionengine.pose_estimation_task_operator"
@@ -93,6 +95,10 @@ class PoseEstimationTaskOperator(bpy.types.Operator):
             callbacks.display_warmup_state_callback(False)
             callbacks.ui_draw_callback()
 
+            global_vars.info_message.msg = "Detecting poses: 0%"
+
+            bpy.ops.motionengine.report_status_operator() # Start the modal info reporter
+
             MEPython.mt.infer_async(
                 global_vars.me_detectpose_model,
                 det_path,
@@ -105,6 +111,7 @@ class PoseEstimationTaskOperator(bpy.types.Operator):
                 det_conf_thresh,
                 det_iou_thresh,
                 global_vars.clip_tracker,
+                global_vars.info_message,
                 bpy.path.abspath,
                 callbacks.ui_draw_callback,
                 callbacks.ui_lock_callback,
@@ -127,11 +134,21 @@ class PoseEstimationClearCurrentOperator(bpy.types.Operator):
             current_clip = context.edit_movieclip
             me_scene_data = scene.motion_engine_data
             stats_data = scene.motion_engine_ui_properties.me_ui_prop_stats_collection
-            stat_prop = me_stats.check_stats_for_clip(stats_data, current_clip)
-            clip_data = me_scene_data.check_data_for_clip(me_scene_data, current_clip)
+
+            stat_prop = None
+            for entry in stats_data:
+                if entry.clip == current_clip:
+                    stat_prop = entry
+
+            clip_data = None
+            for entry in me_scene_data.items:
+                if entry.clip == current_clip:
+                    clip_data = entry
+
             me_data.clear_blend_clip_data(current_clip)
             if stat_prop is not None and clip_data is not None:
-                me_stats.calculate_statistics(clip_data, stat_prop)
+                global_vars.clip_tracker = context.edit_movieclip
+                bpy.ops.motionengine.calculate_statistics_operator()
 
         return {'FINISHED'}
 
@@ -153,7 +170,8 @@ class PoseEstimationClearAllOperator(bpy.types.Operator):
                 clip_data = me_data.check_data_for_clip(me_scene_data, current_clip)
                 me_data.clear_blend_clip_data(current_clip)
                 if stat_prop is not None and clip_data is not None:
-                    me_stats.calculate_statistics(clip_data, stat_prop)
+                    global_vars.clip_tracker = context.edit_movieclip
+                    bpy.ops.motionengine.calculate_statistics_operator()
 
         return {'FINISHED'}
 

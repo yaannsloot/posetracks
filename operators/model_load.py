@@ -28,6 +28,7 @@ class ModelLoadOperator(bpy.types.Operator):
     bl_label = "Load Models"
 
     def execute(self, context):
+        bpy.ops.motionengine.prune_data_operator()
         if not global_vars.ui_lock_state:
             scene = context.scene
             properties = scene.motion_engine_ui_properties
@@ -96,6 +97,7 @@ class ModelUnloadOperator(bpy.types.Operator):
     bl_label = "Unload Models"
 
     def execute(self, context):
+        bpy.ops.motionengine.prune_data_operator()
         if not global_vars.ui_lock_state:
             global_vars.me_detectpose_model.unload_all()
             print("[MotionEngine] Unloaded models.")

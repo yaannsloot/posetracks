@@ -17,7 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 from .me_data import MEPoseTracksClip
+from .me_data import MEPoseTracks
 from .me_stats import MotionEngineRunStatistics
+from ..utils import set_select_tracks
 
 
 def force_redraw(self, context):
@@ -42,6 +44,44 @@ def cache_method_update(self, context):
     properties = scene.motion_engine_ui_properties
     if properties.me_ui_prop_cache_method_enum == "AUTO":
         properties.me_ui_prop_cache_size = 256
+    return None
+
+
+def active_pose_update(self, context):
+    scene = context.scene
+    properties = scene.motion_engine_ui_properties
+    current_clip = context.edit_movieclip
+    clip_tracks = current_clip.tracking.tracks
+
+    target_list = None
+
+    for item in properties.me_ui_prop_pose_clip_collection:
+        if item.clip == current_clip:
+            target_list = item.pose_tracks_list
+            break
+
+    if target_list is not None:
+        target = target_list[properties.me_ui_prop_active_pose_index]
+
+        if target is not None:
+
+            all_pose_tracks = []
+            target_pose_tracks = []
+
+            for other in target_list:
+                for i in range(other.tracks):
+                    track = clip_tracks.get(other.track_prefix + '.' + str(i))
+                    if track is not None:
+                        all_pose_tracks.append(track)
+
+            for i in range(target.tracks):
+                track = clip_tracks.get(target.track_prefix + '.' + str(i))
+                if track is not None:
+                    target_pose_tracks.append(track)
+
+            set_select_tracks(all_pose_tracks, False)
+            set_select_tracks(target_pose_tracks, True)
+
     return None
 
 
@@ -271,7 +311,14 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
     )
     me_ui_prop_stats_collection: bpy.props.CollectionProperty(type=MotionEngineRunStatistics)
     me_ui_prop_pose_clip_collection: bpy.props.CollectionProperty(type=MEPoseTracksClip)
-    me_ui_prop_active_pose_index: bpy.props.IntProperty()
+    me_ui_prop_active_pose_index: bpy.props.IntProperty(
+        name="Active Pose Index",
+        description="Active pose in the pose tracks list",
+        update=active_pose_update
+    )
+
+    # Placeholder property. Must always remain empty.
+    me_ui_prop_pose_empty_clip: bpy.props.PointerProperty(type=MEPoseTracksClip)
 
 
 CLASSES = [
