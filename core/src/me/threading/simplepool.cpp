@@ -1,7 +1,4 @@
 /*
-me_core_simplepool.cpp
-Thread pool implementation for task based multithreading
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -18,16 +15,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <me_core_simplepool.hpp>
+#include "simplepool.hpp"
+#include <memory>
+#include <iostream>
 
 namespace me {
 
-    namespace core {
+    namespace threading {
 
         void SimplePool::Start(const uint32_t numthreads) {
             threads.resize(numthreads);
             for (uint32_t i = 0; i < numthreads; i++) {
                 threads.at(i) = std::thread([this] { this->ThreadLoop(); });
+                std::cout << "[MotionEngine](" << threads.at(i).get_id() << ") thread started" << std::endl;
             }
         }
 
@@ -74,9 +74,14 @@ namespace me {
             }
             mutex_condition.notify_all();
             for (std::thread& active_thread : threads) {
+                std::cout << "[MotionEngine](" << active_thread.get_id() << ") thread stopped" << std::endl;
                 active_thread.join();
             }
             threads.clear();
+        }
+
+        size_t SimplePool::NumThreads() {
+            return threads.size();
         }
 
         SimplePool::~SimplePool() {

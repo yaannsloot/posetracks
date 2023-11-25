@@ -1,5 +1,4 @@
 /*
-me_pose_test.cpp
 This file is hot garbage
 It will be removed eventually
 
@@ -19,13 +18,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <me_dnn_pose_model.hpp>
-#include <me_dnn_detection_model.hpp>
-#include <me_dnn_rtdetection_model.hpp>
-#include <me_dnn_detectpose_model.hpp>
-#include <me_core_transcoder.hpp>
+#include <me/dnn/rtmdet.hpp>
+#include <me/dnn/rtmpose.hpp>
+#include <me/dnn/pose_topdown.hpp>
+#include <me/io/imagelist.hpp>
+#include <me/io/transcoder.hpp>
 #include <opencv2/opencv.hpp>
-#include <me_core_simplepool.hpp>
+#include <opencv2/sfm/triangulation.hpp>
+#include <opencv2/sfm/projection.hpp>
+#include <me/threading/simplepool.hpp>
 #include <filesystem>
 
 void performance_experiments() {
@@ -352,31 +353,28 @@ void performance_experiments() {
 //	video_reader2.release();
 //}
 
+
 void detectpose_test() {
-	auto video_reader2 = cv::VideoCapture("right3.mp4");
-	cv::VideoCapture cap3("right3.mp4");
-	cv::Mat mat;
-	cap3.read(mat);
-	std::cout << video_reader2.get(cv::CAP_PROP_POS_FRAMES) << " " << cap3.get(cv::CAP_PROP_POS_FRAMES) << std::endl;
-	me::dnn::DetectPoseModel detectpose_model;
-	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
-	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody26-m.onnx", me::dnn::Executor::CUDA);
+	//me::io::FrameProvider& cap = me::io::Transcoder();
+	//cap.load("right3.mp4");
+	me::io::FrameProvider& cap = me::io::ImageList();
+	cap.load("left3jpg/0001.jpg");
+	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
+	me::dnn::models::TopDownPoseDetector detectpose_model;
+	detectpose_model.detection_model(me::dnn::models::RTMDetModel());
+	detectpose_model.pose_model(me::dnn::models::RTMPoseModel());
+	detectpose_model.detection_model().load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.pose_model().load("redis/models/rtmpose/fullbody26-l.onnx", me::dnn::Executor::CUDA);
 	std::vector<me::dnn::Pose> poses;
-	while (video_reader2.isOpened()) {
+	while (cap.is_open()) {
 		bool success = false;
 		cv::Mat frame;
-		success = video_reader2.read(frame);
-		for (int i = 0; i < 100; i++) {
-			if (!success)
-				success = video_reader2.read(frame);
-			else
-				break;
-		}
+		success = cap.next_frame(frame);
 		if (!success) {
 			std::cout << "Failed to read from video" << std::endl;
 			break;
 		}
-		detectpose_model.infer(frame, poses, 1);
+		detectpose_model.infer(frame, poses, 4);
 		for (auto& pose : poses) {
 			for (int i = 0; i < pose.num_joints(); i++) {
 				auto& joint = pose[i];
@@ -388,11 +386,42 @@ void detectpose_test() {
 		cv::waitKey(1);
 	}
 	detectpose_model.unload_all();
-	video_reader2.release();
+	cap.close();
 }
 
 int main() {
 	try {
+		// Run functions used in the python module so their dependencies show up on the logs
+		std::vector<float> dist_coeffs = { 1, 0, 0, 1, 1 };
+		std::vector<cv::Point2f> points = { cv::Point2f(0.1, 0.1) };
+		cv::undistortPoints(points, points, cv::Mat::eye(3, 3, CV_64FC1), dist_coeffs);
+		cv::Mat E = cv::findEssentialMat(points, points, cv::Mat::eye(3, 3, CV_64FC1), cv::RANSAC, 0.999, 0.0001);
+		cv::Mat P;
+		cv::sfm::projectionFromKRt(cv::Mat::eye(3, 3, CV_64FC1), cv::Mat::eye(3, 3, CV_64FC1), cv::Mat::ones(3, 1, CV_64FC1), P);
+		cv::Mat pointsMat(points);
+		pointsMat = pointsMat.reshape(1, 2); // reshape to a 2xN matrix
+		std::vector<cv::Mat> points2d = { pointsMat, pointsMat };
+		std::vector<cv::Mat> proj_matrices = { P, P };
+		cv::Mat points3d;
+		cv::sfm::triangulatePoints(points2d, proj_matrices, points3d);
+		cv::KalmanFilter kalman(4, 2, 0);
+		
+		std::cout << "Optimized: " << cv::useOptimized() << std::endl;
+
+		cv::Mat test_img = cv::imread("left3jpg/0001.jpg");
+
+		auto new_img = me::dnn::resize_to_net(test_img, cv::Size(1920, 1080));
+
+		cv::imshow("resized", new_img);
+
+		std::shared_ptr<me::threading::SimplePool> poolp;
+		poolp.reset();
+		poolp = std::make_shared<me::threading::SimplePool>();
+		poolp->Start();
+		poolp = std::make_shared<me::threading::SimplePool>();
+		poolp->Start();
+		poolp.reset();
+
 		std::cout << std::filesystem::temp_directory_path().string() << std::endl;
 		std::vector<std::string> providers = Ort::GetAvailableProviders();
 		for (auto& provider : providers) {
@@ -402,7 +431,7 @@ int main() {
 		performance_experiments();
 		detectpose_test();
 		std::cout << "Starting pool..." << std::endl;
-		auto pool = me::core::SimplePool();
+		auto pool = me::threading::SimplePool();
 		pool.Start();
 		auto test_job = pool.QueueJob([]() {
 			std::cout << "Hello world!" << std::endl;
@@ -426,17 +455,17 @@ int main() {
 		}
 		pool.Stop();
 		auto start = std::chrono::high_resolution_clock::now();
-		auto segments_a = me::core::calculateSegments(100000, std::thread::hardware_concurrency());
+		auto segments_a = me::threading::calculateSegments(100000, std::thread::hardware_concurrency());
 		auto end = std::chrono::high_resolution_clock::now();
 		std::cout << "Seg calc: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 		for (auto& seg : segments_a) {
 			std::cout << "segment_a: " << seg.first << ", " << seg.second << std::endl;
 		}
-		auto segments_b = me::core::calculateSegments(5, std::thread::hardware_concurrency());
+		auto segments_b = me::threading::calculateSegments(5, std::thread::hardware_concurrency());
 		for (auto& seg : segments_b) {
 			std::cout << "segment_b: " << seg.first << ", " << seg.second << std::endl;
 		}
-		auto segments_c = me::core::calculateSegments(1, std::thread::hardware_concurrency());
+		auto segments_c = me::threading::calculateSegments(1, std::thread::hardware_concurrency());
 		for (auto& seg : segments_c) {
 			std::cout << "segment_c: " << seg.first << ", " << seg.second << std::endl;
 		}

@@ -1,7 +1,4 @@
 /*
-me_core_transcoder.cpp
-Implements a class that serves as a wrapper for cv::VideoCapture
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -18,15 +15,16 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <me_core_transcoder.hpp>
+#include "transcoder.hpp"
+#include <me/threading/simplepool.hpp>
 
 namespace me {
 
-	namespace core {
+	namespace io {
 
 		Transcoder::Transcoder() {
-			if (!global_pool.Running()) {
-				global_pool.Start();
+			if (!me::threading::global_pool.Running()) {
+				me::threading::global_pool.Start();
 			}
 		}
 
@@ -91,11 +89,11 @@ namespace me {
 			success.resize(batch_size);
 			frames.resize(batch_size);
 
-			auto splits = calculateSegments((size_t)batch_size, (size_t)std::thread::hardware_concurrency());
+			auto splits = me::threading::calculateSegments((size_t)batch_size, (size_t)std::thread::hardware_concurrency());
 
 			// MAIN TASK LOOP
 			for (auto& split : splits) {
-				auto task = global_pool.QueueJob([](std::pair<size_t, size_t>* split,
+				auto task = me::threading::global_pool.QueueJob([](std::pair<size_t, size_t>* split,
 					int offset,
 					int retry_count,
 					std::vector<cv::Mat>* frames,

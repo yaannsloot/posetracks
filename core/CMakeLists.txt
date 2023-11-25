@@ -50,66 +50,30 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${ONNXRUNTIME_INCLUDE_DIR})
 
-# Primary source files
-#set(SOURCES_MOTIONENGINE
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/buildkey.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_crypto.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_base.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_module_mmdeploy.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_module_opencv.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_pose_model.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_detection_model.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_rtdetection_model.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_detectpose_model.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_marker_comparator.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_utils.cpp
-#)
-
-# Source files for testing
-set(SOURCES_ME_POSE_TEST 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_core.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_core_simplepool.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_core_transcoder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_pose_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_detection_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_rtdetection_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_detectpose_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_pose_test.cpp
-)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 
 # Python
-set(SOURCES_MOTIONENGINE_PYBIND
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_core.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_core_simplepool.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_core_transcoder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_pose_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_detection_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_rtdetection_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/me_dnn_detectpose_model.cpp
-)
+set(SOURCES_MOTIONENGINE_PYBIND)
 
+# Source files for testing
+set(SOURCES_ME_POSE_TEST)
+
+set(MODULE_LIST)
+
+add_library(me_objects INTERFACE)
+add_subdirectory(src)
+
+foreach(module ${MODULE_LIST})
+    add_dependencies(me_objects ${module})
+    target_link_libraries(me_objects INTERFACE $<TARGET_OBJECTS:${module}>)
+    set_target_properties(${module} PROPERTIES FOLDER "modules")
+endforeach()
 
 # Target definitions
-#add_library(MotionEngine SHARED ${SOURCES_MOTIONENGINE})
 
 # Testing targets
 add_executable(MEPoseTest ${SOURCES_ME_POSE_TEST})
-
-
-# Target linking
-#target_link_libraries(MotionEngine PRIVATE
-#    ${OpenCV_LIBS}
-#    CUDA::cudart
-#    CUDA::curand
-#    CUDA::cublas
-#    CUDA::cuda_driver
-#    ${CUDNN_LIBRARIES}
-#    ${ONNXRUNTIME_LIBRARIES}
-#)
 
 # Test linking
 target_link_libraries(MEPoseTest PRIVATE
@@ -120,16 +84,8 @@ target_link_libraries(MEPoseTest PRIVATE
     CUDA::cuda_driver
     ${CUDNN_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
+	me_objects
 )
-
-# Required compile flags
-#target_compile_definitions(MotionEngine PRIVATE
-#    MECRYPTO_EXPORTS
-#    MEUTILS_EXPORTS
-#    ME_DNN_BASE_EXPORTS
-#    ME_DNN_MODULE_PROVIDER
-#)
-#target_compile_features(MotionEngine PRIVATE cxx_std_17)
 
 # Test compile flags
 target_compile_features(MEPoseTest PRIVATE cxx_std_17)
@@ -141,7 +97,7 @@ target_compile_options(MEPoseTest PRIVATE
     /openmp
 )
 
-# Subdirectories
+# Pybind Subdirectories
 add_subdirectory(module/cp39)
 add_subdirectory(module/cp310)
 

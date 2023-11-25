@@ -1,10 +1,4 @@
 /*
-me_dnn_pose_model.hpp
-Includes driver class for RTMPose models
-
-Driver classes are responsible for loading and managing model instances,
-as well as performing all of the pre/post processing required for inference
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -21,26 +15,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef ME_DNN_POSE_MODEL_HPP
-#define ME_DNN_POSE_MODEL_HPP
+#pragma once
 
-#include <me_dnn.hpp>
-#include <set>
+#include "models.hpp"
 
 namespace me {
 
 	namespace dnn {
 
-		class PoseModel {
+		class MarkerComparatorModel {
 		public:
-			PoseModel();
-			~PoseModel();
-			void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
+			MarkerComparatorModel(const std::string& model_path);
+			~MarkerComparatorModel();
+			void load(const std::string& model_path, Executor target_device = Executor::CUDA);
 			void unload();
-			void infer(const cv::Mat& image, Pose& pose);
-			void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses);
+			void infer(const cv::Point2d& coord_1, const cv::Mat& image_1, const cv::Point2d& coord_2, const cv::Mat& image_2, double& score);
+			void infer(const std::vector<std::tuple<const cv::Point2d&, const cv::Mat&, const cv::Point2d&, const cv::Mat&>>& inputs, std::vector<double>& scores);
 			bool is_loaded();
-			cv::Size net_size();
 			Precision get_precision();
 			Executor get_executor();
 		private:
@@ -54,5 +45,3 @@ namespace me {
 	}
 
 }
-
-#endif

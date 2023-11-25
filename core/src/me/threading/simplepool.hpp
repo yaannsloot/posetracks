@@ -1,7 +1,4 @@
 /*
-me_core_simplepool.hpp
-Thread pool implementation for task based multithreading
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -18,10 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef ME_CORE_SIMPLEPOOL_HPP
-#define ME_CORE_SIMPLEPOOL_HPP
+#pragma once
 
-#include <me_core.hpp>
 #include <functional>
 #include <thread>
 #include <mutex>
@@ -31,7 +26,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace me {
 
-    namespace core {
+    namespace threading {
 
         // https://stackoverflow.com/a/32593825
         // Modified to use std::future
@@ -43,6 +38,7 @@ namespace me {
             void Stop();
             bool Busy();
             bool Running();
+            size_t NumThreads();
             ~SimplePool();
         private:
             void ThreadLoop();
@@ -83,5 +79,3 @@ namespace me {
     }
 
 }
-
-#endif

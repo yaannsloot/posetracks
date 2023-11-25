@@ -1,7 +1,4 @@
 /*
-me_dnn.cpp
-Includes model output types and pre/post processing functions
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -18,12 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <me_dnn.hpp>
-#include <opencv2/dnn.hpp>
+#include "dnn.hpp"
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/cudaarithm.hpp>
-#include <me_core_simplepool.hpp>
+#include <me/threading/simplepool.hpp>
+#include <onnxruntime_cxx_api.h>
 
 namespace me {
 
@@ -125,6 +122,57 @@ namespace me {
 			return selected_indices;
 		}
 
+		cv::Mat resize_segment(const cv::Mat& img_segment, cv::Size new_segment_size) {
+			cv::Mat resized_segment;
+			cv::resize(img_segment, resized_segment, new_segment_size);
+			return resized_segment;
+		}
+
+		std::vector<cv::Mat> split_into_segments(const cv::Mat& img, int num_segments) {
+			std::vector<cv::Mat> segments;
+			int segment_size = std::sqrt(img.rows * img.cols / num_segments);
+			int padding = segment_size * num_segments - img.rows * img.cols;
+			cv::Mat padded_img;
+			cv::copyMakeBorder(img, padded_img, 0, padding / img.cols, 0, padding % img.cols, cv::BORDER_CONSTANT, cv::Scalar(0));
+			for (int i = 0; i < padded_img.rows; i += segment_size) {
+				for (int j = 0; j < padded_img.cols; j += segment_size) {
+					cv::Mat segment = padded_img(cv::Rect(j, i, segment_size, segment_size));
+					segments.push_back(segment);
+				}
+			}
+			return segments;
+		}
+
+		cv::Mat combine_segments(const std::vector<cv::Mat>& segments, cv::Size new_size) {
+			cv::Mat img(new_size, CV_8UC3);
+			for (const auto& segment : segments) {
+				cv::Mat resized_segment;
+				cv::resize(segment, resized_segment, new_size);
+				cv::Rect roi(segment.cols * (&segment - &segments[0]), segment.rows * (&segment - &segments[0]), segment.cols, segment.rows);
+				resized_segment.copyTo(img(roi));
+			}
+			return img;
+		}
+
+		cv::Mat resize_to_net(const cv::Mat& img, cv::Size new_size) {
+			if (!threading::global_pool.Running())
+				threading::global_pool.Start();
+			int num_segments = threading::global_pool.NumThreads();
+			std::vector<cv::Mat> segments = split_into_segments(img, num_segments);
+			std::vector<cv::Mat> resized_segments;
+			std::vector<std::shared_future<cv::Mat>> futures;
+
+			for (const auto& segment : segments) {
+				futures.push_back(threading::global_pool.QueueJob(resize_segment, segment, new_size));
+			}
+
+			for (auto& future : futures) {
+				resized_segments.push_back(future.get());
+			}
+
+			return combine_segments(resized_segments, new_size);
+		}
+
 		void blobifyImages(const std::vector<cv::Mat>& images,
 			std::vector<float>& output,
 			double scale,
@@ -176,17 +224,17 @@ namespace me {
 			float* output_ptr = output.data();
 
 			auto pool_size = std::thread::hardware_concurrency();
-			if (!me::core::global_pool.Running())
-				me::core::global_pool.Start();
+			if (!me::threading::global_pool.Running())
+				me::threading::global_pool.Start();
 
-			auto resize_segments = me::core::calculateSegments(N, pool_size);
+			auto resize_segments = me::threading::calculateSegments(N, pool_size);
 			std::vector<cv::Mat> resized_images;
 			std::vector<std::future<void>> resize_tasks;
 			resized_images.resize(N);
 
 			// Queue segment tasks
 			for (auto& seg : resize_segments) {
-				auto task = me::core::global_pool.QueueJob([](const std::pair<size_t, size_t> segment,
+				auto task = me::threading::global_pool.QueueJob([](const std::pair<size_t, size_t> segment,
 					const std::vector<cv::Mat> *src_images,
 					std::vector<cv::Mat> *dst_images,
 					CropMethod method,
@@ -219,11 +267,11 @@ namespace me {
 			}
 
 			// Copy tasks
-			auto copy_segments = me::core::calculateSegments(blob_size, pool_size);
+			auto copy_segments = me::threading::calculateSegments(blob_size, pool_size);
 			std::vector<std::future<void>> copy_tasks;
 
 			for (auto& seg : copy_segments) {
-				auto task = me::core::global_pool.QueueJob([](const std::pair<size_t, size_t> segment,
+				auto task = me::threading::global_pool.QueueJob([](const std::pair<size_t, size_t> segment,
 					float *blob,
 					const std::vector<cv::Mat> *src_images,
 					BlobLayout l_type,
@@ -383,6 +431,23 @@ namespace me {
 					return true;
 			}
 			return false;
+		}
+
+		cv::Mat getRoiWithPadding(const cv::Mat& image, cv::Rect roi) {
+			// Create rects representing the image and the ROI
+			auto image_rect = cv::Rect(0, 0, image.cols, image.rows);
+
+			// Find intersection, i.e. valid crop region
+			auto intersection = image_rect & roi;
+
+			// Move intersection to the result coordinate space
+			auto inter_roi = intersection - roi.tl();
+
+			// Create gray image and copy intersection
+			cv::Mat crop = cv::Mat::ones(roi.size(), image.type());
+			image(intersection).copyTo(crop(inter_roi));
+
+			return crop;
 		}
 
 	}

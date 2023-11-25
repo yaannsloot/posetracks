@@ -1,7 +1,4 @@
 /*
-me_dnn.hpp
-Includes model output types, configuration enums, and pre/post processing functions
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -17,18 +14,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-
-#ifndef ME_DNN_HPP
-#define ME_DNN_HPP
+#pragma once
 
 #include <opencv2/opencv.hpp>
-#include <onnxruntime_cxx_api.h>
 
 namespace me {
 	
 	namespace dnn {
 
-		enum class Precision { // Status flag for models classes
+		// GENERAL TODO: Make generic class definitions for model types
+
+		enum class Precision { // Status flag for model classes
 			FLOAT64,
 			FLOAT32,
 			FLOAT16,
@@ -92,6 +88,8 @@ namespace me {
 
 		std::vector<size_t> nms(std::vector<Detection>& detections, float iou_thresh);
 
+		cv::Mat resize_to_net(const cv::Mat& img, cv::Size new_size);
+
 		void blobifyImages(const std::vector<cv::Mat>& images,
 			std::vector<float>& output,
 			double scale = 1.0,
@@ -145,8 +143,8 @@ namespace me {
 
 		bool checkForProvider(const std::string provider_str);
 
+		cv::Mat getRoiWithPadding(const cv::Mat& image, cv::Rect roi);
+
 	}
 
 }
-
-#endif

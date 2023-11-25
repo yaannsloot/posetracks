@@ -1,8 +1,4 @@
 /*
-me_core.hpp
-Miscellaneous functions, templates and base classes would go here
-This may end up getting removed later if it is not needed
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -19,9 +15,26 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef ME_CORE_HPP
-#define ME_CORE_HPP
+#pragma once
 
-#include <opencv2/opencv.hpp>
+#include "curve.hpp"
 
-#endif
+namespace me {
+	
+	namespace data {
+		
+		// Implements bezier curves
+		// Sources: https://en.wikipedia.org/wiki/B%C3%A9zier_curve, https://www.desmos.com/calculator/ebdtbxgbq0
+
+		class BezierCurve : public Curve {
+		public:
+			using Curve::Curve;
+			// BEWARE: Beziers are driven by t and x means t in this context. t must be within the interval of [0, 1]
+			cv::Point2d solve(double x);
+		};
+
+		double estimateT(BezierCurve& c, double x, size_t iterations = 10);
+		
+	}
+	
+}

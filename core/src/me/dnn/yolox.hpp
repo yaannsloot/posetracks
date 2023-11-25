@@ -1,10 +1,4 @@
 /*
-me_dnn_marker_comparator.hpp
-Includes driver class for a custom model that compares marker detections
-
-Driver classes are responsible for loading and managing model instances,
-as well as performing all of the pre/post processing required for inference
-
 Copyright (C) 2023 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
@@ -21,25 +15,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef ME_DNN_MARKER_COMPARATOR_HPP
-#define ME_DNN_MARKER_COMPARATOR_HPP
+#pragma once
 
-#include <me_dnn.hpp>
-#include <onnxruntime_cxx_api.h>
+#include "models.hpp"
 
 namespace me {
 
 	namespace dnn {
 
-		class MarkerComparatorModel {
+		class YOLOXModel{
 		public:
-			MarkerComparatorModel(const std::string& model_path);
-			~MarkerComparatorModel();
-			void load(const std::string& model_path, Device target_device = Device::GPU);
+			void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
 			void unload();
-			void infer(const cv::Point2d& coord_1, const cv::Mat& image_1, const cv::Point2d& coord_2, const cv::Mat& image_2, double& score);
-			void infer(const std::vector<std::tuple<const cv::Point2d&, const cv::Mat&, const cv::Point2d&, const cv::Mat&>>& inputs, std::vector<double>& scores);
+			void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh);
+			void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh);
 			bool is_loaded();
+			cv::Size net_size();
 			Precision get_precision();
 			Executor get_executor();
 		private:
@@ -53,5 +44,3 @@ namespace me {
 	}
 
 }
-
-#endif

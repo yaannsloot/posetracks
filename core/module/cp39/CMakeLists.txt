@@ -12,6 +12,7 @@ target_link_libraries(MEPython.cp39 PRIVATE
     CUDA::cuda_driver
     ${CUDNN_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
+    me_objects
 )
 
 target_compile_features(MEPython.cp39 PRIVATE cxx_std_17)
