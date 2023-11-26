@@ -24,7 +24,7 @@ namespace me {
 
 		namespace models {
 
-			RTMDetModel::RTMDetModel() {
+			RTMDetModelImpl::RTMDetModelImpl() {
 				inputs = 1;
 				outputs = 2;
 				logid = "me_rtmpose_driver";
@@ -32,7 +32,7 @@ namespace me {
 				output_names = { "dets", "labels" };
 			}
 
-			cv::Size RTMDetModel::net_size() {
+			cv::Size RTMDetModelImpl::net_size() {
 				cv::Size result(0, 0);
 				if (is_loaded()) {
 					auto net_shape = this->session->GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
@@ -43,14 +43,14 @@ namespace me {
 				return result;
 			}
 
-			void RTMDetModel::infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) {
+			void RTMDetModelImpl::infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) {
 				std::vector<cv::Mat> images{ image };
 				std::vector<std::vector<Detection>> batch_detections;
 				infer(images, batch_detections, conf_thresh, iou_thresh);
 				detections = batch_detections[0];
 			}
 
-			void RTMDetModel::infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) {
+			void RTMDetModelImpl::infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) {
 
 				// Check if session is loaded
 				if (this->session == nullptr)
@@ -164,6 +164,10 @@ namespace me {
 				}
 				binding.ClearBoundInputs();
 				binding.ClearBoundOutputs();
+			}
+
+			RTMDetModel::RTMDetModel() {
+				model_ptr = std::make_shared<RTMDetModelImpl>();
 			}
 
 		}

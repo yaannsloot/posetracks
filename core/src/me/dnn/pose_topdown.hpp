@@ -72,22 +72,8 @@ namespace me {
 
 				bool is_ready();
 
-				template<typename T>
-				void detection_model(T& other) {
-					static_assert(std::is_base_of<DetectionModel, T>::value, "T must be a derived class of DetectionModel");
-					detection_model_ = std::make_shared<T>(other);
-				}
-				template<typename T>
-				void pose_model(T& other) {
-					static_assert(std::is_base_of<PoseModel, T>::value, "T must be a derived class of PoseModel");
-					pose_model_ = std::make_shared<T>(other); 
-				}
-				DetectionModel& detection_model() const { return *detection_model_; }
-				PoseModel& pose_model() const { return *pose_model_; }
-
-			private:
-				std::shared_ptr<DetectionModel> detection_model_;
-				std::shared_ptr<PoseModel> pose_model_;
+				DetectionModel detection_model;
+				PoseModel pose_model;
 
 			};
 

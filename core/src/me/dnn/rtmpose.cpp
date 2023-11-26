@@ -24,7 +24,7 @@ namespace me {
 
 		namespace models {
 
-			RTMPoseModel::RTMPoseModel() {
+			RTMPoseModelImpl::RTMPoseModelImpl() {
 				inputs = 1;
 				outputs = 2;
 				logid = "me_rtmpose_driver";
@@ -32,14 +32,14 @@ namespace me {
 				output_names = { "simcc_x", "simcc_y" };
 			}
 
-			void RTMPoseModel::infer(const cv::Mat& image, Pose& pose) {
+			void RTMPoseModelImpl::infer(const cv::Mat& image, Pose& pose) {
 				std::vector<cv::Mat> images = { image };
 				std::vector<Pose> poses = { pose };
 				infer(images, poses);
 				pose = poses[0];
 			}
 
-			void RTMPoseModel::infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) {
+			void RTMPoseModelImpl::infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) {
 
 				// Check if session is loaded
 				if (this->session == nullptr)
@@ -145,7 +145,7 @@ namespace me {
 
 			}
 
-			cv::Size RTMPoseModel::net_size() {
+			cv::Size RTMPoseModelImpl::net_size() {
 				cv::Size result(0, 0);
 				if (is_loaded()) {
 					auto net_shape = this->session->GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
@@ -154,6 +154,10 @@ namespace me {
 					result = cv::Size(net_width, net_height);
 				}
 				return result;
+			}
+
+			RTMPoseModel::RTMPoseModel() {
+				model_ptr = std::make_shared<RTMPoseModelImpl>();
 			}
 
 		}

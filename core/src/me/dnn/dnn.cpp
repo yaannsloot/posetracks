@@ -133,7 +133,9 @@ namespace me {
 			int segment_size = std::sqrt(img.rows * img.cols / num_segments);
 			int padding = segment_size * num_segments - img.rows * img.cols;
 			cv::Mat padded_img;
-			cv::copyMakeBorder(img, padded_img, 0, padding / img.cols, 0, padding % img.cols, cv::BORDER_CONSTANT, cv::Scalar(0));
+			int padding_top = std::max(0, padding / img.cols);
+			int padding_left = std::max(0, padding % img.cols);
+			cv::copyMakeBorder(img, padded_img, padding_top, 0, padding_left, 0, cv::BORDER_CONSTANT, cv::Scalar(0));
 			for (int i = 0; i < padded_img.rows; i += segment_size) {
 				for (int j = 0; j < padded_img.cols; j += segment_size) {
 					cv::Mat segment = padded_img(cv::Rect(j, i, segment_size, segment_size));

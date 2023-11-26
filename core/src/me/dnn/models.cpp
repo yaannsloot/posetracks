@@ -24,7 +24,7 @@ namespace me {
 		
 		namespace models {
 
-			void Model::load(const std::string& model_path, Executor target_executor) {
+			void ModelImpl::load(const std::string& model_path, Executor target_executor) {
 				// Unload the model if it is already loaded
 				unload();
 
@@ -180,22 +180,86 @@ namespace me {
 				}
 			}
 
-			void Model::unload() {
+			void ModelImpl::unload() {
 				this->session.reset();
 				precision = Precision::NONE;
 				executor = Executor::NONE;
 			}
 
-			bool Model::is_loaded() {
+			bool ModelImpl::is_loaded() {
 				return this->session != nullptr;
 			}
 
-			Precision Model::get_precision() {
+			Precision ModelImpl::get_precision() {
 				return this->precision;
 			}
 
-			Executor Model::get_executor() {
+			Executor ModelImpl::get_executor() {
 				return this->executor;
+			}
+
+			void Model::load(const std::string& model_path, Executor target_executor) {
+				if (model_ptr != nullptr)
+					model_ptr->load(model_path, target_executor);
+			}
+
+			void Model::unload() {
+				if (model_ptr != nullptr)
+					model_ptr->unload();
+			}
+
+			bool Model::is_loaded() {
+				if (model_ptr != nullptr)
+					return model_ptr->is_loaded();
+				return false;
+			}
+
+			Precision Model::get_precision() {
+				if (model_ptr != nullptr)
+					return model_ptr->get_precision();
+				return Precision::UNKNOWN;
+			}
+
+			Executor Model::get_executor() {
+				if (model_ptr != nullptr)
+					return model_ptr->get_executor();
+				return Executor::NONE;
+			}
+
+			cv::Size ImageModel::net_size() {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<ImageModelImpl> im_model_ptr = std::dynamic_pointer_cast<ImageModelImpl>(model_ptr);
+					return im_model_ptr->net_size();
+				}
+				return cv::Size();
+			}
+
+			void DetectionModel::infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<DetectionModelImpl> dt_model_ptr = std::dynamic_pointer_cast<DetectionModelImpl>(model_ptr);
+					dt_model_ptr->infer(image, detections, conf_thresh, iou_thresh);
+				}
+			}
+
+			void DetectionModel::infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<DetectionModelImpl> dt_model_ptr = std::dynamic_pointer_cast<DetectionModelImpl>(model_ptr);
+					dt_model_ptr->infer(images, detections, conf_thresh, iou_thresh);
+				}
+			}
+
+			void PoseModel::infer(const cv::Mat& image, Pose& pose) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<PoseModelImpl> p_model_ptr = std::dynamic_pointer_cast<PoseModelImpl>(model_ptr);
+					p_model_ptr->infer(image, pose);
+				}
+			}
+
+			void PoseModel::infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<PoseModelImpl> p_model_ptr = std::dynamic_pointer_cast<PoseModelImpl>(model_ptr);
+					p_model_ptr->infer(images, poses);
+				}
 			}
 
 		}

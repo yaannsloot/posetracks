@@ -24,9 +24,12 @@ namespace me {
 
 	namespace io {
 
-		class ImageList : public FrameProvider {
+		/// <summary>
+		/// Frame provider implementation for image lists
+		/// </summary>
+		class ImageListImpl : public FrameProviderImpl {
 		public:
-			ImageList();
+			ImageListImpl();
 			virtual bool load(std::string path, bool use_hw_accel) override;
 			virtual bool next_frame(cv::Mat& frame, int retry_count) override;
 			virtual bool grab_frame(cv::Mat& frame, int frame_id, int retry_count) override;
@@ -48,6 +51,14 @@ namespace me {
 			std::shared_ptr<threading::SimplePool> internal_pool;
 			std::queue<std::pair<int, std::shared_future<cv::Mat>>> future_queue;
 			int max_queue = std::thread::hardware_concurrency();
+		};
+
+		/// <summary>
+		/// Frame provider instance that operates off of a list of images
+		/// </summary>
+		class ImageList : public FrameProvider {
+		public:
+			ImageList();
 		};
 
 	}

@@ -57,14 +57,14 @@ namespace me {
 			return files;
 		}
 
-		ImageList::ImageList()
+		ImageListImpl::ImageListImpl()
 		{
 			if (!me::threading::global_pool.Running()) {
 				me::threading::global_pool.Start();
 			}
 		}
 
-		bool ImageList::load(std::string path, bool use_hw_accel)
+		bool ImageListImpl::load(std::string path, bool use_hw_accel)
 		{
 			if (this->is_open())
 				this->close();
@@ -99,7 +99,7 @@ namespace me {
 			return frame;
 		}
 
-		bool ImageList::next_frame(cv::Mat& frame, int retry_count)
+		bool ImageListImpl::next_frame(cv::Mat& frame, int retry_count)
 		{
 			if (!this->is_open())
 				return false;
@@ -148,23 +148,23 @@ namespace me {
 			return success;
 		}
 
-		bool ImageList::grab_frame(cv::Mat& frame, int frame_id, int retry_count)
+		bool ImageListImpl::grab_frame(cv::Mat& frame, int frame_id, int retry_count)
 		{
 			set_frame(frame_id);
 			return this->next_frame(frame, retry_count);
 		}
 
-		std::vector<std::shared_future<void>> ImageList::next_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size, int retry_count)
+		std::vector<std::shared_future<void>> ImageListImpl::next_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size, int retry_count)
 		{
 			return std::vector<std::shared_future<void>>();
 		}
 
-		std::vector<std::shared_future<void>> ImageList::grab_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int start_frame, int batch_size, int retry_count)
+		std::vector<std::shared_future<void>> ImageListImpl::grab_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int start_frame, int batch_size, int retry_count)
 		{
 			return std::vector<std::shared_future<void>>();
 		}
 
-		bool ImageList::set_frame(int frame_id)
+		bool ImageListImpl::set_frame(int frame_id)
 		{
 			if (frame_id < this->paths.size()) {
 				this->f_index = frame_id;
@@ -173,27 +173,27 @@ namespace me {
 			return false;
 		}
 
-		int ImageList::current_frame()
+		int ImageListImpl::current_frame()
 		{
 			return this->f_index;
 		}
 
-		int ImageList::frame_count()
+		int ImageListImpl::frame_count()
 		{
 			return paths.size();
 		}
 
-		cv::Size ImageList::frame_size()
+		cv::Size ImageListImpl::frame_size()
 		{
 			return this->f_size;
 		}
 
-		double ImageList::fps()
+		double ImageListImpl::fps()
 		{
 			return 0.0;
 		}
 
-		void ImageList::close()
+		void ImageListImpl::close()
 		{
 			this->f_index = 0;
 			this->paths.clear();
@@ -205,17 +205,17 @@ namespace me {
 			this->internal_pool.reset();
 		}
 
-		bool ImageList::is_open()
+		bool ImageListImpl::is_open()
 		{
 			return this->paths.size() > 0;
 		}
 
-		std::string ImageList::get_fourcc_str()
+		std::string ImageListImpl::get_fourcc_str()
 		{
 			return "LIST";
 		}
 
-		int ImageList::get_fourcc()
+		int ImageListImpl::get_fourcc()
 		{
 			const std::string str = this->get_fourcc_str();
 			int fourcc = 0;
@@ -223,6 +223,10 @@ namespace me {
 				fourcc |= (str[i] << (i * 8));
 			}
 			return fourcc;
+		}
+
+		ImageList::ImageList() {
+			this->fp_instance = std::make_shared<ImageListImpl>();
 		}
 
 	}

@@ -15,7 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <me/io/me_core_transcoder.hpp>
+#include <me/io/transcoder.hpp>
+#include <me/io/imagelist.hpp>
 #include <me/dnn/rtmdet.hpp>
 #include <me/dnn/rtmpose.hpp>
 #include <me/dnn/pose_topdown.hpp>
@@ -44,12 +45,12 @@ void load_models(
 	try {
 		std::filesystem::path det_path(det_model_path);
 		std::filesystem::path pose_path(pose_model_path);
-		model->detection_model(me::dnn::models::RTMDetModel());
-		model->pose_model(me::dnn::models::RTMPoseModel());
+		model->detection_model = me::dnn::models::RTMDetModel();
+		model->pose_model = me::dnn::models::RTMPoseModel();
 		std::cout << "[MotionEngine] Loading model \"" << det_path.string() << "\"" << std::endl;
-		model->detection_model().load(det_model_path, det_model_executor);
+		model->detection_model.load(det_model_path, det_model_executor);
 		std::cout << "[MotionEngine] Loading model \"" << pose_path.string() << "\"" << std::endl;
-		model->pose_model().load(pose_model_path, pose_model_executor);
+		model->pose_model.load(pose_model_path, pose_model_executor);
 	}
 	catch (const std::exception& ex) {
 		std::cout << "An error occurred on asynchronous task while loading models: " << ex.what() << std::endl;
@@ -67,14 +68,14 @@ void warmup_models(
 ) {
 	try {
 		if (model->is_ready()) {
-			cv::Mat wu_det(model->detection_model().net_size(), CV_8UC3);
-			cv::Mat wu_pose(model->pose_model().net_size(), CV_8UC3);
+			cv::Mat wu_det(model->detection_model.net_size(), CV_8UC3);
+			cv::Mat wu_pose(model->pose_model.net_size(), CV_8UC3);
 			cv::randn(wu_det, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 			cv::randn(wu_pose, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 			std::cout << "[MotionEngine] Starting warmup phase of detection model..." << std::endl;
-			model->detection_model().infer(wu_det, std::vector<me::dnn::Detection>(), 0, 0);
+			model->detection_model.infer(wu_det, std::vector<me::dnn::Detection>(), 0, 0);
 			std::cout << "[MotionEngine] Starting warmup phase of pose model..." << std::endl;
-			model->pose_model().infer(wu_pose, me::dnn::Pose());
+			model->pose_model.infer(wu_pose, me::dnn::Pose());
 			std::cout << "[MotionEngine] Warmup phase complete." << std::endl;
 		}
 	}
@@ -90,7 +91,7 @@ void warmup_models(
 }
 
 void rtm_load_async_func(
-	me::dnn::DetectPoseModel* model,
+	me::dnn::models::TopDownPoseDetector* model,
 	const std::string det_model_path,
 	me::dnn::Executor det_model_executor,
 	const std::string pose_model_path,
@@ -147,17 +148,18 @@ void rtm_load_async_func(
 
 }
 
-void cache_frames(me::core::Transcoder &transcoder, std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size) {
-	auto futures = transcoder.next_frames(frames, success, batch_size);
+// Likely never going to be used
+void cache_frames(me::io::Transcoder &transcoder, std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size) {
+	auto futures = transcoder.next_frames(frames, success, batch_size, 100);
 	for (auto& future : futures) {
 		future.wait();
 	}
 }
 
-void cache_frames_single_threaded(me::core::Transcoder& transcoder, std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size) {
+void cache_frames_single_threaded(me::io::FrameProvider &frame_provider, std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size) {
 
-	const int current_frame = transcoder.current_frame();
-	const int total_frames = transcoder.frame_count();
+	const int current_frame = frame_provider.current_frame();
+	const int total_frames = frame_provider.frame_count();
 
 	if (current_frame >= total_frames)
 		return;
@@ -175,7 +177,7 @@ void cache_frames_single_threaded(me::core::Transcoder& transcoder, std::vector<
 
 	for (int f = 0; f < batch_size; ++f) {
 		cv::Mat &frame = frames[f];
-		bool s = transcoder.next_frame(frame);
+		bool s = frame_provider.next_frame(frame);
 		success[f] = s;
 		if (!s)
 			break;
@@ -184,7 +186,7 @@ void cache_frames_single_threaded(me::core::Transcoder& transcoder, std::vector<
 }
 
 void infer_async_func(
-	me::dnn::DetectPoseModel* model, 
+	me::dnn::models::TopDownPoseDetector* model, 
 	const std::string det_model_path,
 	me::dnn::Executor det_model_executor,
 	const std::string pose_model_path,
@@ -232,17 +234,22 @@ void infer_async_func(
 
 		std::string clip_name = py::str(target_clip.attr("name"));
 		std::string clip_path = py::str(abspath_func(target_clip.attr("filepath")));
-		me::core::Transcoder transcoder;
-		transcoder.load(clip_path);
+		std::string clip_source = py::str(target_clip.attr("source"));
+		me::io::FrameProvider frame_provider;
+		if (clip_source == "SEQUENCE")
+			frame_provider = me::io::ImageList();
+		else
+			frame_provider = me::io::Transcoder();
+		frame_provider.load(clip_path);
 
-		if (model->is_ready() && transcoder.is_open()) { // This logic is a little weird. Please rearrange it later
+		if (model->is_ready() && frame_provider.is_open()) { // This logic is a little weird. Please rearrange it later
 
-			int total_frames = transcoder.frame_count();
+			int total_frames = frame_provider.frame_count();
 			std::vector<std::vector<me::dnn::Pose>> all_poses;
 
 			info_str.attr("msg") = py::str("Detecting poses: 0%");
 
-			while (transcoder.current_frame() < total_frames) {
+			while (frame_provider.current_frame() < total_frames) {
 
 				int current_frame = 0;
 				std::vector<std::vector<me::dnn::Pose>> poses;
@@ -254,11 +261,11 @@ void infer_async_func(
 					py::gil_scoped_release release;
 
 					// Cache frames
-					current_frame = transcoder.current_frame();
+					current_frame = frame_provider.current_frame();
 
 					std::cout << "[MotionEngine] Reading frames from \"" << clip_name << "\"" << std::endl;
 
-					cache_frames_single_threaded(transcoder, frames, success, batch_size);
+					cache_frames_single_threaded(frame_provider, frames, success, batch_size);
 
 					for (const bool& s : success) {
 						if (!s)
@@ -323,9 +330,10 @@ void infer_async_func(
 PYBIND11_MODULE(MEPython, m)
 {
 	// Submodules
-	auto m_core = m.def_submodule("core");
+	auto m_data = m.def_submodule("data");
 	auto m_dnn = m.def_submodule("dnn");
-	auto m_mt = m.def_submodule("mt");
+	auto m_io = m.def_submodule("io");
+	auto m_threading = m.def_submodule("threading");
 
 
 	// Class bindings
@@ -336,7 +344,8 @@ PYBIND11_MODULE(MEPython, m)
 		.def("__repr__", [](cv::Mat& self) {
 		std::stringstream ss;
 		ss << "<cv::Mat: size=(" << self.cols << ',' << self.rows << "), type=" << self.type() << '>';
-		return ss.str();});
+		return ss.str();
+	});
 	py::class_<cv::Point2d>(m, "Point")
 		.def(py::init<>())
 		.def(py::init<double, double>())
@@ -366,24 +375,32 @@ PYBIND11_MODULE(MEPython, m)
 		.def_readwrite("width", &cv::Rect2d::width)
 		.def_readwrite("height", &cv::Rect2d::height);
 	
-	// Core
-	py::class_<me::core::Transcoder>(m_core, "Transcoder")
+	// Data
+
+
+
+	// IO
+	py::class_<me::io::FrameProvider>(m_io, "FrameProvider")
 		.def(py::init<>())
-		.def("load", &me::core::Transcoder::load, py::arg("path"), py::arg("use_hw_accel") = false)
-		.def("next_frame", &me::core::Transcoder::next_frame, py::arg("frame"), py::arg("retry_count") = 100)
-		.def("grab_frame", &me::core::Transcoder::grab_frame, py::arg("frame"), py::arg("frame_id"), py::arg("retry_count") = 100)
-		.def("set_frame", &me::core::Transcoder::set_frame, py::arg("frame_id"))
-		.def("current_frame", &me::core::Transcoder::current_frame)
-		.def("frame_count", &me::core::Transcoder::frame_count)
-		.def("frame_size", [](me::core::Transcoder& self) {
+		.def("load", &me::io::FrameProvider::load, py::arg("path"), py::arg("use_hw_accel") = false)
+		.def("next_frame", &me::io::FrameProvider::next_frame, py::arg("frame"), py::arg("retry_count") = 100)
+		.def("grab_frame", &me::io::FrameProvider::grab_frame, py::arg("frame"), py::arg("frame_id"), py::arg("retry_count") = 100)
+		.def("set_frame", &me::io::FrameProvider::set_frame, py::arg("frame_id"))
+		.def("current_frame", &me::io::FrameProvider::current_frame)
+		.def("frame_count", &me::io::FrameProvider::frame_count)
+		.def("frame_size", [](me::io::FrameProvider& self) {
 			cv::Size size = self.frame_size();
 			return py::make_tuple(size.width, size.height);
 		})
-		.def("fps", &me::core::Transcoder::fps)
-		.def("close", &me::core::Transcoder::close)
-		.def("is_open", &me::core::Transcoder::is_open)
-		.def("get_fourcc_str", &me::core::Transcoder::get_fourcc_str)
-		.def("get_fourcc", &me::core::Transcoder::get_fourcc);
+		.def("fps", &me::io::FrameProvider::fps)
+		.def("close", &me::io::FrameProvider::close)
+		.def("is_open", &me::io::FrameProvider::is_open)
+		.def("get_fourcc_str", &me::io::FrameProvider::get_fourcc_str)
+		.def("get_fourcc", &me::io::FrameProvider::get_fourcc);
+	py::class_<me::io::ImageList, me::io::FrameProvider>(m_io, "ImageList")
+		.def(py::init<>());
+	py::class_<me::io::Transcoder, me::io::FrameProvider>(m_io, "Transcoder")
+		.def(py::init<>());
 
 
 	// DNN
@@ -409,91 +426,63 @@ PYBIND11_MODULE(MEPython, m)
 		.def("get_joint_ids", &me::dnn::Pose::get_joint_ids)
 		.def("num_joints", &me::dnn::Pose::num_joints)
 		.def("__getitem__", &me::dnn::Pose::operator[], py::return_value_policy::reference);
-	py::class_<me::dnn::PoseModel>(m_dnn, "RTMPoseModel")
+	py::class_<me::dnn::models::Model>(m_dnn, "Model")
 		.def(py::init<>())
-		.def("load", &me::dnn::PoseModel::load)
-		.def("unload", &me::dnn::PoseModel::unload)
-		.def("infer", [](me::dnn::PoseModel& self, const cv::Mat& image) {
+		.def("load", &me::dnn::models::Model::load, py::arg("model_path"), py::arg("target_executor") = me::dnn::Executor::CPU)
+		.def("unload", &me::dnn::models::Model::unload)
+		.def("is_loaded", &me::dnn::models::Model::is_loaded)
+		.def("get_precision", &me::dnn::models::Model::get_precision)
+		.def("get_executor", &me::dnn::models::Model::get_executor);
+	py::class_<me::dnn::models::ImageModel, me::dnn::models::Model>(m_dnn, "ImageModel")
+		.def(py::init<>())
+		.def("net_size", [](me::dnn::models::ImageModel& self) {
+			cv::Size size = self.net_size();
+			return py::make_tuple(size.width, size.height);
+		});
+	py::class_<me::dnn::models::DetectionModel, me::dnn::models::ImageModel>(m_dnn, "DetectionModel")
+		.def(py::init<>())
+		.def("infer", [](me::dnn::models::DetectionModel& self, const cv::Mat& image, float conf_thresh, float iou_thresh) {
+			std::vector<me::dnn::Detection> result;
+			self.infer(image, result, conf_thresh, iou_thresh);
+			return result;
+		}, py::arg("image"), py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5)
+		.def("infer", [](me::dnn::models::DetectionModel& self, const std::vector<cv::Mat>& images, float conf_thresh, float iou_thresh) {
+			std::vector<std::vector<me::dnn::Detection>> result;
+			self.infer(images, result, conf_thresh, iou_thresh);
+			return result;
+		}, py::arg("images"), py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5);
+	py::class_<me::dnn::models::PoseModel, me::dnn::models::ImageModel>(m_dnn, "PoseModel")
+		.def(py::init<>())
+		.def("infer", [](me::dnn::models::PoseModel& self, const cv::Mat& image) {
 			me::dnn::Pose result;
 			self.infer(image, result);
 			return result;
 		})
-		.def("infer", [](me::dnn::PoseModel& self, const std::vector<cv::Mat>& images) {
+		.def("infer", [](me::dnn::models::PoseModel& self, const std::vector<cv::Mat>& images) {
 			std::vector<me::dnn::Pose> result;
 			self.infer(images, result);
 			return result;
-		})
-		.def("is_loaded", &me::dnn::PoseModel::is_loaded)
-		.def("net_size", [](me::dnn::PoseModel& self) {
-		cv::Size size = self.net_size();
-			return py::make_tuple(size.width, size.height);
-		})
-		.def("get_precision", &me::dnn::PoseModel::get_precision)
-		.def("get_executor", &me::dnn::PoseModel::get_executor);
-
-	/*py::class_<me::dnn::DetectionModel>(m_dnn, "YOLOv4Model") // MUST BE REIMPLEMENTED DUE TO DRIVE CRASH
+		});
+	py::class_<me::dnn::models::RTMDetModel, me::dnn::models::DetectionModel>(m_dnn, "RTMDetModel")
+		.def(py::init<>());
+	py::class_<me::dnn::models::RTMPoseModel, me::dnn::models::PoseModel>(m_dnn, "RTMPoseModel")
+		.def(py::init<>());
+	py::class_<me::dnn::models::TopDownPoseDetector>(m_dnn, "TopDownPoseDetector")
 		.def(py::init<>())
-		.def("load", &me::dnn::DetectionModel::load)
-		.def("unload", &me::dnn::DetectionModel::unload)
-		.def("infer", [](me::dnn::DetectionModel& self, const cv::Mat& image, float conf_thresh = 0.5, float iou_thresh = 0.5) {
-			std::vector<me::dnn::Detection> result;
-			self.infer(image, result, conf_thresh, iou_thresh);
-			return result;
-		})
-		.def("infer", [](me::dnn::DetectionModel& self, const std::vector<cv::Mat>& images, float conf_thresh = 0.5, float iou_thresh = 0.5) {
-			std::vector<std::vector<me::dnn::Detection>> result;
-			self.infer(images, result, conf_thresh, iou_thresh);
-			return result;
-		})
-		.def("is_loaded", &me::dnn::DetectionModel::is_loaded)
-		.def("net_size", [](me::dnn::DetectionModel& self) {
-		cv::Size size = self.net_size();
-			return py::make_tuple(size.width, size.height);
-		})
-		.def("get_precision", &me::dnn::DetectionModel::get_precision)
-		.def("get_executor", &me::dnn::DetectionModel::get_executor);*/
-
-	py::class_<me::dnn::RTMDetModel>(m_dnn, "RTMDetModel")
-		.def(py::init<>())
-		.def("load", &me::dnn::RTMDetModel::load)
-		.def("unload", &me::dnn::RTMDetModel::unload)
-		.def("infer", [](me::dnn::RTMDetModel& self, const cv::Mat& image, float conf_thresh = 0.5, float iou_thresh = 0.5) {
-			std::vector<me::dnn::Detection> result;
-			self.infer(image, result, conf_thresh, iou_thresh);
-			return result;
-		})
-		.def("infer", [](me::dnn::RTMDetModel& self, const std::vector<cv::Mat>& images, float conf_thresh = 0.5, float iou_thresh = 0.5) {
-			std::vector<std::vector<me::dnn::Detection>> result;
-			self.infer(images, result, conf_thresh, iou_thresh);
-			return result;
-		})
-		.def("is_loaded", &me::dnn::RTMDetModel::is_loaded)
-		.def("net_size", [](me::dnn::RTMDetModel& self) {
-		cv::Size size = self.net_size();
-			return py::make_tuple(size.width, size.height);
-		})
-		.def("get_precision", &me::dnn::RTMDetModel::get_precision)
-		.def("get_executor", &me::dnn::RTMDetModel::get_executor);
-	py::class_<me::dnn::DetectPoseModel>(m_dnn, "RTMDetPoseBundleModel")
-		.def(py::init<>())
-		.def("unload_all", &me::dnn::DetectPoseModel::unload_all)
-		.def("infer", [](me::dnn::DetectPoseModel& self, const cv::Mat& image, int max_pose_batches = 1, float conf_thresh = 0.5, float iou_thresh = 0.5) {
-			std::vector<me::dnn::Pose> result;
-			std::cout << "Start" << std::endl;
+		.def("unload_all", &me::dnn::models::TopDownPoseDetector::unload_all)
+		.def("infer", [](me::dnn::models::TopDownPoseDetector& self, const cv::Mat& image, int max_pose_batches, float conf_thresh, float iou_thresh) {
+		std::vector<me::dnn::Pose> result;
 			self.infer(image, result, max_pose_batches, conf_thresh, iou_thresh);
-			std::cout << "End" << std::endl;
 			return result;
-		})
-		.def("infer", [](me::dnn::DetectPoseModel& self, const std::vector<cv::Mat>& images, int max_detection_batches = 1, int max_pose_batches = 1, float conf_thresh = 0.5, float iou_thresh = 0.5) {
+		}, py::arg("image"), py::arg("max_pose_batches") = 1, py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5)
+		.def("infer", [](me::dnn::models::TopDownPoseDetector& self, const std::vector<cv::Mat>& images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
 			std::vector<std::vector<me::dnn::Pose>> result;
-			std::cout << "Start" << std::endl;
 			self.infer(images, result, max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
-			std::cout << "End" << std::endl;
 			return result;
-		})
-		.def("is_ready", &me::dnn::DetectPoseModel::is_ready)
-		.def_readonly("detection_model", &me::dnn::DetectPoseModel::detection_model)
-		.def_readonly("pose_model", &me::dnn::DetectPoseModel::pose_model);
+		}, py::arg("images"), py::arg("max_detection_batches") = 1, py::arg("max_pose_batches") = 1, py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5)
+		.def("is_ready", &me::dnn::models::TopDownPoseDetector::is_ready)
+		.def_readwrite("detection_model", &me::dnn::models::TopDownPoseDetector::detection_model)
+		.def_readwrite("pose_model", &me::dnn::models::TopDownPoseDetector::pose_model);
 
 
 	// Function bindings
@@ -1597,8 +1586,8 @@ PYBIND11_MODULE(MEPython, m)
 		;
 
 	// Async functions (MT module)
-	m_mt.def("rtm_load_async", [](
-		me::dnn::DetectPoseModel& model, 
+	m_threading.def("rtm_load_async", [](
+		me::dnn::models::TopDownPoseDetector& model, 
 		const std::string det_model_path, 
 		me::dnn::Executor det_model_executor, 
 		const std::string pose_model_path, 
@@ -1630,8 +1619,8 @@ PYBIND11_MODULE(MEPython, m)
 				std::cout << "An unknown error occurred while attempting to execute an asynchronous task" << std::endl;
 			}
 	});
-	m_mt.def("infer_async", [](
-		me::dnn::DetectPoseModel& model,
+	m_threading.def("infer_async", [](
+		me::dnn::models::TopDownPoseDetector& model,
 		const std::string det_model_path,
 		me::dnn::Executor det_model_executor,
 		const std::string pose_model_path,
@@ -1681,10 +1670,10 @@ PYBIND11_MODULE(MEPython, m)
 				std::cout << "An unknown error occurred while attempting to execute an asynchronous task" << std::endl;
 			}
 		});
-	m_mt.def("RTMDP_infer_async", [](me::dnn::DetectPoseModel& model, const std::vector<cv::Mat>& images, int max_detection_batches = 1, int max_pose_batches = 1, float conf_thresh = 0.5, float iou_thresh = 0.5) {
-		if (!me::core::global_pool.Running())
-			me::core::global_pool.Start();
-		auto future = me::core::global_pool.QueueJob([](me::dnn::DetectPoseModel* model, const std::shared_ptr<std::vector<cv::Mat>> images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
+	m_threading.def("RTMDP_infer_async", [](me::dnn::models::TopDownPoseDetector& model, const std::vector<cv::Mat>& images, int max_detection_batches = 1, int max_pose_batches = 1, float conf_thresh = 0.5, float iou_thresh = 0.5) {
+		if (!me::threading::global_pool.Running())
+			me::threading::global_pool.Start();
+		auto future = me::threading::global_pool.QueueJob([](me::dnn::models::TopDownPoseDetector* model, const std::shared_ptr<std::vector<cv::Mat>> images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
 			std::vector<std::vector<me::dnn::Pose>> poses;
 			if (model->is_ready())
 				model->infer(*images, poses, max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
@@ -1693,10 +1682,10 @@ PYBIND11_MODULE(MEPython, m)
 		}, &model, std::make_shared<std::vector<cv::Mat>>(images), max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
 		return future.share();
 	});
-	m_mt.def("Transcoder_read_async", [](me::core::Transcoder& transcoder, int num_frames) {
-		if (!me::core::global_pool.Running())
-			me::core::global_pool.Start();
-		auto future = me::core::global_pool.QueueJob([](me::core::Transcoder* transcoder, int num_frames) {
+	m_threading.def("Transcoder_read_async", [](me::io::FrameProvider& transcoder, int num_frames) {
+		if (!me::threading::global_pool.Running())
+			me::threading::global_pool.Start();
+		auto future = me::threading::global_pool.QueueJob([](me::io::FrameProvider* transcoder, int num_frames) {
 			bool success = true;
 			std::vector<cv::Mat> frames;
 			for (int i = 0; i < num_frames; i++) {

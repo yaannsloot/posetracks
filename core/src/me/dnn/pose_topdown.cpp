@@ -24,8 +24,8 @@ namespace me {
 		namespace models {
 
 			void TopDownPoseDetector::unload_all() {
-				detection_model().unload();
-				pose_model().unload();
+				detection_model.unload();
+				pose_model.unload();
 			}
 
 			void TopDownPoseDetector::infer(const cv::Mat& image, std::vector<Pose>& poses, int max_pose_batches, float conf_thresh, float iou_thresh) {
@@ -64,7 +64,7 @@ namespace me {
 					// Padding
 					size_t diff = max_detection_batches - chunk.size();
 					if (diff > 0) {
-						auto size_d = detection_model().net_size();
+						auto size_d = detection_model.net_size();
 						for (size_t d = 0; d < diff; ++d) {
 							cv::Mat zero_img(size_d, CV_8UC3, cv::Scalar(0, 0, 0));
 							chunk.push_back(zero_img);
@@ -72,7 +72,7 @@ namespace me {
 					}
 
 					std::vector<std::vector<Detection>> chunk_detections;
-					detection_model().infer(chunk, chunk_detections, conf_thresh, iou_thresh);
+					detection_model.infer(chunk, chunk_detections, conf_thresh, iou_thresh);
 
 					// Post-infer trimming
 					chunk_detections.resize(chunk_detections.size() - diff);
@@ -94,8 +94,8 @@ namespace me {
 				poses.resize(images.size());
 
 				// infer on pose model. Final pose predictions will be placed into poses vector
-				auto det_net_size = detection_model().net_size();
-				auto pose_net_size = pose_model().net_size();
+				auto det_net_size = detection_model.net_size();
+				auto pose_net_size = pose_model.net_size();
 				for (size_t i = 0; i < img_detections.size(); i = i + max_pose_batches) {
 					size_t end = i + max_pose_batches;
 					std::vector<Detection> chunk;
@@ -149,14 +149,14 @@ namespace me {
 					// Padding
 					size_t diff = max_pose_batches - ROIs.size();
 					if (diff > 0) {
-						auto size_d = pose_model().net_size();
+						auto size_d = pose_model.net_size();
 						for (size_t d = 0; d < diff; ++d) {
 							cv::Mat zero_img(size_d, CV_8UC3, cv::Scalar(0, 0, 0));
 							ROIs.push_back(zero_img);
 						}
 					}
 
-					pose_model().infer(ROIs, chunk_poses);
+					pose_model.infer(ROIs, chunk_poses);
 
 					// Post-infer trimming
 					chunk_poses.resize(chunk_poses.size() - diff);
@@ -185,7 +185,7 @@ namespace me {
 			}
 
 			bool TopDownPoseDetector::is_ready() {
-				if (detection_model().is_loaded() && pose_model().is_loaded())
+				if (detection_model.is_loaded() && pose_model.is_loaded())
 					return true;
 				return false;
 			}

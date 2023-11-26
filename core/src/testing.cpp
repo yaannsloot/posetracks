@@ -357,14 +357,14 @@ void performance_experiments() {
 void detectpose_test() {
 	//me::io::FrameProvider& cap = me::io::Transcoder();
 	//cap.load("right3.mp4");
-	me::io::FrameProvider& cap = me::io::ImageList();
-	cap.load("left3jpg/0001.jpg");
+	me::io::FrameProvider cap = me::io::ImageList();
+	cap.load("right3jpg/right30736.jpg");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	me::dnn::models::TopDownPoseDetector detectpose_model;
-	detectpose_model.detection_model(me::dnn::models::RTMDetModel());
-	detectpose_model.pose_model(me::dnn::models::RTMPoseModel());
-	detectpose_model.detection_model().load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
-	detectpose_model.pose_model().load("redis/models/rtmpose/fullbody26-l.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.detection_model = me::dnn::models::RTMDetModel();
+	detectpose_model.pose_model = me::dnn::models::RTMPoseModel();
+	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody26-l.onnx", me::dnn::Executor::CUDA);
 	std::vector<me::dnn::Pose> poses;
 	while (cap.is_open()) {
 		bool success = false;
@@ -374,7 +374,7 @@ void detectpose_test() {
 			std::cout << "Failed to read from video" << std::endl;
 			break;
 		}
-		detectpose_model.infer(frame, poses, 4);
+		detectpose_model.infer(frame, poses, 1);
 		for (auto& pose : poses) {
 			for (int i = 0; i < pose.num_joints(); i++) {
 				auto& joint = pose[i];
@@ -388,6 +388,67 @@ void detectpose_test() {
 	detectpose_model.unload_all();
 	cap.close();
 }
+
+// Testing class proxy patterns used elsewhere
+
+class A {
+public:
+	virtual void f() = 0;
+};
+
+class B : public A {
+public:
+	virtual void e() = 0;
+};
+
+class C : public B {
+public:
+	virtual void f() override {
+		std::cout << 2 << std::endl;
+	}
+	virtual void e() override {
+		std::cout << 'a' << std::endl;
+	}
+};
+
+// Stores the actual pointer for the object
+class AInstance {
+public:
+	void f() {
+		if (a_instance != nullptr)
+			a_instance->f();
+		else
+			std::cout << "No instance managed" << std::endl;
+	}
+protected:
+	std::shared_ptr<A> a_instance;
+};
+
+// Adds a dynamic call to the new virtual function in B. Still no actual instantiation
+class BInstance : public AInstance {
+public:
+	void e() {
+		if (a_instance != nullptr) {
+			std::shared_ptr<B> b_instance = std::dynamic_pointer_cast<B>(a_instance);
+			b_instance->e();
+		}
+		else
+			std::cout << "No instance managed" << std::endl;
+	}
+};
+
+// Creates an instance because the impl class is not abstract at this level
+class CInstance : public BInstance {
+public:
+	CInstance() {
+		a_instance = std::make_shared<C>();
+	}
+};
+
+// This maintains implicit inheritence rules for type casting.
+// Because the managed instance of A cannot be downcasted to B, the dynamic pointer cast should never fail. b_instance will always come from a child type pointer.
+// Upcasting works perfectly fine here. THe only thing that gets copied is the instance pointer, which has our actual implementation
+
 
 int main() {
 	try {
@@ -408,11 +469,31 @@ int main() {
 		
 		std::cout << "Optimized: " << cv::useOptimized() << std::endl;
 
-		cv::Mat test_img = cv::imread("left3jpg/0001.jpg");
+		AInstance a;
 
-		auto new_img = me::dnn::resize_to_net(test_img, cv::Size(1920, 1080));
+		BInstance b;
 
-		cv::imshow("resized", new_img);
+		CInstance c;
+
+		a.f();
+
+		a = b;
+
+		a.f();
+
+		a = c;
+
+		a.f();
+
+		b = c;
+
+		b.e();
+
+		//cv::Mat test_img = cv::imread("left3jpg/0001.jpg");
+
+		//auto new_img = me::dnn::resize_to_net(test_img, cv::Size(1920, 1080));
+
+		//cv::imshow("resized", new_img);
 
 		std::shared_ptr<me::threading::SimplePool> poolp;
 		poolp.reset();

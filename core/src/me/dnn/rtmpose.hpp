@@ -25,29 +25,17 @@ namespace me {
 
 		namespace models {
 			
+			class RTMPoseModelImpl : public PoseModelImpl {
+			public:
+				RTMPoseModelImpl();
+				cv::Size net_size() override;
+				void infer(const cv::Mat& image, Pose& pose) override;
+				void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) override;
+			};
+
 			class RTMPoseModel : public PoseModel {
 			public:
 				RTMPoseModel();
-
-				/// <summary>
-				/// The size of the currently loaded model's input in pixels
-				/// </summary>
-				/// <returns>A cv::Size object with width and height in pixels</returns>
-				cv::Size net_size() override;
-
-				/// <summary>
-				/// Run an inference on the currently loaded model
-				/// </summary>
-				/// <param name="image">Input image to process</param>
-				/// <param name="pose">Output vector for pose estimation</param>
-				void infer(const cv::Mat& image, Pose& pose) override;
-
-				/// <summary>
-				/// Run a batch inference on the currently loaded model
-				/// </summary>
-				/// <param name="images">Input vector containing images to process</param>
-				/// <param name="poses">Output vector of vectors containing the estimated pose for each image</param>
-				void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) override;
 			};
 
 		}

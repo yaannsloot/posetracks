@@ -26,8 +26,63 @@ namespace me {
 		
 		namespace models {
 
+			// Implementation classes
+
 			/// <summary>
 			/// Generic model class used to define key methods and variables inherited by all model types
+			/// </summary>
+			class ModelImpl {
+			public:
+				virtual void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
+				void unload();
+				bool is_loaded();
+				Precision get_precision();
+				Executor get_executor();
+			protected:
+				// Values kept during lifetime of driver
+				int inputs = 0;
+				int outputs = 0;
+				std::string logid = "me_generic_model_driver";
+				std::set<std::string> input_names = {};
+				std::set<std::string> output_names = {};
+
+				// Modified while an onnx session is running
+				Precision precision = Precision::NONE; // Flag used for model stats when loaded
+				Executor executor = Executor::NONE; // Flag used for model stats when loaded
+				std::shared_ptr<Ort::Env> env;
+				std::shared_ptr<Ort::SessionOptions> session_options;
+				std::shared_ptr<Ort::Session> session; // MUST ensure the session is destroyed when using this smart pointer to prevent memory leaks
+			};
+
+			/// <summary>
+			/// Base class for all models that take images as imput
+			/// </summary>
+			class ImageModelImpl : public ModelImpl {
+			public:
+				virtual cv::Size net_size() = 0;
+			};
+
+			/// <summary>
+			/// Base class for object detection models
+			/// </summary>
+			class DetectionModelImpl : public ImageModelImpl{
+			public:
+				virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) = 0;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) = 0;
+			};
+
+			class PoseModelImpl : public ImageModelImpl {
+			public:
+				virtual void infer(const cv::Mat& image, Pose& pose) = 0;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) = 0;
+			};
+
+
+
+			// Proxy classes
+
+			/// <summary>
+			/// Base model class. Has no inference functions.
 			/// </summary>
 			class Model {
 			public:
@@ -36,7 +91,7 @@ namespace me {
 				/// </summary>
 				/// <param name="model_path">Path to the ONNX model</param>
 				/// <param name="target_executor">Target model executor. Certain executors have fallbacks defined if the target is not available.</param>
-				virtual void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
+				void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
 
 				/// <summary>
 				/// Reset the current ONNX session
@@ -61,23 +116,11 @@ namespace me {
 				/// </summary>
 				Executor get_executor();
 			protected:
-				// Values kept during lifetime of driver
-				int inputs = 0;
-				int outputs = 0;
-				std::string logid = "me_generic_model_driver";
-				std::set<std::string> input_names = {};
-				std::set<std::string> output_names = {};
-
-				// Modified while an onnx session is running
-				Precision precision = Precision::NONE; // Flag used for model stats when loaded
-				Executor executor = Executor::NONE; // Flag used for model stats when loaded
-				std::shared_ptr<Ort::Env> env;
-				std::shared_ptr<Ort::SessionOptions> session_options;
-				std::shared_ptr<Ort::Session> session; // MUST ensure the session is destroyed when using this smart pointer to prevent memory leaks
+				std::shared_ptr<ModelImpl> model_ptr;
 			};
 
 			/// <summary>
-			/// Base class for all models that take images as imput
+			/// Image model class. Same as base model class but includes a function for obtaining the input dimensions of the model.
 			/// </summary>
 			class ImageModel : public Model {
 			public:
@@ -85,13 +128,13 @@ namespace me {
 				/// The size of the currently loaded model's input in pixels
 				/// </summary>
 				/// <returns>A cv::Size object with width and height in pixels</returns>
-				virtual cv::Size net_size() = 0;
+				cv::Size net_size();
 			};
 
 			/// <summary>
-			/// Base class for object detection models
+			/// Detection model class
 			/// </summary>
-			class DetectionModel : public ImageModel{
+			class DetectionModel : public ImageModel {
 			public:
 				/// <summary>
 				/// Run an inference on the currently loaded model
@@ -100,7 +143,7 @@ namespace me {
 				/// <param name="detections">Output vector for bounding box detections</param>
 				/// <param name="conf_thresh">Confidence threshold</param>
 				/// <param name="iou_thresh">IoU threshold</param>
-				virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) = 0;
+				void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh);
 
 				/// <summary>
 				/// Run a batch inference on the currently loaded model
@@ -109,9 +152,12 @@ namespace me {
 				/// <param name="detections">Output vector of vectors containing bounding box detections for each image</param>
 				/// <param name="conf_thresh">Confidence threshold</param>
 				/// <param name="iou_thresh">IoU threshold</param>
-				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) = 0;
+				void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh);
 			};
 
+			/// <summary>
+			/// Pose model class
+			/// </summary>
 			class PoseModel : public ImageModel {
 			public:
 				/// <summary>
@@ -119,14 +165,14 @@ namespace me {
 				/// </summary>
 				/// <param name="image">Input image to process</param>
 				/// <param name="pose">Output vector for pose estimation</param>
-				virtual void infer(const cv::Mat& image, Pose& pose) = 0;
+				void infer(const cv::Mat& image, Pose& pose);
 
 				/// <summary>
 				/// Run a batch inference on the currently loaded model
 				/// </summary>
 				/// <param name="images">Input vector containing images to process</param>
 				/// <param name="poses">Output vector of vectors containing the estimated pose for each image</param>
-				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) = 0;
+				void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses);
 			};
 
 		}	

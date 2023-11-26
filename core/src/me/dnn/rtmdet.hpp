@@ -25,34 +25,18 @@ namespace me {
 
 		namespace models {
 
+			class RTMDetModelImpl : public DetectionModelImpl {
+			public:
+				RTMDetModelImpl();
+				cv::Size net_size() override;
+				void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
+				void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
+
+			};
+
 			class RTMDetModel : public DetectionModel {
 			public:
 				RTMDetModel();
-
-				/// <summary>
-				/// The size of the currently loaded model's input in pixels
-				/// </summary>
-				/// <returns>A cv::Size object with width and height in pixels</returns>
-				cv::Size net_size() override;
-
-				/// <summary>
-				/// Run an inference on the currently loaded model
-				/// </summary>
-				/// <param name="image">Input image to process</param>
-				/// <param name="detections">Output vector for bounding box detections</param>
-				/// <param name="conf_thresh">Confidence threshold</param>
-				/// <param name="iou_thresh">IoU threshold</param>
-				void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
-
-				/// <summary>
-				/// Run a batch inference on the currently loaded model
-				/// </summary>
-				/// <param name="images">Input vector containing images to process</param>
-				/// <param name="detections">Output vector of vectors containing bounding box detections for each image</param>
-				/// <param name="conf_thresh">Confidence threshold</param>
-				/// <param name="iou_thresh">IoU threshold</param>
-				void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
-
 			};
 
 		}

@@ -23,10 +23,10 @@ namespace me {
 
 	namespace io {
 
-		class Transcoder : public FrameProvider {
+		class TranscoderImpl : public FrameProviderImpl {
 		public:
-			Transcoder();
-			~Transcoder();
+			TranscoderImpl();
+			~TranscoderImpl();
 			virtual bool load(std::string path, bool use_hw_accel) override;
 			virtual bool next_frame(cv::Mat& frame, int retry_count) override;
 			virtual bool grab_frame(cv::Mat& frame, int frame_id, int retry_count) override;
@@ -44,6 +44,14 @@ namespace me {
 		private:
 			cv::VideoCapture cap;
 			std::string last_path;
+		};
+
+		/// <summary>
+		/// Frame provider instance that operates off of a movie file
+		/// </summary>
+		class Transcoder : public FrameProvider {
+		public:
+			Transcoder();
 		};
 
 	}

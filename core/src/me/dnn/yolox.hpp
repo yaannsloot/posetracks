@@ -23,23 +23,22 @@ namespace me {
 
 	namespace dnn {
 
-		class YOLOXModel{
-		public:
-			void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
-			void unload();
-			void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh);
-			void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh);
-			bool is_loaded();
-			cv::Size net_size();
-			Precision get_precision();
-			Executor get_executor();
-		private:
-			Precision precision = Precision::NONE; // Flag used for model stats when loaded
-			Executor executor = Executor::NONE; // Flag used for model stats when loaded
-			Ort::Env env;
-			Ort::SessionOptions session_options;
-			std::shared_ptr<Ort::Session> session; // MUST ensure the session is destroyed when using this smart pointer to prevent memory leaks
-		};
+		namespace models {
+
+			class YOLOXModelImpl : public DetectionModelImpl {
+			public:
+				YOLOXModelImpl();
+				virtual cv::Size net_size() override;
+				virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
+			};
+
+			class YOLOXModel : public DetectionModel {
+			public:
+				YOLOXModel();
+			};
+
+		}
 
 	}
 

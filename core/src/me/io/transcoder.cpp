@@ -22,18 +22,18 @@ namespace me {
 
 	namespace io {
 
-		Transcoder::Transcoder() {
+		TranscoderImpl::TranscoderImpl() {
 			if (!me::threading::global_pool.Running()) {
 				me::threading::global_pool.Start();
 			}
 		}
 
-		Transcoder::~Transcoder() {
+		TranscoderImpl::~TranscoderImpl() {
 			last_path = "";
 			close();
 		}
 
-		bool Transcoder::load(std::string path, bool use_hw_accel) {
+		bool TranscoderImpl::load(std::string path, bool use_hw_accel) {
 			if (cap.isOpened())
 				cap.release();
 			bool success = false;
@@ -46,7 +46,7 @@ namespace me {
 			return success;
 		}
 
-		bool Transcoder::next_frame(cv::Mat& frame, int retry_count) {
+		bool TranscoderImpl::next_frame(cv::Mat& frame, int retry_count) {
 			if (cap.isOpened()) {
 				bool success = cap.read(frame);
 				for (int i = 0; i < retry_count; i++) {
@@ -60,16 +60,16 @@ namespace me {
 			return false;
 		}
 
-		bool Transcoder::grab_frame(cv::Mat& frame, int frame_id, int retry_count) {
+		bool TranscoderImpl::grab_frame(cv::Mat& frame, int frame_id, int retry_count) {
 			set_frame(frame_id);
 			return this->next_frame(frame, retry_count);
 		}
 
-		std::vector<std::shared_future<void>> Transcoder::next_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size, int retry_count) {
+		std::vector<std::shared_future<void>> TranscoderImpl::next_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int batch_size, int retry_count) {
 			return grab_frames(frames, success, this->current_frame(), batch_size, retry_count);
 		}
 
-		std::vector<std::shared_future<void>> Transcoder::grab_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int start_frame, int batch_size, int retry_count) {
+		std::vector<std::shared_future<void>> TranscoderImpl::grab_frames(std::vector<cv::Mat>& frames, std::vector<bool>& success, int start_frame, int batch_size, int retry_count) {
 
 			std::vector<std::shared_future<void>> tasks;
 
@@ -134,23 +134,23 @@ namespace me {
 
 		}
 
-		bool Transcoder::set_frame(int frame_id) {
+		bool TranscoderImpl::set_frame(int frame_id) {
 			return cap.set(cv::CAP_PROP_POS_FRAMES, (double)frame_id);
 		}
 
-		int Transcoder::current_frame() {
+		int TranscoderImpl::current_frame() {
 			if (cap.isOpened())
 				return (int)cap.get(cv::CAP_PROP_POS_FRAMES);
 			return -1;
 		}
 
-		int Transcoder::frame_count() {
+		int TranscoderImpl::frame_count() {
 			if (cap.isOpened())
 				return (int)cap.get(cv::CAP_PROP_FRAME_COUNT);
 			return -1;
 		}
 
-		cv::Size Transcoder::frame_size() {
+		cv::Size TranscoderImpl::frame_size() {
 			if (cap.isOpened()) {
 				int frame_width = (int)cap.get(cv::CAP_PROP_FRAME_WIDTH);
 				int frame_height = (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT);
@@ -159,21 +159,21 @@ namespace me {
 			return cv::Size(0, 0);
 		}
 
-		double Transcoder::fps() {
+		double TranscoderImpl::fps() {
 			if (cap.isOpened())
 				return cap.get(cv::CAP_PROP_FPS);
 			return -1;
 		}
 
-		void Transcoder::close() {
+		void TranscoderImpl::close() {
 			cap.release();
 		}
 
-		bool Transcoder::is_open() {
+		bool TranscoderImpl::is_open() {
 			return cap.isOpened();
 		}
 
-		std::string Transcoder::get_fourcc_str() {
+		std::string TranscoderImpl::get_fourcc_str() {
 			if (cap.isOpened()) {
 				int fourcc = static_cast<int>(cap.get(cv::CAP_PROP_FOURCC));
 				char fourcc_str[] = {
@@ -188,10 +188,14 @@ namespace me {
 			return "";
 		}
 
-		int Transcoder::get_fourcc() {
+		int TranscoderImpl::get_fourcc() {
 			if (cap.isOpened())
 				return (int)cap.get(cv::CAP_PROP_FOURCC);
 			return -1;
+		}
+
+		Transcoder::Transcoder() {
+			fp_instance = std::make_shared<TranscoderImpl>();
 		}
 
 	}
