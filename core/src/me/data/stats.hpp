@@ -25,6 +25,8 @@ namespace me {
 		
 		double calculateMean(const std::vector<double>& data);
 
+		double calculateMedian(const std::vector<double>& data);
+
 		double calculateStdDev(const std::vector<double>& data, double mean);
 
 		std::vector<size_t> findOutliers(const std::vector<double>& data, double threshold);

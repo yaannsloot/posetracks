@@ -28,6 +28,21 @@ namespace me {
 			return std::accumulate(data.begin(), data.end(), 0.0) / data.size();
 		}
 
+		double calculateMedian(const std::vector<double>& data) {
+			if (data.empty()) return 0;
+
+			std::vector<double> sortedData = data;
+			std::sort(sortedData.begin(), sortedData.end());
+
+			size_t n = sortedData.size();
+			if (n % 2 == 0) { // even number of elements
+				return (sortedData[n / 2 - 1] + sortedData[n / 2]) / 2;
+			}
+			else { // odd number of elements
+				return sortedData[n / 2];
+			}
+		}
+
 		double calculateStdDev(const std::vector<double>& data, double mean) {
 			double sq_sum = std::inner_product(data.begin(), data.end(), data.begin(), 0.0);
 			return std::sqrt(sq_sum / data.size() - mean * mean);

@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "rtmdet.hpp"
 #include <opencv2/dnn.hpp>
+#include <me/data/memory.hpp>
 
 namespace me {
 
@@ -124,8 +125,8 @@ namespace me {
 				// Convert to accessors
 				std::array<size_t, 3> dets_shape{ batch_size, num_dets, reshap_dims };
 				std::array<size_t, 2> labels_shape{ batch_size, num_dets };
-				Accessor<3, float> dets(det_result, dets_shape); // Access via: dets(batch, box, box_dim). box_dim is 0 for x, 1 for y, 2 for width, 3 for height, 4 for confidence
-				Accessor<2, int> labels(label_result, labels_shape); // Access via: labels(batch, box)
+				me::data::Accessor<3, float> dets(det_result, dets_shape); // Access via: dets(batch, box, box_dim). box_dim is 0 for x, 1 for y, 2 for width, 3 for height, 4 for confidence
+				me::data::Accessor<2, int> labels(label_result, labels_shape); // Access via: labels(batch, box)
 
 				detections.clear();
 				detections.resize(batch_size);

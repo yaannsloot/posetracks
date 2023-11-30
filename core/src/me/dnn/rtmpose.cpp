@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "rtmpose.hpp"
 #include <opencv2/dnn.hpp>
+#include <me/data/memory.hpp>
 
 namespace me {
 
@@ -110,8 +111,8 @@ namespace me {
 				// Convert to accessors
 				std::array<size_t, 3> simcc_x_shape{ batch_size, joint_num, extend_width };
 				std::array<size_t, 3> simcc_y_shape{ batch_size, joint_num, extend_height };
-				Accessor<3, float> simcc_x(simcc_x_result, simcc_x_shape);
-				Accessor<3, float> simcc_y(simcc_y_result, simcc_y_shape);
+				me::data::Accessor<3, float> simcc_x(simcc_x_result, simcc_x_shape);
+				me::data::Accessor<3, float> simcc_y(simcc_y_result, simcc_y_shape);
 
 				poses.clear();
 				poses.resize(batch_size);

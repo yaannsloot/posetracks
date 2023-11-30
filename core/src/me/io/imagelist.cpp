@@ -95,7 +95,6 @@ namespace me {
 				if (success)
 					break;
 			}
-			std::cout << "[MotionEngine](" << std::this_thread::get_id() << ") Read image " << std::filesystem::path(path).stem().string() << std::endl;
 			return frame;
 		}
 

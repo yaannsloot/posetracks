@@ -15,6 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define PYBIND11_DETAILED_ERROR_MESSAGES
+
 #include <me/io/transcoder.hpp>
 #include <me/io/imagelist.hpp>
 #include <me/dnn/rtmdet.hpp>
@@ -32,8 +34,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 namespace py = pybind11;
-
-#define PYBIND11_DETAILED_ERROR_MESSAGES
 
 void load_models(
 	me::dnn::models::TopDownPoseDetector* model,
@@ -335,6 +335,32 @@ PYBIND11_MODULE(MEPython, m)
 	auto m_io = m.def_submodule("io");
 	auto m_threading = m.def_submodule("threading");
 
+
+	// Enum bindings
+
+	// Base
+
+	// Core
+
+	// DNN
+	py::enum_<me::dnn::Precision>(m_dnn, "Precision")
+		.value("FLOAT64", me::dnn::Precision::FLOAT64)
+		.value("FLOAT32", me::dnn::Precision::FLOAT32)
+		.value("FLOAT16", me::dnn::Precision::FLOAT16)
+		.value("INT64", me::dnn::Precision::INT64)
+		.value("INT32", me::dnn::Precision::INT32)
+		.value("INT16", me::dnn::Precision::INT16)
+		.value("INT8", me::dnn::Precision::INT8)
+		.value("UNKNOWN", me::dnn::Precision::UNKNOWN)
+		.value("NONE", me::dnn::Precision::NONE)
+		.export_values();
+
+	py::enum_<me::dnn::Executor>(m_dnn, "Executor")
+		.value("TENSORRT", me::dnn::Executor::TENSORRT)
+		.value("CUDA", me::dnn::Executor::CUDA)
+		.value("CPU", me::dnn::Executor::CPU)
+		.value("NONE", me::dnn::Executor::NONE)
+		.export_values();
 
 	// Class bindings
 
@@ -1519,33 +1545,6 @@ PYBIND11_MODULE(MEPython, m)
 	m_dnn.def("LetterboxImage", [](const cv::Mat& src, cv::Mat& dst, py::tuple out_size) {
 		return me::dnn::LetterboxImage(src, dst, cv::Size(out_size[0].cast<int>(), out_size[1].cast<int>()));
 	}, py::arg("src"), py::arg("dst"), py::arg("out_size"));
-
-	
-	// Enum bindings
-
-	// Base
-
-	// Core
-
-	// DNN
-	py::enum_<me::dnn::Precision>(m_dnn, "Precision")
-		.value("FLOAT64", me::dnn::Precision::FLOAT64)
-		.value("FLOAT32", me::dnn::Precision::FLOAT32)
-		.value("FLOAT16", me::dnn::Precision::FLOAT16)
-		.value("INT64", me::dnn::Precision::INT64)
-		.value("INT32", me::dnn::Precision::INT32)
-		.value("INT16", me::dnn::Precision::INT16)
-		.value("INT8", me::dnn::Precision::INT8)
-		.value("UNKNOWN", me::dnn::Precision::UNKNOWN)
-		.value("NONE", me::dnn::Precision::NONE)
-		.export_values();
-
-	py::enum_<me::dnn::Executor>(m_dnn, "Executor")
-		.value("TENSORRT", me::dnn::Executor::TENSORRT)
-		.value("CUDA", me::dnn::Executor::CUDA)
-		.value("CPU", me::dnn::Executor::CPU)
-		.value("NONE", me::dnn::Executor::NONE)
-		.export_values();
 
 
 	// Async bindings (MT module)

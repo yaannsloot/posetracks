@@ -101,40 +101,6 @@ namespace me {
 			CropMethod crop_method = CropMethod::NONE,
 			BlobLayout layout = BlobLayout::NCHW);
 
-		// Data wrapper for operating on flattened blobs
-		template <std::size_t N, typename T>
-		class Accessor {
-		public:
-			Accessor(T* data, const std::array<size_t, N>& dim)
-				: data(data), dimensions(dim) {
-				calculate_strides();
-			}
-
-			template <typename... Args>
-			inline T& operator()(Args... args) {
-				std::array<size_t, N> indices{ (size_t)args... };
-				size_t index = 0;
-
-				for (size_t i = 0; i < N; i++)
-					index += indices[i] * strides[i];
-
-				return data[index];
-			}
-
-		private:
-			T* data;
-			std::array<size_t, N> dimensions;
-			std::array<size_t, N> strides;
-
-			void calculate_strides() {
-				size_t stride = 1;
-				for (size_t i = N; i-- > 0; ) {
-					strides[i] = stride;
-					stride *= dimensions[i];
-				}
-			}
-		};
-
 		std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = true);
 
 		std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = true);

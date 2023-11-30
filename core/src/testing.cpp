@@ -27,6 +27,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <opencv2/sfm/triangulation.hpp>
 #include <opencv2/sfm/projection.hpp>
 #include <me/threading/simplepool.hpp>
+#include <me/data/memory.hpp>
+#include <me/crypto/sha1.hpp>
 #include <filesystem>
 
 void performance_experiments() {
@@ -40,7 +42,7 @@ void performance_experiments() {
 	}
 	int *flatarray = new int[100 * 100 * 100];
 	std::array<size_t, 3> flob_dim{ 100, 100, 100 };
-	me::dnn::Accessor<3, int> flob(flatarray, flob_dim);
+	me::data::Accessor<3, int> flob(flatarray, flob_dim);
 	auto start = std::chrono::high_resolution_clock::now();
 	#pragma omp parallel for
 	for (int i = 0; i < 100; i++) {
@@ -355,7 +357,7 @@ void performance_experiments() {
 
 
 void detectpose_test() {
-	//me::io::FrameProvider& cap = me::io::Transcoder();
+	//me::io::FrameProvider cap = me::io::Transcoder();
 	//cap.load("right3.mp4");
 	me::io::FrameProvider cap = me::io::ImageList();
 	cap.load("right3jpg/right30736.jpg");
@@ -365,6 +367,8 @@ void detectpose_test() {
 	detectpose_model.pose_model = me::dnn::models::RTMPoseModel();
 	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
 	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody26-l.onnx", me::dnn::Executor::CUDA);
+	std::cout << (int)detectpose_model.detection_model.get_precision() << std::endl;
+	std::cout << (int)detectpose_model.pose_model.get_precision() << std::endl;
 	std::vector<me::dnn::Pose> poses;
 	while (cap.is_open()) {
 		bool success = false;
@@ -452,6 +456,9 @@ public:
 
 int main() {
 	try {
+		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
+		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
+		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		// Run functions used in the python module so their dependencies show up on the logs
 		std::vector<float> dist_coeffs = { 1, 0, 0, 1, 1 };
 		std::vector<cv::Point2f> points = { cv::Point2f(0.1, 0.1) };
