@@ -2,7 +2,7 @@
 This file is hot garbage
 It will be removed eventually
 
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/dnn/rtmdet.hpp>
 #include <me/dnn/rtmpose.hpp>
 #include <me/dnn/pose_topdown.hpp>
+#include <me/dnn/feature_extractor.hpp>
 #include <me/io/imagelist.hpp>
 #include <me/io/transcoder.hpp>
 #include <opencv2/opencv.hpp>
@@ -30,6 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/data/memory.hpp>
 #include <me/crypto/sha1.hpp>
 #include <filesystem>
+#include <numeric>
 
 void performance_experiments() {
 	// Accessor vs true N dimensionsal heap memory structure performance
@@ -459,6 +461,105 @@ int main() {
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
+
+		me::dnn::Feature feature_a({ 3, 5, 8, 9, 10, 14, 15 });
+		me::dnn::Feature feature_b({ 2, 4, 6, 7, 8, 10, 12 });
+		me::dnn::Feature feature_c({ 2, 4, 6, 7, 8, 10, 12 });
+		std::cout << "www" << std::endl;
+		std::cout << feature_a.size() << ", " << feature_b.size() << ", " << feature_c.size() << std::endl;
+
+		me::dnn::FeatureSet feature_set(7);
+
+		feature_set.add(feature_a);
+		feature_set.add(feature_b);
+		feature_set.add(feature_c);
+
+		feature_set.remove(1);
+		
+		auto feature_mean = feature_set.mean();
+		auto feature_median = feature_set.median();
+
+		for (auto& d : feature_mean.data)
+			std::cout << d << ' ';
+		std::cout << std::endl;
+
+		for (auto& d : feature_median.data)
+			std::cout << d << ' ';
+		std::cout << std::endl;
+
+		me::dnn::models::FeatureModel feature_extractor = me::dnn::models::GenericFeatureModel();
+
+		feature_extractor.load("BasicConv6_People_64.onnx", me::dnn::Executor::TENSORRT);
+
+		feature_extractor.infer(cv::imread("1.jpg"), feature_a);
+
+		me::dnn::FeatureSet f_set(feature_a.size());
+
+		std::vector<me::dnn::Feature> features;
+		std::vector<cv::Mat> images = { cv::imread("1.jpg"), cv::imread("2.jpg") };
+		
+		auto start = std::chrono::high_resolution_clock::now();
+		auto end = std::chrono::high_resolution_clock::now();
+
+		std::vector<long long> inference_times;
+		for (int i = 0; i < 1; ++i) {
+			start = std::chrono::high_resolution_clock::now();
+			feature_extractor.infer(images, features);
+			end = std::chrono::high_resolution_clock::now();
+			inference_times.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+		}
+		double avg_time = std::accumulate(inference_times.begin(), inference_times.end(), 0) / inference_times.size();
+		
+		std::cout << "Inference time: " << avg_time << "us" << std::endl;
+
+		f_set.add(features[0]);
+		f_set.add(features[1]);
+		
+		feature_a.similarity(feature_b);
+
+		start = std::chrono::high_resolution_clock::now();
+		std::cout << feature_a.size() << std::endl;
+		std::cout << feature_a.similarity(f_set.median()) << std::endl;
+		end = std::chrono::high_resolution_clock::now();
+		std::cout << "Compare time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us" << std::endl;
+
+		// Feature space test
+		images.clear();
+		std::cout << "Loading images..." << std::endl;
+		std::string img_path = "samples";
+		std::map<int, std::filesystem::path> target_files;
+		for (const auto& entry : std::filesystem::directory_iterator(img_path)) {
+			std::string ext = entry.path().extension().string();
+			if (ext == ".png" || ext == ".jpg") {
+				target_files.emplace(std::stoi(entry.path().stem().string()), entry.path());
+			}
+		}
+		for (auto& path : target_files) {
+			images.push_back(cv::imread(path.second.string()));
+			std::cout << path.first << ' ';
+		}
+		std::cout << std::endl;
+
+		std::cout << "Running inference..." << std::endl;
+		feature_extractor.infer(images, features);
+
+		std::vector<int> ids;
+		me::dnn::FeatureSpace feature_space(features[0].size());
+
+		std::cout << "Estimating ids..." << std::endl;
+		for (auto& f : features) {
+			auto it = feature_space.assign(f, 0.7, me::dnn::SetIdentityType::LAST);
+			ids.push_back(std::distance(feature_space.begin(), it));
+		}
+
+		std::cout << "ids: ";
+		for (auto& id : ids) {
+			std::cout << id << ' ';
+		}
+		std::cout << std::endl;
+
+
+
 		// Run functions used in the python module so their dependencies show up on the logs
 		std::vector<float> dist_coeffs = { 1, 0, 0, 1, 1 };
 		std::vector<cv::Point2f> points = { cv::Point2f(0.1, 0.1) };
@@ -542,9 +643,9 @@ int main() {
 			std::cout << "Task " << task.get() << " has finished" << std::endl;
 		}
 		pool.Stop();
-		auto start = std::chrono::high_resolution_clock::now();
+		start = std::chrono::high_resolution_clock::now();
 		auto segments_a = me::threading::calculateSegments(100000, std::thread::hardware_concurrency());
-		auto end = std::chrono::high_resolution_clock::now();
+		end = std::chrono::high_resolution_clock::now();
 		std::cout << "Seg calc: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 		for (auto& seg : segments_a) {
 			std::cout << "segment_a: " << seg.first << ", " << seg.second << std::endl;

@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ namespace me {
 				cv::Size net_size() override;
 				void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
 				void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
-
 			};
 
 			class RTMDetModel : public DetectionModel {

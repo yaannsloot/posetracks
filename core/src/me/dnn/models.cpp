@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -259,6 +259,20 @@ namespace me {
 				if (model_ptr != nullptr) {
 					std::shared_ptr<PoseModelImpl> p_model_ptr = std::dynamic_pointer_cast<PoseModelImpl>(model_ptr);
 					p_model_ptr->infer(images, poses);
+				}
+			}
+
+			void FeatureModel::infer(const cv::Mat& image, Feature& feature) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<FeatureModelImpl> f_model_ptr = std::dynamic_pointer_cast<FeatureModelImpl>(model_ptr);
+					f_model_ptr->infer(image, feature);
+				}
+			}
+
+			void FeatureModel::infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<FeatureModelImpl> f_model_ptr = std::dynamic_pointer_cast<FeatureModelImpl>(model_ptr);
+					f_model_ptr->infer(images, features);
 				}
 			}
 

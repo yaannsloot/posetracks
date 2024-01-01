@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ namespace me {
 	
 	namespace dnn {
 
-		// GENERAL TODO: Make generic class definitions for model types
+		// GENERAL TODO: Make generic class definitions for model types <- DONE
 
 		enum class Precision { // Status flag for model classes
 			FLOAT64,
@@ -55,6 +55,12 @@ namespace me {
 			NONE
 		};
 
+		enum class SetIdentityType {
+			MEAN,
+			MEDIAN,
+			LAST
+		};
+
 		struct Detection {
 			Detection();
 			Detection(int class_id, cv::Rect2d bbox, float score);
@@ -82,6 +88,67 @@ namespace me {
 			int num_joints();
 			Joint& operator[](int id);
 			std::map<int, Joint> joints;
+		};
+
+		struct Feature {
+			Feature() {}
+			Feature(std::vector<double>& data) : data(data) {}
+			Feature(std::initializer_list<double> data) : data(data) {}
+			Feature(const Feature& other) : data(other.data) {}
+			std::vector<double> data;
+			double norm() const;
+			Feature operator/(double val) const;
+			Feature operator-(Feature& other) const;
+			Feature& operator=(const Feature& other);
+			double similarity(const Feature& other) const;
+			size_t size() const;
+		};
+
+		/// <summary>
+		/// Specialized container for fast mean and median operations on a managed set of feature vectors.
+		/// 
+		/// Currently uses a list of sets for each element so that everything is pre-sorted for median calculations.
+		/// This currently uses a linear search which could slow down operations when the feature length reaches a considerable size
+		/// Consider using a custon implementation of a red-black tree that uses order statistics for faster search and insert
+		/// </summary>
+		class FeatureSet {
+		public:
+			FeatureSet(size_t feature_length);
+			void add(Feature& f);
+			Feature& at(size_t index);
+			void remove(size_t index);
+			void erase(std::vector<Feature>::iterator position);
+			Feature mean();
+			Feature median();
+			std::vector<Feature>::iterator begin();
+			std::vector<Feature>::iterator end();
+			size_t size();
+			size_t length();
+			Feature& operator[](size_t index);
+		private:
+			std::vector<Feature> features;
+			size_t feature_length;
+			struct ptr_cmp {
+				bool operator()(double* a, double* b) const {
+					return *a < *b;
+				}
+			};
+			std::vector<std::multiset<double*, ptr_cmp>> feature_elements;
+		};
+
+		class FeatureSpace {
+		public:
+			FeatureSpace(size_t feature_length) : feature_length(feature_length) {}
+			std::vector<FeatureSet>::iterator assign(Feature &input, double threshold = 0.8, SetIdentityType identity_type = SetIdentityType::MEDIAN);
+			std::vector<std::vector<FeatureSet>::iterator> assign(std::vector<Feature>& input, double threshold = 0.8, SetIdentityType identity_type = SetIdentityType::MEDIAN,
+				std::vector<std::vector<FeatureSet>::iterator> mask = std::vector<std::vector<FeatureSet>::iterator>());
+			std::vector<FeatureSet>::iterator begin();
+			std::vector<FeatureSet>::iterator end();
+			size_t size();
+			size_t length();
+		private:
+			size_t feature_length;
+			std::vector<FeatureSet> feature_sets;
 		};
 
 		inline double iou(cv::Rect2d a, cv::Rect2d b);

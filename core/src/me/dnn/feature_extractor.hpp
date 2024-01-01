@@ -17,26 +17,29 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "bezier.hpp"
+#include "models.hpp"
 
 namespace me {
-	
-	namespace data {
-		
-		class Range {
-		public:
-			Range();
-			Range(double min, double max);
-			double solve(double t) { return curve.solve(t).y; }
-			void setMin(double min);
-			void setMax(double max);
-			bool contains(double val);
-			bool checkForOverlap(Range& other);
-			Range getOverlapRange(Range& other);
-		private:
-			BezierCurve curve;
-		};
-		
+
+	namespace dnn {
+
+		namespace models {
+
+			class GenericFeatureModelImpl : public FeatureModelImpl {
+			public:
+				GenericFeatureModelImpl();
+				virtual cv::Size net_size() override;
+				virtual void infer(const cv::Mat& image, Feature& feature) override;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features) override;
+			};
+
+			class GenericFeatureModel : public FeatureModel {
+			public:
+				GenericFeatureModel();
+			};
+
+		}
+
 	}
-	
+
 }

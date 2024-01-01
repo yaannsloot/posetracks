@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -89,6 +89,265 @@ namespace me {
 
 		Joint& Pose::operator[](int id) {
 			return this->joints[id];
+		}
+
+		double Feature::norm() const {
+			double sum = 0;
+			for (auto& val : this->data) {
+				sum += pow(abs(val), 2);
+			}
+			if (sum > 0)
+				return sqrt(sum);
+			return 0;
+		}
+
+		Feature Feature::operator/(double val) const {
+			if (val > 0 && this->size() > 0) {
+				Feature output;
+				output.data = this->data;
+				for (auto it = output.data.begin(); it != output.data.end(); ++it) {
+					*it /= val;
+				}
+				return output;
+			}
+			return *this;
+		}
+
+		Feature Feature::operator-(Feature& other) const {
+			Feature output;
+			if (this->size() > 0 && other.size() > 0 && this->size() == other.size()) {
+				auto it_a = this->data.begin();
+				auto it_b = other.data.begin();
+				while (it_a != this->data.end() && it_b != other.data.end()) {
+					output.data.push_back(*it_a - *it_b);
+					++it_a;
+					++it_b;
+				}
+			}
+			return output;
+		}
+
+		Feature& Feature::operator=(const Feature& other) {
+			if (this != &other) {
+				this->data = other.data;
+			}
+			return *this;
+		}
+
+		double Feature::similarity(const Feature& other) const {
+			if (this->size() != other.size())
+				return 0;
+			Feature norm_a = *this / this->norm();
+			Feature norm_b = other / other.norm();
+			Feature diff = norm_a - norm_b;
+			double dist = diff.norm();
+			return 1 - (dist / 2);
+		}
+
+		size_t Feature::size() const {
+			return data.size();
+		}
+
+		FeatureSet::FeatureSet(size_t feature_length) {
+			for (size_t i = 0; i < feature_length; ++i) {
+				feature_elements.push_back(std::multiset<double*, ptr_cmp>());
+			}
+			this->feature_length = feature_length;
+		}
+
+		void FeatureSet::add(Feature& f) {
+			if (f.size() != this->feature_length) {
+				std::stringstream ss;
+				ss << "Mismatch in expected feature length (" << this->feature_length << ") and provided length (" << f.size() << ").";
+				throw std::runtime_error(ss.str());
+			}
+			this->features.push_back(f);
+			Feature& new_f = this->features.back();
+			auto set_it = this->feature_elements.begin();
+			for (auto it = new_f.data.begin(); it != new_f.data.end(); ++it) {
+				set_it->insert(&(*it));
+				++set_it;
+			}
+		}
+
+		Feature& FeatureSet::at(size_t index) {
+			return this->features[index];
+		}
+
+		void FeatureSet::remove(size_t index) {
+			auto t_it = this->features.begin() + index;
+			this->erase(t_it);
+		}
+
+		void FeatureSet::erase(std::vector<Feature>::iterator position) {
+			auto set_it = this->feature_elements.begin();
+			for (auto it = position->data.begin(); it != position->data.end(); ++it) {
+				for (auto& a : *set_it)
+					std::cout << a << ' ';
+				std::cout << std::endl;
+				auto e = set_it->find(&(*it));
+				if (e != set_it->end())
+					set_it->erase(e);
+				for (auto& a : *set_it)
+					std::cout << a << ' ';
+				std::cout << std::endl;
+				++set_it;
+			}
+			this->features.erase(position);
+		}
+
+		Feature FeatureSet::mean() {
+			Feature result;
+			if (!this->features.empty()) {
+				for (auto it = this->feature_elements.begin(); it != this->feature_elements.end(); ++it) {
+					double a = 0;
+					for (auto itt = it->begin(); itt != it->end(); ++itt) {
+						a += **itt;
+					}
+					a = a / it->size();
+					result.data.push_back(a);
+				}
+			}
+			return result;
+		}
+
+		Feature FeatureSet::median() {
+			Feature result;
+			if (!this->features.empty()) {
+				for (auto it = this->feature_elements.begin(); it != this->feature_elements.end(); ++it) {
+					size_t e_size = it->size();
+					if (e_size % 2 == 0) {
+						double a = 0;
+						double b = 0;
+						size_t i_a = e_size / 2 - 1;
+						size_t i_b = e_size / 2;
+						size_t pos = 0;
+						for (auto itt = it->begin(); itt != it->end(); ++itt) {
+							if (pos == i_a)
+								a = **itt;
+							else if (pos == i_b) {
+								b = **itt;
+								break;
+							}
+							++pos;
+						}
+						result.data.push_back((a + b) / 2);
+					}
+					else {
+						double a = 0;
+						size_t i_a = e_size / 2;
+						size_t pos = 0;
+						for (auto itt = it->begin(); itt != it->end(); ++itt) {
+							if (pos == i_a) {
+								a = **itt;
+								break;
+							}
+							++pos;
+						}
+						result.data.push_back(a);
+					}
+				}
+			}
+			return result;
+		}
+
+		std::vector<Feature>::iterator FeatureSet::begin() {
+			return this->features.begin();
+		}
+
+		std::vector<Feature>::iterator FeatureSet::end() {
+			return this->features.end();
+		}
+
+		size_t FeatureSet::size() {
+			return this->features.size();
+		}
+
+		size_t FeatureSet::length() {
+			return this->feature_length;
+		}
+
+		Feature& FeatureSet::operator[](size_t index) {
+			return this->at(index);
+		}
+
+		std::vector<FeatureSet>::iterator FeatureSpace::assign(Feature& input, double threshold, SetIdentityType identity_type) {
+			if (input.size() != this->feature_length) {
+				std::stringstream ss;
+				ss << "Mismatch in expected feature length (" << this->feature_length << ") and provided length (" << input.size() << ").";
+				throw std::runtime_error(ss.str());
+			}
+			auto it = this->feature_sets.end();
+			double highest = 0;
+			for (auto itt = this->feature_sets.begin(); itt != this->feature_sets.end(); ++itt) {
+				double dist = 0;
+				if (identity_type == SetIdentityType::MEAN)
+					dist = input.similarity(itt->mean());
+				else if (identity_type == SetIdentityType::MEDIAN)
+					dist = input.similarity(itt->median());
+				else if (identity_type == SetIdentityType::LAST)
+					dist = input.similarity(*(itt->end() - 1));
+				if (dist > threshold && dist > highest) {
+					it = itt;
+					highest = dist;
+				}
+			}
+			if (it == this->feature_sets.end()) {
+				this->feature_sets.emplace_back(this->feature_length);
+				it = this->feature_sets.end() - 1;
+			}
+			it->add(input);
+			return it;
+		}
+
+		std::vector<std::vector<FeatureSet>::iterator> FeatureSpace::assign(std::vector<Feature>& input, double threshold, SetIdentityType identity_type,
+			std::vector<std::vector<FeatureSet>::iterator> mask) {
+			std::vector<std::tuple<double, int, std::vector<FeatureSet>::iterator>> scores;
+			for (auto it = this->feature_sets.begin(); it != this->feature_sets.end(); ++it) {
+				bool is_masked = false;
+				for (auto& itt : mask) {
+					if (it == itt) {
+						is_masked = true;
+						break;
+					}
+				}
+				if (is_masked)
+					continue;
+				for (int i = 0; i < input.size(); ++i) {
+					double dist = 0;
+					if (identity_type == SetIdentityType::MEAN)
+						dist = input[i].similarity(it->mean());
+					else if (identity_type == SetIdentityType::MEDIAN)
+						dist = input[i].similarity(it->median());
+					else if (identity_type == SetIdentityType::LAST)
+						dist = input[i].similarity(*(it->end() - 1));
+					if (dist > threshold) {
+						scores.push_back(std::tuple<double, int, std::vector<FeatureSet>::iterator>(dist, i, it));
+					}
+				}
+			}
+			auto comp = [](const std::tuple<double, int, std::vector<FeatureSet>::iterator>& first, 
+				const std::tuple<double, int, std::vector<FeatureSet>::iterator>& second) {
+				return std::get<0>(first) > std::get<0>(second);
+			};
+			std::sort(scores.begin(), scores.end(), comp);
+			//CONTINUE HERE
+		}
+
+		std::vector<FeatureSet>::iterator FeatureSpace::begin() {
+			return this->feature_sets.begin();
+		}
+
+		std::vector<FeatureSet>::iterator FeatureSpace::end() {
+			return this->feature_sets.end();
+		}
+
+		size_t FeatureSpace::size() {
+			return this->feature_sets.size();
+		}
+
+		size_t FeatureSpace::length() {
+			return this->feature_length;
 		}
 
 		inline double iou(cv::Rect2d a, cv::Rect2d b) {

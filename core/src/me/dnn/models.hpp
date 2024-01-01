@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -65,16 +65,28 @@ namespace me {
 			/// <summary>
 			/// Base class for object detection models
 			/// </summary>
-			class DetectionModelImpl : public ImageModelImpl{
+			class DetectionModelImpl : public ImageModelImpl {
 			public:
 				virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) = 0;
 				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) = 0;
 			};
 
+			/// <summary>
+			/// Base class for pose models
+			/// </summary>
 			class PoseModelImpl : public ImageModelImpl {
 			public:
 				virtual void infer(const cv::Mat& image, Pose& pose) = 0;
 				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) = 0;
+			};
+
+			/// <summary>
+			/// Base class for feature models
+			/// </summary>
+			class FeatureModelImpl : public ImageModelImpl {
+			public:
+				virtual void infer(const cv::Mat& image, Feature& feature) = 0;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features) = 0;
 			};
 
 
@@ -171,8 +183,28 @@ namespace me {
 				/// Run a batch inference on the currently loaded model
 				/// </summary>
 				/// <param name="images">Input vector containing images to process</param>
-				/// <param name="poses">Output vector of vectors containing the estimated pose for each image</param>
+				/// <param name="poses">Output vector containing the estimated pose for each image</param>
 				void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses);
+			};
+
+			/// <summary>
+			/// Feature model class
+			/// </summary>
+			class FeatureModel : public ImageModel {
+			public:
+				/// <summary>
+				/// Run an inference on the currently loaded model
+				/// </summary>
+				/// <param name="image">Input image to process</param>
+				/// <param name="feature">Output feature extracted from the image</param>
+				void infer(const cv::Mat& image, Feature& feature);
+
+				/// <summary>
+				/// Run a batch inference on the currently loaded model
+				/// </summary>
+				/// <param name="images">Input vector containing images to process</param>
+				/// <param name="features">Output vector containing the feature extracted for each image</param>
+				void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features);
 			};
 
 		}	

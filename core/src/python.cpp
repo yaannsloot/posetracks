@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2023 Ian Sloat
+Copyright (C) 2024 Ian Sloat
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/dnn/rtmdet.hpp>
 #include <me/dnn/rtmpose.hpp>
 #include <me/dnn/pose_topdown.hpp>
+#include <me/crypto/sha1.hpp>
 #include <opencv2/sfm/triangulation.hpp>
 #include <opencv2/sfm/projection.hpp>
 #include <pybind11/pybind11.h>
@@ -31,7 +32,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <random>
 #include <limits>
 #include <numeric>
-
 
 namespace py = pybind11;
 
@@ -334,6 +334,7 @@ PYBIND11_MODULE(MEPython, m)
 	auto m_dnn = m.def_submodule("dnn");
 	auto m_io = m.def_submodule("io");
 	auto m_threading = m.def_submodule("threading");
+	auto m_crypto = m.def_submodule("crypto");
 
 
 	// Enum bindings
@@ -1699,5 +1700,7 @@ PYBIND11_MODULE(MEPython, m)
 		return future.share();
 	});
 
+	// Crypto
+	m_crypto.def("random_sha1", []() { return me::crypto::generateRandomSHA1().to_string(); });
 
 }
