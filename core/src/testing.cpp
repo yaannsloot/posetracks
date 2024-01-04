@@ -32,6 +32,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/crypto/sha1.hpp>
 #include <filesystem>
 #include <numeric>
+#include <random>
 
 void performance_experiments() {
 	// Accessor vs true N dimensionsal heap memory structure performance
@@ -463,8 +464,8 @@ int main() {
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 
 		me::dnn::Feature feature_a({ 3, 5, 8, 9, 10, 14, 15 });
-		me::dnn::Feature feature_b({ 2, 4, 6, 7, 8, 10, 12 });
-		me::dnn::Feature feature_c({ 2, 4, 6, 7, 8, 10, 12 });
+		me::dnn::Feature feature_b({ 2, 4, 6, 7, 8, 12, 10 });
+		me::dnn::Feature feature_c({ 2, 4, 6, 7, 8, 12, 10 });
 		std::cout << "www" << std::endl;
 		std::cout << feature_a.size() << ", " << feature_b.size() << ", " << feature_c.size() << std::endl;
 
@@ -474,7 +475,9 @@ int main() {
 		feature_set.add(feature_b);
 		feature_set.add(feature_c);
 
-		feature_set.remove(1);
+		std::cout << feature_b.dist(feature_c) << std::endl;
+
+		feature_set.remove(0);
 		
 		auto feature_mean = feature_set.mean();
 		auto feature_median = feature_set.median();
@@ -489,7 +492,10 @@ int main() {
 
 		me::dnn::models::FeatureModel feature_extractor = me::dnn::models::GenericFeatureModel();
 
-		feature_extractor.load("BasicConv6_People_64.onnx", me::dnn::Executor::TENSORRT);
+		feature_extractor.load("BasicConv6_People_64.onnx", me::dnn::Executor::CUDA);
+
+		if(!feature_extractor.is_loaded())
+			std::cout << "MODEL NOT LOADED!" << std::endl;
 
 		feature_extractor.infer(cv::imread("1.jpg"), feature_a);
 
@@ -515,13 +521,20 @@ int main() {
 		f_set.add(features[0]);
 		f_set.add(features[1]);
 		
-		feature_a.similarity(feature_b);
+		feature_a.dist(feature_b);
 
 		start = std::chrono::high_resolution_clock::now();
 		std::cout << feature_a.size() << std::endl;
-		std::cout << feature_a.similarity(f_set.median()) << std::endl;
+		std::cout << feature_a.dist(f_set.median()) << std::endl;
 		end = std::chrono::high_resolution_clock::now();
 		std::cout << "Compare time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us" << std::endl;
+
+		std::vector<double> fa(feature_a.size(), 0);
+		std::vector<double> fb(feature_a.size(), 1);
+		me::dnn::Feature feature_short_a({ me::dnn::Feature(fa).dist(feature_a), me::dnn::Feature(fb).dist(feature_a) });
+		me::dnn::Feature feature_short_b({ me::dnn::Feature(fa).dist(feature_b), me::dnn::Feature(fb).dist(feature_b) });
+		std::cout << (feature_short_a - feature_short_b).norm() << std::endl;
+
 
 		// Feature space test
 		images.clear();
@@ -547,17 +560,89 @@ int main() {
 		me::dnn::FeatureSpace feature_space(features[0].size());
 
 		std::cout << "Estimating ids..." << std::endl;
-		for (auto& f : features) {
-			auto it = feature_space.assign(f, 0.7, me::dnn::SetIdentityType::LAST);
-			ids.push_back(std::distance(feature_space.begin(), it));
+		bool one_to_one = false;
+		if (!one_to_one) {
+			for (auto& f : features) {
+				auto it = feature_space.assign(f, 0.6, me::dnn::SetIdentityType::LAST);
+				ids.push_back(it);
+			}
+			std::cout << "ids: ";
+			for (auto& id : ids) {
+				std::cout << id << ' ';
+			}
+			std::cout << std::endl;
+		}
+		else {
+			auto id_type = me::dnn::SetIdentityType::MEDIAN;
+			double thresh = 0.7;
+			for (int i = 0; i < 100; ++i) {
+				start = std::chrono::high_resolution_clock::now();
+				auto assignments = feature_space.assign(features, thresh, id_type);
+				end = std::chrono::high_resolution_clock::now();
+				std::cout << "Assign time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us" << std::endl;
+				for (auto& id : assignments) {
+					std::cout << id << ' ';
+				}
+				std::cout << std::endl;
+			}
 		}
 
-		std::cout << "ids: ";
-		for (auto& id : ids) {
-			std::cout << id << ' ';
-		}
-		std::cout << std::endl;
+		std::cout << "Generating test video..." << std::endl;
 
+		int num_elements = 100;
+		int num_frames = 2000;
+		double frame_rate = 60.0;
+		cv::Size frame_size(1024, 1024);
+		cv::VideoWriter video_out;
+		me::dnn::FeatureSpace f_space(2);
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<int> rand_x(0, frame_size.width);
+		std::uniform_int_distribution<int> rand_y(0, frame_size.height);
+		std::uniform_int_distribution<int> rand_rgb(0, 255);
+		std::vector<cv::Scalar> colors;
+		auto set_id_type = me::dnn::SetIdentityType::MEDIAN;
+		auto f_dist_type = me::dnn::FeatureDistanceType::EUCLIDEAN;
+		video_out.open("clustering.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), frame_rate, frame_size);
+		bool init = true;
+		bool one_one = false;
+		for (int f = 0; f < num_frames; ++f) {
+			cv::Mat frame(frame_size, CV_8UC3, cv::Scalar(255, 255, 255));
+			std::vector<me::dnn::Feature> frame_points;
+			for (int e = 0; e < num_elements; ++e) {
+				me::dnn::Feature feature({ (double)rand_x(gen), (double)rand_y(gen) });
+				frame_points.push_back(feature);
+			}
+			if (init || one_one) {
+				f_space.assign(frame_points, 2000, set_id_type, f_dist_type);
+				init = false;
+			}
+			else {
+				for (auto& rf : frame_points) {
+					f_space.assign(rf, 2000, set_id_type, f_dist_type);
+				}
+			}
+			int colors_to_add = f_space.size() - colors.size();
+			for (int i = 0; i < colors_to_add; ++i) {
+				colors.emplace_back(rand_rgb(gen), rand_rgb(gen), rand_rgb(gen));
+			}
+			for (int s = 0; s < f_space.size(); ++s) {
+				for (auto& feat : f_space[s]) {
+					cv::circle(frame, cv::Point(feat.data[0], feat.data[1]), 3, colors[s], -1);
+				}
+			}
+			for (auto& s : f_space) {
+				me::dnn::Feature center;
+				if (set_id_type == me::dnn::SetIdentityType::MEAN)
+					center = s.mean();
+				else
+					center = s.median();
+				cv::drawMarker(frame, cv::Point(center.data[0], center.data[1]), cv::Scalar(0, 0, 0));
+			}
+
+			video_out.write(frame);
+		}
+		video_out.release();
 
 
 		// Run functions used in the python module so their dependencies show up on the logs

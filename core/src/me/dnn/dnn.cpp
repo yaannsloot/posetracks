@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <opencv2/cudaarithm.hpp>
 #include <me/threading/simplepool.hpp>
 #include <onnxruntime_cxx_api.h>
+#include <omp.h>
 
 namespace me {
 
@@ -134,14 +135,17 @@ namespace me {
 			return *this;
 		}
 
-		double Feature::similarity(const Feature& other) const {
+		double Feature::dist(const Feature& other, FeatureDistanceType d_type) const {
 			if (this->size() != other.size())
 				return 0;
-			Feature norm_a = *this / this->norm();
-			Feature norm_b = other / other.norm();
-			Feature diff = norm_a - norm_b;
-			double dist = diff.norm();
-			return 1 - (dist / 2);
+			if (d_type == FeatureDistanceType::NORM_EUCLIDEAN) {
+				Feature norm_a = *this / this->norm();
+				Feature norm_b = other / other.norm();
+				return (norm_a - norm_b).norm();
+			}
+			else {
+				return (Feature(*this) - Feature(other)).norm();
+			}
 		}
 
 		size_t Feature::size() const {
@@ -150,7 +154,7 @@ namespace me {
 
 		FeatureSet::FeatureSet(size_t feature_length) {
 			for (size_t i = 0; i < feature_length; ++i) {
-				feature_elements.push_back(std::multiset<double*, ptr_cmp>());
+				feature_elements.push_back(std::multiset<double>());
 			}
 			this->feature_length = feature_length;
 		}
@@ -162,15 +166,15 @@ namespace me {
 				throw std::runtime_error(ss.str());
 			}
 			this->features.push_back(f);
-			Feature& new_f = this->features.back();
+			const Feature& new_f = this->features.back();
 			auto set_it = this->feature_elements.begin();
 			for (auto it = new_f.data.begin(); it != new_f.data.end(); ++it) {
-				set_it->insert(&(*it));
+				set_it->insert(*it);
 				++set_it;
 			}
 		}
 
-		Feature& FeatureSet::at(size_t index) {
+		const Feature& FeatureSet::at(size_t index) const {
 			return this->features[index];
 		}
 
@@ -182,27 +186,21 @@ namespace me {
 		void FeatureSet::erase(std::vector<Feature>::iterator position) {
 			auto set_it = this->feature_elements.begin();
 			for (auto it = position->data.begin(); it != position->data.end(); ++it) {
-				for (auto& a : *set_it)
-					std::cout << a << ' ';
-				std::cout << std::endl;
-				auto e = set_it->find(&(*it));
+				auto e = set_it->find(*it);
 				if (e != set_it->end())
 					set_it->erase(e);
-				for (auto& a : *set_it)
-					std::cout << a << ' ';
-				std::cout << std::endl;
 				++set_it;
 			}
 			this->features.erase(position);
 		}
 
-		Feature FeatureSet::mean() {
+		const Feature FeatureSet::mean() const {
 			Feature result;
 			if (!this->features.empty()) {
 				for (auto it = this->feature_elements.begin(); it != this->feature_elements.end(); ++it) {
 					double a = 0;
 					for (auto itt = it->begin(); itt != it->end(); ++itt) {
-						a += **itt;
+						a += *itt;
 					}
 					a = a / it->size();
 					result.data.push_back(a);
@@ -211,7 +209,7 @@ namespace me {
 			return result;
 		}
 
-		Feature FeatureSet::median() {
+		const Feature FeatureSet::median() const {
 			Feature result;
 			if (!this->features.empty()) {
 				for (auto it = this->feature_elements.begin(); it != this->feature_elements.end(); ++it) {
@@ -224,9 +222,9 @@ namespace me {
 						size_t pos = 0;
 						for (auto itt = it->begin(); itt != it->end(); ++itt) {
 							if (pos == i_a)
-								a = **itt;
+								a = *itt;
 							else if (pos == i_b) {
-								b = **itt;
+								b = *itt;
 								break;
 							}
 							++pos;
@@ -239,7 +237,7 @@ namespace me {
 						size_t pos = 0;
 						for (auto itt = it->begin(); itt != it->end(); ++itt) {
 							if (pos == i_a) {
-								a = **itt;
+								a = *itt;
 								break;
 							}
 							++pos;
@@ -259,79 +257,126 @@ namespace me {
 			return this->features.end();
 		}
 
-		size_t FeatureSet::size() {
+		size_t FeatureSet::size() const {
 			return this->features.size();
 		}
 
-		size_t FeatureSet::length() {
+		size_t FeatureSet::length() const {
 			return this->feature_length;
 		}
 
-		Feature& FeatureSet::operator[](size_t index) {
+		const Feature& FeatureSet::operator[](size_t index) const {
 			return this->at(index);
 		}
 
-		std::vector<FeatureSet>::iterator FeatureSpace::assign(Feature& input, double threshold, SetIdentityType identity_type) {
+		size_t FeatureSpace::assign(Feature& input, double threshold, SetIdentityType identity_type, FeatureDistanceType dist_type) {
 			if (input.size() != this->feature_length) {
 				std::stringstream ss;
 				ss << "Mismatch in expected feature length (" << this->feature_length << ") and provided length (" << input.size() << ").";
 				throw std::runtime_error(ss.str());
 			}
-			auto it = this->feature_sets.end();
-			double highest = 0;
-			for (auto itt = this->feature_sets.begin(); itt != this->feature_sets.end(); ++itt) {
+			double lowest = std::numeric_limits<double>::infinity();
+			int lowest_index = -1;
+			omp_lock_t lock;
+			omp_init_lock(&lock);
+			#pragma omp parallel for 
+			for (int i = 0; i < this->feature_sets.size(); ++i) {
 				double dist = 0;
 				if (identity_type == SetIdentityType::MEAN)
-					dist = input.similarity(itt->mean());
+					dist = input.dist(this->feature_sets[i].mean(), dist_type);
 				else if (identity_type == SetIdentityType::MEDIAN)
-					dist = input.similarity(itt->median());
+					dist = input.dist(this->feature_sets[i].median(), dist_type);
 				else if (identity_type == SetIdentityType::LAST)
-					dist = input.similarity(*(itt->end() - 1));
-				if (dist > threshold && dist > highest) {
-					it = itt;
-					highest = dist;
+					dist = input.dist(*(this->feature_sets[i].end() - 1), dist_type);
+				omp_set_lock(&lock);
+				if (dist < threshold && dist < lowest) {
+					lowest_index = i;
+					lowest = dist;
 				}
+				omp_unset_lock(&lock);
 			}
-			if (it == this->feature_sets.end()) {
+			omp_destroy_lock(&lock);
+			auto it = this->feature_sets.end();
+			if (lowest_index > -1) {
+				it = this->feature_sets.begin() + lowest_index;
+			}
+			else {
 				this->feature_sets.emplace_back(this->feature_length);
 				it = this->feature_sets.end() - 1;
 			}
 			it->add(input);
-			return it;
+			return std::distance(this->feature_sets.begin(), it);
 		}
 
-		std::vector<std::vector<FeatureSet>::iterator> FeatureSpace::assign(std::vector<Feature>& input, double threshold, SetIdentityType identity_type,
-			std::vector<std::vector<FeatureSet>::iterator> mask) {
-			std::vector<std::tuple<double, int, std::vector<FeatureSet>::iterator>> scores;
-			for (auto it = this->feature_sets.begin(); it != this->feature_sets.end(); ++it) {
-				bool is_masked = false;
-				for (auto& itt : mask) {
-					if (it == itt) {
-						is_masked = true;
-						break;
-					}
-				}
-				if (is_masked)
+		std::vector<size_t> FeatureSpace::assign(std::vector<Feature>& input, double threshold, SetIdentityType identity_type,
+			FeatureDistanceType dist_type, std::vector<int> mask) {
+			std::vector<size_t> output;
+			output.resize(input.size());
+			std::set<size_t> selected_features;
+			std::vector<std::tuple<double, size_t, size_t>> scores;
+			omp_lock_t lock;
+			omp_init_lock(&lock);
+			if (mask.size() > 0 && mask.size() != this->feature_sets.size()) {
+				std::stringstream ss;
+				ss << "Mismatch in expected mask length (" << this->feature_sets.size() << ") and provided length (" << mask.size() << ").";
+				throw std::runtime_error(ss.str());
+			}
+			for (int i = 0; i < this->feature_sets.size(); ++i) {
+				if (mask.size() > 0 && mask[i] >= 1)
 					continue;
-				for (int i = 0; i < input.size(); ++i) {
+				#pragma omp parallel for 
+				for (int j = 0; j < input.size(); ++j) {
 					double dist = 0;
 					if (identity_type == SetIdentityType::MEAN)
-						dist = input[i].similarity(it->mean());
+						dist = input[j].dist(this->feature_sets[i].mean(), dist_type);
 					else if (identity_type == SetIdentityType::MEDIAN)
-						dist = input[i].similarity(it->median());
+						dist = input[j].dist(this->feature_sets[i].median(), dist_type);
 					else if (identity_type == SetIdentityType::LAST)
-						dist = input[i].similarity(*(it->end() - 1));
-					if (dist > threshold) {
-						scores.push_back(std::tuple<double, int, std::vector<FeatureSet>::iterator>(dist, i, it));
+						dist = input[j].dist(*(this->feature_sets[i].end() - 1), dist_type);
+					if (dist < threshold) {
+						omp_set_lock(&lock);
+						scores.push_back(std::tuple<double, size_t, size_t>(dist, j, i));
+						selected_features.insert(j);
+						omp_unset_lock(&lock);
 					}
 				}
 			}
-			auto comp = [](const std::tuple<double, int, std::vector<FeatureSet>::iterator>& first, 
-				const std::tuple<double, int, std::vector<FeatureSet>::iterator>& second) {
-				return std::get<0>(first) > std::get<0>(second);
+			omp_destroy_lock(&lock);
+			auto comp = [](const std::tuple<double, size_t, size_t>& first, 
+				const std::tuple<double, size_t, size_t>& second) {
+				return std::get<0>(first) < std::get<0>(second);
 			};
 			std::sort(scores.begin(), scores.end(), comp);
-			//CONTINUE HERE
+
+			std::set<size_t> spent_features;
+			std::set<size_t> spent_feature_sets;
+			std::vector<int> feature_mask(input.size(), 0);
+
+			for (auto& score_tuple : scores) {
+				if (spent_features.size() == selected_features.size() || 
+					spent_feature_sets.size() == this->feature_sets.size())
+					break;
+				size_t feature_index = std::get<1>(score_tuple);
+				size_t feature_set_index = std::get<2>(score_tuple);
+				if (spent_features.find(feature_index) != spent_features.end() ||
+					spent_feature_sets.find(feature_set_index) != spent_feature_sets.end())
+					continue;
+				this->feature_sets[feature_set_index].add(input[feature_index]);
+				spent_features.insert(feature_index);
+				spent_feature_sets.insert(feature_set_index);
+				feature_mask[feature_index] = 1;
+				output[feature_index] = feature_set_index;
+			}
+
+			for (size_t i = 0; i < input.size(); ++i) {
+				if (feature_mask[i] >= 1)
+					continue;
+				this->feature_sets.emplace_back(this->feature_length);
+				this->feature_sets.back().add(input[i]);
+				output[i] = this->feature_sets.size() - 1;
+			}
+
+			return output;
 		}
 
 		std::vector<FeatureSet>::iterator FeatureSpace::begin() {
@@ -348,6 +393,18 @@ namespace me {
 
 		size_t FeatureSpace::length() {
 			return this->feature_length;
+		}
+
+		void FeatureSpace::clear() {
+			this->feature_sets.clear();
+		}
+
+		FeatureSet& FeatureSpace::at(size_t index) {
+			return this->feature_sets[index];
+		}
+
+		FeatureSet& FeatureSpace::operator[](size_t index) {
+			return this->at(index);
 		}
 
 		inline double iou(cv::Rect2d a, cv::Rect2d b) {

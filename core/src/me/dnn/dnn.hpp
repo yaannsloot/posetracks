@@ -55,6 +55,11 @@ namespace me {
 			NONE
 		};
 
+		enum class FeatureDistanceType {
+			EUCLIDEAN,
+			NORM_EUCLIDEAN
+		};
+
 		enum class SetIdentityType {
 			MEAN,
 			MEDIAN,
@@ -100,7 +105,7 @@ namespace me {
 			Feature operator/(double val) const;
 			Feature operator-(Feature& other) const;
 			Feature& operator=(const Feature& other);
-			double similarity(const Feature& other) const;
+			double dist(const Feature& other, FeatureDistanceType d_type = FeatureDistanceType::NORM_EUCLIDEAN) const;
 			size_t size() const;
 		};
 
@@ -115,37 +120,57 @@ namespace me {
 		public:
 			FeatureSet(size_t feature_length);
 			void add(Feature& f);
-			Feature& at(size_t index);
+			const Feature& at(size_t index) const;
 			void remove(size_t index);
 			void erase(std::vector<Feature>::iterator position);
-			Feature mean();
-			Feature median();
+			const Feature mean() const;
+			const Feature median() const;
 			std::vector<Feature>::iterator begin();
 			std::vector<Feature>::iterator end();
-			size_t size();
-			size_t length();
-			Feature& operator[](size_t index);
+			size_t size() const;
+			size_t length() const;
+			const Feature& operator[](size_t index) const;
 		private:
 			std::vector<Feature> features;
 			size_t feature_length;
-			struct ptr_cmp {
-				bool operator()(double* a, double* b) const {
-					return *a < *b;
-				}
-			};
-			std::vector<std::multiset<double*, ptr_cmp>> feature_elements;
+			std::vector<std::multiset<double>> feature_elements;
 		};
 
 		class FeatureSpace {
 		public:
 			FeatureSpace(size_t feature_length) : feature_length(feature_length) {}
-			std::vector<FeatureSet>::iterator assign(Feature &input, double threshold = 0.8, SetIdentityType identity_type = SetIdentityType::MEDIAN);
-			std::vector<std::vector<FeatureSet>::iterator> assign(std::vector<Feature>& input, double threshold = 0.8, SetIdentityType identity_type = SetIdentityType::MEDIAN,
-				std::vector<std::vector<FeatureSet>::iterator> mask = std::vector<std::vector<FeatureSet>::iterator>());
+
+			/// <summary>
+			/// Performs a single feature assignment into this feature space. This is not a temporally stable operation. 
+			/// If two features from the same time frame are added using this function and are similar enough, they will be assigned the same id.
+			/// </summary>
+			/// <param name="input">Feature to be added to this feature space</param>
+			/// <param name="threshold">Maximum distance to potential feature sets within this space</param>
+			/// <param name="identity_type">Which feature to use as the set identity during comparisons</param>
+			/// <returns>An Index pointing to the feature set the input was assigned to</returns>
+			size_t assign(Feature &input, double threshold = 0.4, SetIdentityType identity_type = SetIdentityType::MEDIAN, 
+				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN);
+
+			/// <summary>
+			/// Performs a one-to-one assignment of a vector of features to this feature space. 
+			/// All provided features are scored relative to existing feature sets and assigned in ascending order based on distance,
+			/// continuing until all selected features are exhausted or existing feature sets are exhausted, whichever comes first.
+			/// If there are leftover input features, they will be assigned to new feature sets.
+			/// </summary>
+			/// <param name="input">Vector of features to be added to this feature space</param>
+			/// <param name="threshold">Maximum distance to potential feature sets within this space</param>
+			/// <param name="identity_type">Which feature to use as the set identity during comparisons</param>
+			/// <param name="mask">Optional mask vector for excluding existing sets from assignment</param>
+			/// <returns>A vector of indexes that reference the set each input feature was assigned to</returns>
+			std::vector<size_t> assign(std::vector<Feature>& input, double threshold = 0.4, SetIdentityType identity_type = SetIdentityType::MEDIAN,
+				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN, std::vector<int> mask = std::vector<int>());
 			std::vector<FeatureSet>::iterator begin();
 			std::vector<FeatureSet>::iterator end();
 			size_t size();
 			size_t length();
+			void clear();
+			FeatureSet& at(size_t index);
+			FeatureSet& operator[](size_t index);
 		private:
 			size_t feature_length;
 			std::vector<FeatureSet> feature_sets;
