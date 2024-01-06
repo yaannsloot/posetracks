@@ -1,14 +1,30 @@
 ﻿cmake_minimum_required (VERSION 3.10)
 
+find_program(CLANGXX_EXECUTABLE clang++)
+if(CLANGXX_EXECUTABLE)
+    message(STATUS "Found Clang++: ${CLANGXX_EXECUTABLE}")
+    # set(CMAKE_GENERATOR_TOOLSET ClangCL)
+    # set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
+else()
+    message(STATUS "Clang++ not found")
+endif()
+
 # Enable Hot Reload for MSVC compilers if supported.
-if (POLICY CMP0141)
+if(POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-add_compile_options(/bigobj)
+project ("MotionEngine" LANGUAGES CXX)
 
-project ("MotionEngine")
+message(STATUS "Using ${CMAKE_CXX_COMPILER_ID}")
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_compile_options(/bigobj)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_options(-fPIC)
+    add_compile_options(-save-temps)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
@@ -16,6 +32,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(OpenCV REQUIRED)
 find_package(CUDAToolkit REQUIRED)
 find_package(CUDNN REQUIRED)
+find_package(ArrayFire REQUIRED)
 
 # Find onnxruntime which has no cmake support
 find_path(ONNXRUNTIME_ROOT_DIR NO_DEFAULT_PATH REQUIRED)
@@ -51,6 +68,7 @@ set(ONNXRUNTIME_LIBRARIES
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${ONNXRUNTIME_INCLUDE_DIR})
+include_directories(${ArrayFire_INCLUDE_DIRS})
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
@@ -87,17 +105,26 @@ target_link_libraries(MEPoseTest PRIVATE
     ${CUDNN_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
 	me_objects
+    ArrayFire::af
 )
 
 # Test compile flags
 target_compile_features(MEPoseTest PRIVATE cxx_std_17)
 
-target_compile_options(MEPoseTest PRIVATE
-    /arch:AVX2
-    /Ob2
-    /Oi
-    /openmp
-)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(MEPoseTest PRIVATE
+        /arch:AVX2
+        /Ob2
+        /Oi
+        /openmp:llvm
+    )
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(MEPoseTest PRIVATE
+        -mavx2
+        -O2
+        -fopenmp
+    )
+endif()
 
 # Pybind Subdirectories
 add_subdirectory(module/cp39)

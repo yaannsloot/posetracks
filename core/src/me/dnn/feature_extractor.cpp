@@ -115,11 +115,18 @@ namespace me {
 				features.clear();
 				features.resize(batch_size);
 
+				//auto start = std::chrono::high_resolution_clock::now();
+				
 				for (size_t b = 0; b < batch_size; ++b) {
 					for (size_t f = 0; f < feature_length; ++f) {
 						features[b].data.push_back(results(b, f));
 					}
 				}
+
+				//auto end = std::chrono::high_resolution_clock::now();
+
+				//double time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+				//std::cout << "FE copy time: " << time << "us" << std::endl;
 
 				binding.ClearBoundInputs();
 				binding.ClearBoundOutputs();

@@ -33,6 +33,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <numeric>
 #include <random>
+#include <arrayfire.h>
 
 void performance_experiments() {
 	// Accessor vs true N dimensionsal heap memory structure performance
@@ -452,16 +453,125 @@ public:
 	}
 };
 
+template <typename T> // If a vector is already sorted minus the last element, this will rebalance the vector.
+void rotate_insert(std::vector<T>& vec) {
+	if (vec.size() < 2) return;
+
+	T temp = vec.back();
+
+	size_t i = vec.size() - 1;
+	while (i > 0 && vec[i - 1] > temp) {
+		vec[i] = vec[i - 1];
+		--i;
+	}
+
+	vec[i] = temp;
+}
+
 // This maintains implicit inheritence rules for type casting.
 // Because the managed instance of A cannot be downcasted to B, the dynamic pointer cast should never fail. b_instance will always come from a child type pointer.
 // Upcasting works perfectly fine here. THe only thing that gets copied is the instance pointer, which has our actual implementation
-
 
 int main() {
 	try {
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
+
+		auto start = std::chrono::high_resolution_clock::now();
+		auto end = std::chrono::high_resolution_clock::now();
+
+		// Container sorting and RW tests
+		std::random_device randy;
+		std::mt19937 jerry(randy());
+		std::uniform_real_distribution<> steve(0.0, 1.0);
+		std::vector<double> random_numbers(1000);
+		for (double& val : random_numbers) {
+			val = steve(jerry);
+		}
+		af::array af_rand(random_numbers.size(), random_numbers.data());
+		me::dnn::Feature rand_feat(random_numbers);
+		std::cout << rand_feat.norm() << ' ' << af::norm(af_rand) << std::endl;
+
+		start = std::chrono::high_resolution_clock::now();
+		rand_feat.norm();
+		end = std::chrono::high_resolution_clock::now();
+		double feat = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		start = std::chrono::high_resolution_clock::now();
+		af::norm(af_rand);
+		end = std::chrono::high_resolution_clock::now();
+		double fire = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		std::cout << "ME Feature norm: " << feat << "us, ArrayFire norm: " << fire << "us" << std::endl;
+
+		start = std::chrono::high_resolution_clock::now();
+		rand_feat.norm();
+		end = std::chrono::high_resolution_clock::now();
+		feat = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		start = std::chrono::high_resolution_clock::now();
+		af::norm(af_rand);
+		end = std::chrono::high_resolution_clock::now();
+		fire = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		std::cout << "ME Feature norm: " << feat << "us, ArrayFire norm: " << fire << "us" << std::endl;
+
+		start = std::chrono::high_resolution_clock::now();
+		rand_feat.norm();
+		end = std::chrono::high_resolution_clock::now();
+		feat = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		start = std::chrono::high_resolution_clock::now();
+		af::norm(af_rand);
+		end = std::chrono::high_resolution_clock::now();
+		fire = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		std::cout << "ME Feature norm: " << feat << "us, ArrayFire norm: " << fire << "us" << std::endl;
+
+		int test_steps = 100;
+		std::vector<double> test_vector;
+		std::multiset<double> test_set;
+		double set_time = 0;
+		double vector_time = 0;
+		double sort_time = 0;
+		double rand_sort_insert = 0;
+		double rand_set_insert = 0;
+		for (int i = 0; i < test_steps; ++i) {
+			test_vector.clear();
+			test_set.clear();
+			start = std::chrono::high_resolution_clock::now();
+			for (double& val : random_numbers) {
+				test_vector.push_back(val);
+			}
+			end = std::chrono::high_resolution_clock::now();
+			vector_time += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+			start = std::chrono::high_resolution_clock::now();
+			for (double& val : random_numbers) {
+				test_set.insert(val);
+			}
+			end = std::chrono::high_resolution_clock::now();
+			set_time += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+			start = std::chrono::high_resolution_clock::now();
+
+			std::sort(test_vector.begin(), test_vector.end());
+
+			end = std::chrono::high_resolution_clock::now();
+			sort_time += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+			double new_num = steve(jerry);
+			test_vector.push_back(new_num);
+			start = std::chrono::high_resolution_clock::now();
+			rotate_insert(test_vector);
+			end = std::chrono::high_resolution_clock::now();
+			rand_sort_insert += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+			start = std::chrono::high_resolution_clock::now();
+			test_set.insert(new_num);
+			end = std::chrono::high_resolution_clock::now();
+			rand_set_insert += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		}
+		set_time /= test_steps;
+		vector_time /= test_steps;
+		sort_time /= test_steps;
+		rand_sort_insert /= test_steps;
+		rand_set_insert /= test_steps;
+
+		std::cout << "Set_write: " << set_time << "us, Vector write: " << vector_time << "us, Sort time: " << 
+			sort_time << "us, Vector total: " << vector_time + sort_time << "us, Resort time: " << rand_sort_insert << "us, Set insert time: "
+			<< rand_set_insert << "us" << std::endl;
 
 		me::dnn::Feature feature_a({ 3, 5, 8, 9, 10, 14, 15 });
 		me::dnn::Feature feature_b({ 2, 4, 6, 7, 8, 12, 10 });
@@ -480,13 +590,8 @@ int main() {
 		feature_set.remove(0);
 		
 		auto feature_mean = feature_set.mean();
-		auto feature_median = feature_set.median();
 
 		for (auto& d : feature_mean.data)
-			std::cout << d << ' ';
-		std::cout << std::endl;
-
-		for (auto& d : feature_median.data)
 			std::cout << d << ' ';
 		std::cout << std::endl;
 
@@ -503,9 +608,6 @@ int main() {
 
 		std::vector<me::dnn::Feature> features;
 		std::vector<cv::Mat> images = { cv::imread("1.jpg"), cv::imread("2.jpg") };
-		
-		auto start = std::chrono::high_resolution_clock::now();
-		auto end = std::chrono::high_resolution_clock::now();
 
 		std::vector<long long> inference_times;
 		for (int i = 0; i < 1; ++i) {
@@ -525,7 +627,7 @@ int main() {
 
 		start = std::chrono::high_resolution_clock::now();
 		std::cout << feature_a.size() << std::endl;
-		std::cout << feature_a.dist(f_set.median()) << std::endl;
+		std::cout << feature_a.dist(f_set.mean()) << std::endl;
 		end = std::chrono::high_resolution_clock::now();
 		std::cout << "Compare time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us" << std::endl;
 
@@ -560,10 +662,10 @@ int main() {
 		me::dnn::FeatureSpace feature_space(features[0].size());
 
 		std::cout << "Estimating ids..." << std::endl;
-		bool one_to_one = false;
+		bool one_to_one = true;
 		if (!one_to_one) {
 			for (auto& f : features) {
-				auto it = feature_space.assign(f, 0.6, me::dnn::SetIdentityType::LAST);
+				auto it = feature_space.assign(f, 0.6);
 				ids.push_back(it);
 			}
 			std::cout << "ids: ";
@@ -573,11 +675,10 @@ int main() {
 			std::cout << std::endl;
 		}
 		else {
-			auto id_type = me::dnn::SetIdentityType::MEDIAN;
 			double thresh = 0.7;
 			for (int i = 0; i < 100; ++i) {
 				start = std::chrono::high_resolution_clock::now();
-				auto assignments = feature_space.assign(features, thresh, id_type);
+				auto assignments = feature_space.assign(features, thresh);
 				end = std::chrono::high_resolution_clock::now();
 				std::cout << "Assign time: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << "us" << std::endl;
 				for (auto& id : assignments) {
@@ -590,7 +691,7 @@ int main() {
 		std::cout << "Generating test video..." << std::endl;
 
 		int num_elements = 100;
-		int num_frames = 2000;
+		int num_frames = 4000;
 		double frame_rate = 60.0;
 		cv::Size frame_size(1024, 1024);
 		cv::VideoWriter video_out;
@@ -601,7 +702,6 @@ int main() {
 		std::uniform_int_distribution<int> rand_y(0, frame_size.height);
 		std::uniform_int_distribution<int> rand_rgb(0, 255);
 		std::vector<cv::Scalar> colors;
-		auto set_id_type = me::dnn::SetIdentityType::MEDIAN;
 		auto f_dist_type = me::dnn::FeatureDistanceType::EUCLIDEAN;
 		video_out.open("clustering.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), frame_rate, frame_size);
 		bool init = true;
@@ -614,12 +714,12 @@ int main() {
 				frame_points.push_back(feature);
 			}
 			if (init || one_one) {
-				f_space.assign(frame_points, 2000, set_id_type, f_dist_type);
+				f_space.assign(frame_points, 2000, f_dist_type);
 				init = false;
 			}
 			else {
 				for (auto& rf : frame_points) {
-					f_space.assign(rf, 2000, set_id_type, f_dist_type);
+					f_space.assign(rf, 2000, f_dist_type);
 				}
 			}
 			int colors_to_add = f_space.size() - colors.size();
@@ -632,11 +732,7 @@ int main() {
 				}
 			}
 			for (auto& s : f_space) {
-				me::dnn::Feature center;
-				if (set_id_type == me::dnn::SetIdentityType::MEAN)
-					center = s.mean();
-				else
-					center = s.median();
+				me::dnn::Feature center = s.mean();
 				cv::drawMarker(frame, cv::Point(center.data[0], center.data[1]), cv::Scalar(0, 0, 0));
 			}
 

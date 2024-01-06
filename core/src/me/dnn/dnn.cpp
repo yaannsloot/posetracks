@@ -21,6 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <opencv2/cudaarithm.hpp>
 #include <me/threading/simplepool.hpp>
 #include <onnxruntime_cxx_api.h>
+#include <execution>
 #include <omp.h>
 
 namespace me {
@@ -93,36 +94,39 @@ namespace me {
 		}
 
 		double Feature::norm() const {
-			double sum = 0;
-			for (auto& val : this->data) {
-				sum += pow(abs(val), 2);
+			const double* ptr_data = this->data.data();
+			auto elements = this->data.size();
+			double sum_of_squares = 0;
+			for (size_t i = 0; i < elements; ++i) {
+				sum_of_squares += ptr_data[i] * ptr_data[i];
 			}
-			if (sum > 0)
-				return sqrt(sum);
-			return 0;
+			return (sum_of_squares > 0) ? std::sqrt(sum_of_squares) : 0;
 		}
 
 		Feature Feature::operator/(double val) const {
 			if (val > 0 && this->size() > 0) {
 				Feature output;
 				output.data = this->data;
-				for (auto it = output.data.begin(); it != output.data.end(); ++it) {
-					*it /= val;
+				double* output_ptr = output.data.data();
+				auto elements = output.data.size();
+				for (size_t i = 0; i < elements; ++i) {
+					output_ptr[i] /= val;
 				}
 				return output;
 			}
 			return *this;
 		}
 
-		Feature Feature::operator-(Feature& other) const {
+		Feature Feature::operator-(const Feature& other) const {
 			Feature output;
 			if (this->size() > 0 && other.size() > 0 && this->size() == other.size()) {
-				auto it_a = this->data.begin();
-				auto it_b = other.data.begin();
-				while (it_a != this->data.end() && it_b != other.data.end()) {
-					output.data.push_back(*it_a - *it_b);
-					++it_a;
-					++it_b;
+				auto elements = this->data.size();
+				output.data.resize(elements);
+				double* output_ptr = output.data.data();
+				const double* data_ptr = this->data.data();
+				const double* other_ptr = other.data.data();
+				for (size_t i = 0; i < elements; ++i) {
+					output_ptr[i] = data_ptr[i] - other_ptr[i];
 				}
 			}
 			return output;
@@ -144,19 +148,12 @@ namespace me {
 				return (norm_a - norm_b).norm();
 			}
 			else {
-				return (Feature(*this) - Feature(other)).norm();
+				return (*this - other).norm();
 			}
 		}
 
 		size_t Feature::size() const {
 			return data.size();
-		}
-
-		FeatureSet::FeatureSet(size_t feature_length) {
-			for (size_t i = 0; i < feature_length; ++i) {
-				feature_elements.push_back(std::multiset<double>());
-			}
-			this->feature_length = feature_length;
 		}
 
 		void FeatureSet::add(Feature& f) {
@@ -165,13 +162,18 @@ namespace me {
 				ss << "Mismatch in expected feature length (" << this->feature_length << ") and provided length (" << f.size() << ").";
 				throw std::runtime_error(ss.str());
 			}
-			this->features.push_back(f);
-			const Feature& new_f = this->features.back();
-			auto set_it = this->feature_elements.begin();
-			for (auto it = new_f.data.begin(); it != new_f.data.end(); ++it) {
-				set_it->insert(*it);
-				++set_it;
+			if (this->features.size() == 0)
+				this->mean_feature = f;
+			else {
+				size_t current_size = this->features.size();
+				size_t new_size = current_size + 1;
+				double scale_a = (double)current_size / (double)new_size;
+				double scale_b = 1.0 / (double)new_size;
+				std::transform(this->mean_feature.data.begin(), this->mean_feature.data.end(),
+					f.data.begin(), mean_feature.data.begin(), 
+					[scale_a, scale_b](double& a, double& b) -> double { return (a * scale_a) + (b * scale_b); });
 			}
+			this->features.push_back(f);
 		}
 
 		const Feature& FeatureSet::at(size_t index) const {
@@ -184,69 +186,23 @@ namespace me {
 		}
 
 		void FeatureSet::erase(std::vector<Feature>::iterator position) {
-			auto set_it = this->feature_elements.begin();
-			for (auto it = position->data.begin(); it != position->data.end(); ++it) {
-				auto e = set_it->find(*it);
-				if (e != set_it->end())
-					set_it->erase(e);
-				++set_it;
-			}
 			this->features.erase(position);
+			this->mean_feature.data.resize(this->feature_length);
+			std::fill(std::execution::par, this->mean_feature.data.begin(), this->mean_feature.data.end(), 0);
+			if (!this->features.empty()) {
+				for (const auto& vec : this->features) {
+					std::transform(this->mean_feature.data.begin(),
+						this->mean_feature.data.end(), vec.data.begin(), this->mean_feature.data.begin(),
+						std::plus<double>());
+				}
+				auto div = this->features.size();
+				std::transform(this->mean_feature.data.begin(), this->mean_feature.data.end(), this->mean_feature.data.begin(),
+					[div](double& a) -> double { return a / div; });
+			}
 		}
 
-		const Feature FeatureSet::mean() const {
-			Feature result;
-			if (!this->features.empty()) {
-				for (auto it = this->feature_elements.begin(); it != this->feature_elements.end(); ++it) {
-					double a = 0;
-					for (auto itt = it->begin(); itt != it->end(); ++itt) {
-						a += *itt;
-					}
-					a = a / it->size();
-					result.data.push_back(a);
-				}
-			}
-			return result;
-		}
-
-		const Feature FeatureSet::median() const {
-			Feature result;
-			if (!this->features.empty()) {
-				for (auto it = this->feature_elements.begin(); it != this->feature_elements.end(); ++it) {
-					size_t e_size = it->size();
-					if (e_size % 2 == 0) {
-						double a = 0;
-						double b = 0;
-						size_t i_a = e_size / 2 - 1;
-						size_t i_b = e_size / 2;
-						size_t pos = 0;
-						for (auto itt = it->begin(); itt != it->end(); ++itt) {
-							if (pos == i_a)
-								a = *itt;
-							else if (pos == i_b) {
-								b = *itt;
-								break;
-							}
-							++pos;
-						}
-						result.data.push_back((a + b) / 2);
-					}
-					else {
-						double a = 0;
-						size_t i_a = e_size / 2;
-						size_t pos = 0;
-						for (auto itt = it->begin(); itt != it->end(); ++itt) {
-							if (pos == i_a) {
-								a = *itt;
-								break;
-							}
-							++pos;
-						}
-						result.data.push_back(a);
-					}
-				}
-			}
-			return result;
+		const Feature& FeatureSet::mean() const {
+			return this->mean_feature;
 		}
 
 		std::vector<Feature>::iterator FeatureSet::begin() {
@@ -269,7 +225,11 @@ namespace me {
 			return this->at(index);
 		}
 
-		size_t FeatureSpace::assign(Feature& input, double threshold, SetIdentityType identity_type, FeatureDistanceType dist_type) {
+		double dist_thread(const Feature& a, const Feature& mean, FeatureDistanceType d_type) {
+			return a.dist(mean, d_type);
+		}
+
+		size_t FeatureSpace::assign(Feature& input, double threshold, FeatureDistanceType dist_type) {
 			if (input.size() != this->feature_length) {
 				std::stringstream ss;
 				ss << "Mismatch in expected feature length (" << this->feature_length << ") and provided length (" << input.size() << ").";
@@ -279,22 +239,22 @@ namespace me {
 			int lowest_index = -1;
 			omp_lock_t lock;
 			omp_init_lock(&lock);
-			#pragma omp parallel for 
-			for (int i = 0; i < this->feature_sets.size(); ++i) {
-				double dist = 0;
-				if (identity_type == SetIdentityType::MEAN)
-					dist = input.dist(this->feature_sets[i].mean(), dist_type);
-				else if (identity_type == SetIdentityType::MEDIAN)
-					dist = input.dist(this->feature_sets[i].median(), dist_type);
-				else if (identity_type == SetIdentityType::LAST)
-					dist = input.dist(*(this->feature_sets[i].end() - 1), dist_type);
-				omp_set_lock(&lock);
-				if (dist < threshold && dist < lowest) {
-					lowest_index = i;
-					lowest = dist;
+			int num_sets = this->feature_sets.size();
+			FeatureSet* f_set_ptr = this->feature_sets.data();
+            #pragma omp parallel for 
+			for (int i = 0; i < num_sets; ++i) {
+				#pragma omp task
+				{
+					double dist = input.dist(f_set_ptr[i].mean(), dist_type);
+					omp_set_lock(&lock);
+					if (dist < threshold && dist < lowest) {
+						lowest_index = i;
+						lowest = dist;
+					}
+					omp_unset_lock(&lock);
 				}
-				omp_unset_lock(&lock);
 			}
+			#pragma omp taskwait
 			omp_destroy_lock(&lock);
 			auto it = this->feature_sets.end();
 			if (lowest_index > -1) {
@@ -306,9 +266,10 @@ namespace me {
 			}
 			it->add(input);
 			return std::distance(this->feature_sets.begin(), it);
+
 		}
 
-		std::vector<size_t> FeatureSpace::assign(std::vector<Feature>& input, double threshold, SetIdentityType identity_type,
+		std::vector<size_t> FeatureSpace::assign(std::vector<Feature>& input, double threshold,
 			FeatureDistanceType dist_type, std::vector<int> mask) {
 			std::vector<size_t> output;
 			output.resize(input.size());
@@ -321,27 +282,32 @@ namespace me {
 				ss << "Mismatch in expected mask length (" << this->feature_sets.size() << ") and provided length (" << mask.size() << ").";
 				throw std::runtime_error(ss.str());
 			}
-			for (int i = 0; i < this->feature_sets.size(); ++i) {
-				if (mask.size() > 0 && mask[i] >= 1)
+			int num_sets = this->feature_sets.size();
+			FeatureSet* f_set_ptr = this->feature_sets.data();
+			int num_inputs = input.size();
+			Feature* input_ptr = input.data();
+			int* mask_ptr = mask.data();
+			int mask_len = mask.size();
+            #pragma omp parallel for 
+			for (int i = 0; i < num_sets; ++i) {
+				if (mask_len > 0 && mask_ptr[i] >= 1)
 					continue;
-				#pragma omp parallel for 
-				for (int j = 0; j < input.size(); ++j) {
-					double dist = 0;
-					if (identity_type == SetIdentityType::MEAN)
-						dist = input[j].dist(this->feature_sets[i].mean(), dist_type);
-					else if (identity_type == SetIdentityType::MEDIAN)
-						dist = input[j].dist(this->feature_sets[i].median(), dist_type);
-					else if (identity_type == SetIdentityType::LAST)
-						dist = input[j].dist(*(this->feature_sets[i].end() - 1), dist_type);
-					if (dist < threshold) {
-						omp_set_lock(&lock);
-						scores.push_back(std::tuple<double, size_t, size_t>(dist, j, i));
-						selected_features.insert(j);
-						omp_unset_lock(&lock);
+				#pragma omp task
+				{
+					for (int j = 0; j < num_inputs; ++j) {
+						double dist = input_ptr[j].dist(f_set_ptr[i].mean(), dist_type);
+						if (dist < threshold) {
+							omp_set_lock(&lock);
+							scores.push_back(std::tuple<double, size_t, size_t>(dist, j, i));
+							selected_features.insert(j);
+							omp_unset_lock(&lock);
+						}
 					}
 				}
 			}
+			#pragma omp taskwait
 			omp_destroy_lock(&lock);
+
 			auto comp = [](const std::tuple<double, size_t, size_t>& first, 
 				const std::tuple<double, size_t, size_t>& second) {
 				return std::get<0>(first) < std::get<0>(second);

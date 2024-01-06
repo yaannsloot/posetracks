@@ -60,12 +60,6 @@ namespace me {
 			NORM_EUCLIDEAN
 		};
 
-		enum class SetIdentityType {
-			MEAN,
-			MEDIAN,
-			LAST
-		};
-
 		struct Detection {
 			Detection();
 			Detection(int class_id, cv::Rect2d bbox, float score);
@@ -103,7 +97,7 @@ namespace me {
 			std::vector<double> data;
 			double norm() const;
 			Feature operator/(double val) const;
-			Feature operator-(Feature& other) const;
+			Feature operator-(const Feature& other) const;
 			Feature& operator=(const Feature& other);
 			double dist(const Feature& other, FeatureDistanceType d_type = FeatureDistanceType::NORM_EUCLIDEAN) const;
 			size_t size() const;
@@ -118,13 +112,12 @@ namespace me {
 		/// </summary>
 		class FeatureSet {
 		public:
-			FeatureSet(size_t feature_length);
+			FeatureSet(size_t feature_length) : feature_length(feature_length) {}
 			void add(Feature& f);
 			const Feature& at(size_t index) const;
 			void remove(size_t index);
 			void erase(std::vector<Feature>::iterator position);
-			const Feature mean() const;
-			const Feature median() const;
+			const Feature& mean() const;
 			std::vector<Feature>::iterator begin();
 			std::vector<Feature>::iterator end();
 			size_t size() const;
@@ -133,7 +126,7 @@ namespace me {
 		private:
 			std::vector<Feature> features;
 			size_t feature_length;
-			std::vector<std::multiset<double>> feature_elements;
+			Feature mean_feature;
 		};
 
 		class FeatureSpace {
@@ -148,8 +141,7 @@ namespace me {
 			/// <param name="threshold">Maximum distance to potential feature sets within this space</param>
 			/// <param name="identity_type">Which feature to use as the set identity during comparisons</param>
 			/// <returns>An Index pointing to the feature set the input was assigned to</returns>
-			size_t assign(Feature &input, double threshold = 0.4, SetIdentityType identity_type = SetIdentityType::MEDIAN, 
-				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN);
+			size_t assign(Feature &input, double threshold = 0.4, FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN);
 
 			/// <summary>
 			/// Performs a one-to-one assignment of a vector of features to this feature space. 
@@ -162,7 +154,7 @@ namespace me {
 			/// <param name="identity_type">Which feature to use as the set identity during comparisons</param>
 			/// <param name="mask">Optional mask vector for excluding existing sets from assignment</param>
 			/// <returns>A vector of indexes that reference the set each input feature was assigned to</returns>
-			std::vector<size_t> assign(std::vector<Feature>& input, double threshold = 0.4, SetIdentityType identity_type = SetIdentityType::MEDIAN,
+			std::vector<size_t> assign(std::vector<Feature>& input, double threshold = 0.4, 
 				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN, std::vector<int> mask = std::vector<int>());
 			std::vector<FeatureSet>::iterator begin();
 			std::vector<FeatureSet>::iterator end();
