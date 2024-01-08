@@ -20,7 +20,10 @@ project ("MotionEngine" LANGUAGES CXX)
 message(STATUS "Using ${CMAKE_CXX_COMPILER_ID}")
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options(/bigobj)
+    add_compile_options(
+        /bigobj
+        /W4
+    )
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options(-fPIC)
     add_compile_options(-save-temps)

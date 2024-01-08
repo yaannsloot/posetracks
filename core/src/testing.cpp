@@ -610,9 +610,9 @@ int main() {
 		std::vector<cv::Mat> images = { cv::imread("1.jpg"), cv::imread("2.jpg") };
 
 		std::vector<long long> inference_times;
-		for (int i = 0; i < 1; ++i) {
+		for (int i = 0; i < 10; ++i) {
 			start = std::chrono::high_resolution_clock::now();
-			feature_extractor.infer(images, features);
+			me::dnn::models::strict_batch_infer(1, feature_extractor, images, features);
 			end = std::chrono::high_resolution_clock::now();
 			inference_times.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
 		}
@@ -676,6 +676,8 @@ int main() {
 		}
 		else {
 			double thresh = 0.7;
+			auto temp = features;
+			features.insert(features.end(), temp.begin(), temp.end());
 			for (int i = 0; i < 100; ++i) {
 				start = std::chrono::high_resolution_clock::now();
 				auto assignments = feature_space.assign(features, thresh);
@@ -688,57 +690,61 @@ int main() {
 			}
 		}
 
-		std::cout << "Generating test video..." << std::endl;
+		bool gen_test = false;
 
-		int num_elements = 100;
-		int num_frames = 4000;
-		double frame_rate = 60.0;
-		cv::Size frame_size(1024, 1024);
-		cv::VideoWriter video_out;
-		me::dnn::FeatureSpace f_space(2);
-		std::random_device rd;
-		std::mt19937 gen(rd());
-		std::uniform_int_distribution<int> rand_x(0, frame_size.width);
-		std::uniform_int_distribution<int> rand_y(0, frame_size.height);
-		std::uniform_int_distribution<int> rand_rgb(0, 255);
-		std::vector<cv::Scalar> colors;
-		auto f_dist_type = me::dnn::FeatureDistanceType::EUCLIDEAN;
-		video_out.open("clustering.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), frame_rate, frame_size);
-		bool init = true;
-		bool one_one = false;
-		for (int f = 0; f < num_frames; ++f) {
-			cv::Mat frame(frame_size, CV_8UC3, cv::Scalar(255, 255, 255));
-			std::vector<me::dnn::Feature> frame_points;
-			for (int e = 0; e < num_elements; ++e) {
-				me::dnn::Feature feature({ (double)rand_x(gen), (double)rand_y(gen) });
-				frame_points.push_back(feature);
-			}
-			if (init || one_one) {
-				f_space.assign(frame_points, 2000, f_dist_type);
-				init = false;
-			}
-			else {
-				for (auto& rf : frame_points) {
-					f_space.assign(rf, 2000, f_dist_type);
-				}
-			}
-			int colors_to_add = f_space.size() - colors.size();
-			for (int i = 0; i < colors_to_add; ++i) {
-				colors.emplace_back(rand_rgb(gen), rand_rgb(gen), rand_rgb(gen));
-			}
-			for (int s = 0; s < f_space.size(); ++s) {
-				for (auto& feat : f_space[s]) {
-					cv::circle(frame, cv::Point(feat.data[0], feat.data[1]), 3, colors[s], -1);
-				}
-			}
-			for (auto& s : f_space) {
-				me::dnn::Feature center = s.mean();
-				cv::drawMarker(frame, cv::Point(center.data[0], center.data[1]), cv::Scalar(0, 0, 0));
-			}
+		if (gen_test) {
+			std::cout << "Generating test video..." << std::endl;
 
-			video_out.write(frame);
+			int num_elements = 100;
+			int num_frames = 4000;
+			double frame_rate = 60.0;
+			cv::Size frame_size(1024, 1024);
+			cv::VideoWriter video_out;
+			me::dnn::FeatureSpace f_space(2);
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_int_distribution<int> rand_x(0, frame_size.width);
+			std::uniform_int_distribution<int> rand_y(0, frame_size.height);
+			std::uniform_int_distribution<int> rand_rgb(0, 255);
+			std::vector<cv::Scalar> colors;
+			auto f_dist_type = me::dnn::FeatureDistanceType::EUCLIDEAN;
+			video_out.open("clustering.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), frame_rate, frame_size);
+			bool init = true;
+			bool one_one = false;
+			for (int f = 0; f < num_frames; ++f) {
+				cv::Mat frame(frame_size, CV_8UC3, cv::Scalar(255, 255, 255));
+				std::vector<me::dnn::Feature> frame_points;
+				for (int e = 0; e < num_elements; ++e) {
+					me::dnn::Feature feature({ (double)rand_x(gen), (double)rand_y(gen) });
+					frame_points.push_back(feature);
+				}
+				if (init || one_one) {
+					f_space.assign(frame_points, 2000, f_dist_type);
+					init = false;
+				}
+				else {
+					for (auto& rf : frame_points) {
+						f_space.assign(rf, 2000, f_dist_type);
+					}
+				}
+				int colors_to_add = f_space.size() - colors.size();
+				for (int i = 0; i < colors_to_add; ++i) {
+					colors.emplace_back(rand_rgb(gen), rand_rgb(gen), rand_rgb(gen));
+				}
+				for (int s = 0; s < f_space.size(); ++s) {
+					for (auto& feat : f_space[s]) {
+						cv::circle(frame, cv::Point(feat.data[0], feat.data[1]), 3, colors[s], -1);
+					}
+				}
+				for (auto& s : f_space) {
+					me::dnn::Feature center = s.mean();
+					cv::drawMarker(frame, cv::Point(center.data[0], center.data[1]), cv::Scalar(0, 0, 0));
+				}
+
+				video_out.write(frame);
+			}
+			video_out.release();
 		}
-		video_out.release();
 
 
 		// Run functions used in the python module so their dependencies show up on the logs

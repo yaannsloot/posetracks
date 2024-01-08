@@ -22,7 +22,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/threading/simplepool.hpp>
 #include <onnxruntime_cxx_api.h>
 #include <execution>
-#include <omp.h>
 
 namespace me {
 
@@ -236,28 +235,24 @@ namespace me {
 				throw std::runtime_error(ss.str());
 			}
 			double lowest = std::numeric_limits<double>::infinity();
-			int lowest_index = -1;
-			omp_lock_t lock;
-			omp_init_lock(&lock);
-			int num_sets = this->feature_sets.size();
+			bool thresh_passed = false;
+			size_t lowest_index = 0;
+			size_t num_sets = this->feature_sets.size();
 			FeatureSet* f_set_ptr = this->feature_sets.data();
-            #pragma omp parallel for 
-			for (int i = 0; i < num_sets; ++i) {
-				#pragma omp task
-				{
-					double dist = input.dist(f_set_ptr[i].mean(), dist_type);
-					omp_set_lock(&lock);
-					if (dist < threshold && dist < lowest) {
-						lowest_index = i;
-						lowest = dist;
-					}
-					omp_unset_lock(&lock);
+			std::vector<size_t> f_set_indices(num_sets);
+			std::iota(f_set_indices.begin(), f_set_indices.end(), 0);
+			std::mutex lock;
+			std::for_each(std::execution::par_unseq, f_set_indices.begin(), f_set_indices.end(), [&] (size_t i) {
+				double dist = input.dist(f_set_ptr[i].mean(), dist_type);
+				std::lock_guard<std::mutex> lock_guard(lock);
+				if (dist < threshold && dist < lowest) {
+					lowest_index = i;
+					lowest = dist;
+					thresh_passed = true;
 				}
-			}
-			#pragma omp taskwait
-			omp_destroy_lock(&lock);
+			});
 			auto it = this->feature_sets.end();
-			if (lowest_index > -1) {
+			if (thresh_passed) {
 				it = this->feature_sets.begin() + lowest_index;
 			}
 			else {
@@ -275,38 +270,33 @@ namespace me {
 			output.resize(input.size());
 			std::set<size_t> selected_features;
 			std::vector<std::tuple<double, size_t, size_t>> scores;
-			omp_lock_t lock;
-			omp_init_lock(&lock);
 			if (mask.size() > 0 && mask.size() != this->feature_sets.size()) {
 				std::stringstream ss;
 				ss << "Mismatch in expected mask length (" << this->feature_sets.size() << ") and provided length (" << mask.size() << ").";
 				throw std::runtime_error(ss.str());
 			}
-			int num_sets = this->feature_sets.size();
-			FeatureSet* f_set_ptr = this->feature_sets.data();
-			int num_inputs = input.size();
-			Feature* input_ptr = input.data();
+
+			size_t num_features = this->feature_sets.size();
+			size_t mask_len = mask.size();
 			int* mask_ptr = mask.data();
-			int mask_len = mask.size();
-            #pragma omp parallel for 
-			for (int i = 0; i < num_sets; ++i) {
-				if (mask_len > 0 && mask_ptr[i] >= 1)
-					continue;
-				#pragma omp task
-				{
-					for (int j = 0; j < num_inputs; ++j) {
-						double dist = input_ptr[j].dist(f_set_ptr[i].mean(), dist_type);
-						if (dist < threshold) {
-							omp_set_lock(&lock);
-							scores.push_back(std::tuple<double, size_t, size_t>(dist, j, i));
-							selected_features.insert(j);
-							omp_unset_lock(&lock);
-						}
-					}
+			std::vector<size_t> valid_indices;
+			for (size_t i = 0; i < num_features; ++i) {
+				if (mask_len == 0 || mask_ptr[i] == 0) {
+					valid_indices.push_back(i);
 				}
 			}
-			#pragma omp taskwait
-			omp_destroy_lock(&lock);
+			std::mutex lock;
+			std::for_each(std::execution::par_unseq, valid_indices.begin(), valid_indices.end(), [&](size_t i) {
+				const FeatureSet& feature_set = this->feature_sets[i];
+				for (const auto& input_feature : input) {
+					double dist = input_feature.dist(feature_set.mean(), dist_type);
+					if (dist < threshold) {
+						std::lock_guard<std::mutex> lock_guard(lock);
+						scores.push_back(std::tuple<double, size_t, size_t>(dist, &input_feature - &input[0], i));
+						selected_features.insert(&input_feature - &input[0]);
+					}
+				}
+			});
 
 			auto comp = [](const std::tuple<double, size_t, size_t>& first, 
 				const std::tuple<double, size_t, size_t>& second) {
@@ -402,59 +392,6 @@ namespace me {
 			}
 
 			return selected_indices;
-		}
-
-		cv::Mat resize_segment(const cv::Mat& img_segment, cv::Size new_segment_size) {
-			cv::Mat resized_segment;
-			cv::resize(img_segment, resized_segment, new_segment_size);
-			return resized_segment;
-		}
-
-		std::vector<cv::Mat> split_into_segments(const cv::Mat& img, int num_segments) {
-			std::vector<cv::Mat> segments;
-			int segment_size = std::sqrt(img.rows * img.cols / num_segments);
-			int padding = segment_size * num_segments - img.rows * img.cols;
-			cv::Mat padded_img;
-			int padding_top = std::max(0, padding / img.cols);
-			int padding_left = std::max(0, padding % img.cols);
-			cv::copyMakeBorder(img, padded_img, padding_top, 0, padding_left, 0, cv::BORDER_CONSTANT, cv::Scalar(0));
-			for (int i = 0; i < padded_img.rows; i += segment_size) {
-				for (int j = 0; j < padded_img.cols; j += segment_size) {
-					cv::Mat segment = padded_img(cv::Rect(j, i, segment_size, segment_size));
-					segments.push_back(segment);
-				}
-			}
-			return segments;
-		}
-
-		cv::Mat combine_segments(const std::vector<cv::Mat>& segments, cv::Size new_size) {
-			cv::Mat img(new_size, CV_8UC3);
-			for (const auto& segment : segments) {
-				cv::Mat resized_segment;
-				cv::resize(segment, resized_segment, new_size);
-				cv::Rect roi(segment.cols * (&segment - &segments[0]), segment.rows * (&segment - &segments[0]), segment.cols, segment.rows);
-				resized_segment.copyTo(img(roi));
-			}
-			return img;
-		}
-
-		cv::Mat resize_to_net(const cv::Mat& img, cv::Size new_size) {
-			if (!threading::global_pool.Running())
-				threading::global_pool.Start();
-			int num_segments = threading::global_pool.NumThreads();
-			std::vector<cv::Mat> segments = split_into_segments(img, num_segments);
-			std::vector<cv::Mat> resized_segments;
-			std::vector<std::shared_future<cv::Mat>> futures;
-
-			for (const auto& segment : segments) {
-				futures.push_back(threading::global_pool.QueueJob(resize_segment, segment, new_size));
-			}
-
-			for (auto& future : futures) {
-				resized_segments.push_back(future.get());
-			}
-
-			return combine_segments(resized_segments, new_size);
 		}
 
 		void blobifyImages(const std::vector<cv::Mat>& images,
@@ -600,7 +537,7 @@ namespace me {
 									c = 0;
 							}
 
-							float tmp = src_images->at(n).ptr<uchar>(h)[w * 3 + c];
+							float tmp = src_images->at(n).ptr<uchar>(h)[w * 3ul + c];
 
 							blob[i] = scale * ((tmp - mean[c]) / new_std[c]);
 

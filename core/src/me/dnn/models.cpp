@@ -75,7 +75,7 @@ namespace me {
 					executor = Executor::CUDA;
 				}
 				else {
-					OrtStatusPtr status = OrtSessionOptionsAppendExecutionProvider_CPU(*this->session_options, 1);
+					OrtSessionOptionsAppendExecutionProvider_CPU(*this->session_options, 1);
 					executor = Executor::CPU;
 					this->session_options->SetIntraOpNumThreads(std::thread::hardware_concurrency());
 				}
@@ -100,23 +100,23 @@ namespace me {
 						error += std::to_string(num_output_nodes) + " output nodes";
 						throw std::runtime_error(error);
 					}
-					std::vector<Ort::AllocatedStringPtr> input_names;
-					std::vector<Ort::AllocatedStringPtr> output_names;
+					std::vector<Ort::AllocatedStringPtr> ort_input_names;
+					std::vector<Ort::AllocatedStringPtr> ort_output_names;
 					Ort::AllocatorWithDefaultOptions allocator;
 					for (size_t i = 0; i < num_input_nodes; i++) {
-						input_names.push_back(this->session->GetInputNameAllocated(i, allocator));
+						ort_input_names.push_back(this->session->GetInputNameAllocated(i, allocator));
 					}
 					for (size_t i = 0; i < num_output_nodes; i++) {
-						output_names.push_back(this->session->GetOutputNameAllocated(i, allocator));
+						ort_output_names.push_back(this->session->GetOutputNameAllocated(i, allocator));
 					}
 					// Check if input and output names are valid
-					for (auto& name : input_names) {
+					for (auto& name : ort_input_names) {
 						if (std::string(name.get()).empty()) {
 							unload();
 							throw std::runtime_error("Failed to get input and output names from onnxruntime");
 						}
 					}
-					for (auto& name : output_names) {
+					for (auto& name : ort_output_names) {
 						if (std::string(name.get()).empty()) {
 							unload();
 							throw std::runtime_error("Failed to get input and output names from onnxruntime");
@@ -124,7 +124,7 @@ namespace me {
 					}
 					
 					// Check if input and output names match what is expected
-					for (auto& name : input_names) {
+					for (auto& name : ort_input_names) {
 						std::string name_str(name.get());
 						if (this->input_names.find(name_str) == this->input_names.end()) {
 							unload();
@@ -136,7 +136,7 @@ namespace me {
 							throw std::runtime_error(error);
 						}
 					}
-					for (auto& name : output_names) {
+					for (auto& name : ort_output_names) {
 						std::string name_str(name.get());
 						if (this->output_names.find(name_str) == this->output_names.end()) {
 							unload();

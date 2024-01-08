@@ -168,11 +168,16 @@ namespace me {
 			std::vector<FeatureSet> feature_sets;
 		};
 
+		class FeatureTracker {
+		public:
+
+		private:
+			FeatureSpace f_space;
+		};
+
 		inline double iou(cv::Rect2d a, cv::Rect2d b);
 
 		std::vector<size_t> nms(std::vector<Detection>& detections, float iou_thresh);
-
-		cv::Mat resize_to_net(const cv::Mat& img, cv::Size new_size);
 
 		void blobifyImages(const std::vector<cv::Mat>& images,
 			std::vector<float>& output,

@@ -134,7 +134,7 @@ namespace me {
 						f = (b & c) | (b & d) | (c & d);
 						k = 0x8F1BBCDC;
 					}
-					else if (60 <= j && j <= 79) {
+					else {
 						f = b ^ c ^ d;
 						k = 0xCA62C1D6;
 					}

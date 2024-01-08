@@ -19,12 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "dnn.hpp"
 #include <onnxruntime_cxx_api.h>
+#include <type_traits>
+#include <utility>
 
 namespace me {
 	
 	namespace dnn {
 		
 		namespace models {
+
 
 			// Implementation classes
 
@@ -206,6 +209,48 @@ namespace me {
 				/// <param name="features">Output vector containing the feature extracted for each image</param>
 				void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features);
 			};
+
+
+			// Helper template functions
+
+			/// <summary>
+			/// Enforces a strict batch size on model inference. 
+			/// If the input has a size greater than the batch size, it will be broken into chunks and forwarded sequentially.
+			/// </summary>
+			/// <param name="model">Model used for inference</param>
+			/// <param name="images">Input image vector</param>
+			/// <param name="output">Output vector</param>
+			/// <param name="...args">Additional arguments. Refer to batch inference function of model class for more information</param>
+			/// <returns></returns>
+			template<typename T, typename U, typename... Args>
+			typename std::enable_if<std::is_base_of<ImageModel, T>::value>::type
+			strict_batch_infer(size_t batch_size, T& model, const std::vector<cv::Mat>& images, std::vector<U>& output, Args&&... args) {
+				if (!model.is_loaded())
+					return;
+				output.clear();
+				auto* images_ptr = images.data();
+				size_t image_num = images.size();
+				for (size_t i = 0; i < image_num; i += batch_size) {
+					size_t end = i + batch_size;
+					std::vector<cv::Mat> chunk;
+					if (end > image_num)
+						chunk.assign(images.begin() + i, images.end());
+					else
+						chunk.assign(images.begin() + i, images.begin() + end);
+					size_t diff = batch_size - chunk.size();
+					if (diff > 0) {
+						auto size_d = model.net_size();
+						for (size_t d = 0; d < diff; ++d) {
+							cv::Mat zero_img(size_d, CV_8UC3, cv::Scalar(0, 0, 0));
+							chunk.push_back(zero_img);
+						}
+					}
+					std::vector<U> chunk_outputs;
+					model.infer(chunk, chunk_outputs, std::forward<Args>(args)...);
+					chunk_outputs.resize(chunk_outputs.size() - diff);
+					output.insert(output.end(), chunk_outputs.begin(), chunk_outputs.end());
+				}
+			}
 
 		}	
 	

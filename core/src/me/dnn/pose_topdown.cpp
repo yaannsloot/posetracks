@@ -31,7 +31,7 @@ namespace me {
 			void TopDownPoseDetector::infer(const cv::Mat& image, std::vector<Pose>& poses, int max_pose_batches, float conf_thresh, float iou_thresh) {
 				std::vector<cv::Mat> images{ image };
 				std::vector<std::vector<Pose>> poses_;
-				infer(images, poses_, 1, max_pose_batches);
+				infer(images, poses_, 1, max_pose_batches, conf_thresh, iou_thresh);
 				poses = poses_[0];
 			}
 
@@ -99,7 +99,7 @@ namespace me {
 				for (size_t i = 0; i < img_detections.size(); i = i + max_pose_batches) {
 					size_t end = i + max_pose_batches;
 					std::vector<Detection> chunk;
-					std::vector<int> chunk_indices;
+					std::vector<size_t> chunk_indices;
 					if (end > img_detections.size()) {
 						chunk.assign(img_detections.begin() + i, img_detections.end());
 						chunk_indices.assign(img_indices.begin() + i, img_indices.end());
@@ -166,7 +166,6 @@ namespace me {
 					// Pose adjustments
 					for (size_t j = 0; j < chunk.size(); j++) {
 						Pose& pose = chunk_poses[j];
-						const cv::Mat& frame = images[chunk_indices[j]];
 						auto& bbox = chunk[j].bbox;
 						auto num_joints = pose.num_joints();
 
