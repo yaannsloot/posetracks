@@ -537,7 +537,7 @@ namespace me {
 									c = 0;
 							}
 
-							float tmp = src_images->at(n).ptr<uchar>(h)[w * 3ul + c];
+							float tmp = src_images->at(n).ptr<uchar>(h)[w * 3 + c];
 
 							blob[i] = scale * ((tmp - mean[c]) / new_std[c]);
 

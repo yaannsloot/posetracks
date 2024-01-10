@@ -104,24 +104,75 @@ namespace me {
 		};
 
 		/// <summary>
-		/// Specialized container for fast mean and median operations on a managed set of feature vectors.
+		/// Specialized container for fast mean operations on a managed set of feature vectors.
 		/// 
-		/// Currently uses a list of sets for each element so that everything is pre-sorted for median calculations.
-		/// This currently uses a linear search which could slow down operations when the feature length reaches a considerable size
-		/// Consider using a custon implementation of a red-black tree that uses order statistics for faster search and insert
+		/// Tracks the mean by updating it on every insertion. Each inserted feature updates the mean through weighted addition.
+		/// If a feature is removed, the mean is recalculated using the internal list of features. 
+		/// This means it is much faster to insert a new feature than it is to remove one.
 		/// </summary>
 		class FeatureSet {
 		public:
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="feature_length"></param>
 			FeatureSet(size_t feature_length) : feature_length(feature_length) {}
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="f"></param>
 			void add(Feature& f);
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="index"></param>
+			/// <returns></returns>
 			const Feature& at(size_t index) const;
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="index"></param>
 			void remove(size_t index);
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="position"></param>
 			void erase(std::vector<Feature>::iterator position);
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <returns></returns>
 			const Feature& mean() const;
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <returns></returns>
 			std::vector<Feature>::iterator begin();
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <returns></returns>
 			std::vector<Feature>::iterator end();
 			size_t size() const;
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <returns></returns>
 			size_t length() const;
+
+			/// <summary>
+			/// 
+			/// </summary>
+			/// <param name="index"></param>
+			/// <returns></returns>
 			const Feature& operator[](size_t index) const;
 		private:
 			std::vector<Feature> features;
@@ -129,8 +180,13 @@ namespace me {
 			Feature mean_feature;
 		};
 
+
 		class FeatureSpace {
 		public:
+			/// <summary>
+			/// Constructs a new feature space
+			/// </summary>
+			/// <param name="feature_length">Expected feature length of all features assigned to this space</param>
 			FeatureSpace(size_t feature_length) : feature_length(feature_length) {}
 
 			/// <summary>
@@ -156,12 +212,42 @@ namespace me {
 			/// <returns>A vector of indexes that reference the set each input feature was assigned to</returns>
 			std::vector<size_t> assign(std::vector<Feature>& input, double threshold = 0.4, 
 				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN, std::vector<int> mask = std::vector<int>());
+
+			/// <summary>
+			/// Returns an iterator pointing to the first element in the internal vector that stores all the tracked feature sets in this feature space
+			/// </summary>
 			std::vector<FeatureSet>::iterator begin();
+
+			/// <summary>
+			/// Returns an iterator pointing to the past-the-end element in the internal vector that stores all the tracked feature sets in this feature space
+			/// </summary>
 			std::vector<FeatureSet>::iterator end();
+
+			/// <summary>
+			/// Returns the number of tracked feature sets in this feature space
+			/// </summary>
 			size_t size();
+
+			/// <summary>
+			/// Returns the expected feature length of this feature space
+			/// </summary>
 			size_t length();
+
+			/// <summary>
+			/// Removes all feature sets from this feature space
+			/// </summary>
 			void clear();
+
+			/// <summary>
+			/// Returns a reference to the feature set at the specified position within this feature space
+			/// </summary>
+			/// <param name="index">Index of the desired feature set</param>
 			FeatureSet& at(size_t index);
+
+			/// <summary>
+			/// Returns a reference to the feature set at the specified position within this feature space
+			/// </summary>
+			/// <param name="index">Index of the desired feature set</param>
 			FeatureSet& operator[](size_t index);
 		private:
 			size_t feature_length;

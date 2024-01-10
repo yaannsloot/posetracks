@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <me/dnn/rtmdet.hpp>
 #include <me/dnn/rtmpose.hpp>
+#include <me/dnn/yolox.hpp>
 #include <me/dnn/pose_topdown.hpp>
 #include <me/dnn/feature_extractor.hpp>
 #include <me/io/imagelist.hpp>
@@ -367,13 +368,43 @@ void detectpose_test() {
 	cap.load("right3jpg/right30736.jpg");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	me::dnn::models::TopDownPoseDetector detectpose_model;
-	detectpose_model.detection_model = me::dnn::models::RTMDetModel();
+	detectpose_model.detection_model = me::dnn::models::YOLOXModel();
 	detectpose_model.pose_model = me::dnn::models::RTMPoseModel();
-	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.detection_model.load("targets_m_dynamic.onnx", me::dnn::Executor::CUDA);
 	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody26-l.onnx", me::dnn::Executor::CUDA);
 	std::cout << (int)detectpose_model.detection_model.get_precision() << std::endl;
 	std::cout << (int)detectpose_model.pose_model.get_precision() << std::endl;
 	std::vector<me::dnn::Pose> poses;
+
+	// Test box detector
+	std::vector<cv::Mat> frames(3);
+	cap.grab_frame(frames[0], cap.frame_count() * 0.25);
+	cap.grab_frame(frames[1], cap.frame_count() * 0.5);
+	cap.grab_frame(frames[2], cap.frame_count() * 0.75);
+	cap.set_frame(0);
+	std::vector<std::vector<me::dnn::Detection>> detections;
+	detectpose_model.detection_model.infer(frames, detections, 0.5, 0.5);
+	auto net_size = detectpose_model.detection_model.net_size();
+	for (int i = 0; i < frames.size(); ++i) {
+		auto& dets = detections[i];
+		auto& testf = frames[i];
+		for (auto& det : dets) {
+			cv::rectangle(testf,
+				cv::Point(
+					det.bbox.tl().x / net_size.width * testf.cols,
+					det.bbox.tl().y / net_size.height * testf.rows
+				),
+				cv::Point(
+					det.bbox.br().x / net_size.width * testf.cols,
+					det.bbox.br().y / net_size.height * testf.rows
+				),
+				cv::Scalar(0, 255, 0)
+			);
+		}
+		cv::imshow("Detections3", testf);
+		cv::waitKey(0);
+	}
+
 	while (cap.is_open()) {
 		bool success = false;
 		cv::Mat frame;
