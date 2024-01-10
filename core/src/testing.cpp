@@ -364,14 +364,14 @@ void performance_experiments() {
 void detectpose_test() {
 	//me::io::FrameProvider cap = me::io::Transcoder();
 	//cap.load("right3.mp4");
-	me::io::FrameProvider cap = me::io::ImageList();
-	cap.load("right3jpg/right30736.jpg");
+	me::io::FrameProvider cap = me::io::Transcoder();
+	cap.load("shaq.mp4");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	me::dnn::models::TopDownPoseDetector detectpose_model;
-	detectpose_model.detection_model = me::dnn::models::YOLOXModel();
+	detectpose_model.detection_model = me::dnn::models::RTMDetModel();
 	detectpose_model.pose_model = me::dnn::models::RTMPoseModel();
-	detectpose_model.detection_model.load("targets_m_dynamic.onnx", me::dnn::Executor::CUDA);
-	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody26-l.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody133-m.onnx", me::dnn::Executor::CUDA);
 	std::cout << (int)detectpose_model.detection_model.get_precision() << std::endl;
 	std::cout << (int)detectpose_model.pose_model.get_precision() << std::endl;
 	std::vector<me::dnn::Pose> poses;
@@ -404,7 +404,8 @@ void detectpose_test() {
 		cv::imshow("Detections3", testf);
 		cv::waitKey(0);
 	}
-
+	cv::VideoWriter video_out;
+	video_out.open("shaq_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
 	while (cap.is_open()) {
 		bool success = false;
 		cv::Mat frame;
@@ -421,11 +422,13 @@ void detectpose_test() {
 					cv::circle(frame, joint.pt, 3, cv::Scalar(0, 255, 0), -1);
 			}
 		}
+		video_out.write(frame);
 		cv::imshow("Detections3", frame);
 		cv::waitKey(1);
 	}
 	detectpose_model.unload_all();
 	cap.close();
+	video_out.release();
 }
 
 // Testing class proxy patterns used elsewhere

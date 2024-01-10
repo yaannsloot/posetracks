@@ -150,7 +150,6 @@ namespace me {
 				std::vector<int> strides = { 8, 16, 32 };
 				std::vector<GridAndStride> grid_strides;
 				generate_grids_and_stride(strides, grid_strides, net_height, net_width);
-				size_t num_anchors = grid_strides.size();
 
 				// Convert to accessor
 				std::array<size_t, 3> output_shape{ batch_size, num_dets, num_classes + 5 };
@@ -166,9 +165,9 @@ namespace me {
 						const int grid1 = grid_strides[i].grid1;
 						const int stride = grid_strides[i].stride;
 						float box_score = output(b, i, 4);
-						size_t class_ = 0;
+						int class_ = 0;
 						float conf = 0;
-						for (size_t c = 0; c < num_classes; ++c) {
+						for (int c = 0; c < num_classes; ++c) {
 							float class_score = output(b, i, 5 + i);
 							if (class_score > conf) {
 								conf = class_score;
