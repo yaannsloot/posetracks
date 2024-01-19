@@ -363,6 +363,90 @@ namespace me {
 			return this->at(index);
 		}
 
+		void FeatureTracker::grow_detections_vector() {
+			size_t current = detections.size();
+			size_t space_size = f_space.size();
+			if (current < space_size)
+				detections.resize(space_size);
+		}
+
+		void FeatureTracker::grow_state_vector() {
+			size_t current = predicted_states.size();
+			size_t space_size = f_space.size();
+			if (current < space_size)
+				predicted_states.resize(space_size);
+		}
+
+		void FeatureTracker::grow_filter_vector() {
+			size_t current = filters.size();
+			size_t space_size = f_space.size();
+			if (current < space_size) {
+				size_t diff = space_size - current;
+				for (size_t i = 0; i < diff; ++i) {
+					cv::KalmanFilter new_filter(4, 2);
+					new_filter.transitionMatrix = (cv::Mat_<float>(4, 4) <<
+						1, 0, 1, 0,
+						0, 1, 0, 1,
+						0, 0, 1, 0,
+						0, 0, 0, 1);
+					new_filter.measurementMatrix = (cv::Mat_<float>(2, 4) <<
+						1, 0, 0, 0,
+						0, 1, 0, 0);
+					new_filter.measurementNoiseCov = cv::Mat_<float>::eye(2, 2) * 0.001;
+					new_filter.processNoiseCov = cv::Mat_<float>::eye(4, 4) * 0.03;
+					new_filter.statePre.at<float>(0) = 0;
+					new_filter.statePre.at<float>(1) = 0;
+					new_filter.statePre.at<float>(2) = 0;
+					new_filter.statePre.at<float>(3) = 0;
+					new_filter.statePost.at<float>(0) = 0;
+					new_filter.statePost.at<float>(1) = 0;
+					new_filter.statePost.at<float>(2) = 0;
+					new_filter.statePost.at<float>(3) = 0;
+					filters.push_back(new_filter);
+				}
+				init_list.resize(space_size, 0);
+			}
+		}
+
+		void FeatureTracker::update_predictions(std::vector<size_t> targets) {
+			for (size_t& target : targets) {
+				Feature& last_feature = *(f_space[target].end() - 1);
+				Detection& last_detection = detections[target].back();
+				if (init_list[target] == 0) {
+					predicted_states[target].t = last_frame + 1;
+					predicted_states[target].d = last_detection;
+					predicted_states[target].f = last_feature;
+					auto tl = last_detection.bbox.tl();
+					auto br = last_detection.bbox.br();
+					float cx = (float)((tl.x + br.x) / 2);
+					float cy = (float)((tl.y + br.y) / 2);
+					cv::Mat measurement = (cv::Mat_<float>(2, 1) << cx, cy);
+					filters[target].predict();
+					filters[target].correct(measurement);
+					init_list[target] = 1;
+				}
+				else {
+					predicted_states[target].t = last_frame + 1;
+					predicted_states[target].f = last_feature;
+					auto tl = last_detection.bbox.tl();
+					auto br = last_detection.bbox.br();
+					float cx = (float)((tl.x + br.x) / 2);
+					float cy = (float)((tl.y + br.y) / 2);
+					cv::Mat measurement = (cv::Mat_<float>(2, 1) << cx, cy);
+					filters[target].correct(measurement);
+					auto prediction = filters[target].predict();
+					double estimated_x = (double)(prediction.at<float>(0));
+					double estimated_y = (double)(prediction.at<float>(1));
+					double width = last_detection.bbox.width;
+					double height = last_detection.bbox.height;
+					cv::Point2d new_tl(estimated_x - width / 2, estimated_y - height / 2);
+					cv::Point2d new_br(estimated_x + width / 2, estimated_y + height / 2);
+					predicted_states[target].d = last_detection;
+					predicted_states[target].d.bbox = cv::Rect2d(new_tl, new_br);
+				}
+			}
+		}
+
 		inline double iou(cv::Rect2d a, cv::Rect2d b) {
 			auto interArea = (a & b).area();
 			auto unionArea = a.area() + b.area() - interArea;

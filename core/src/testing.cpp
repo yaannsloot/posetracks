@@ -365,45 +365,52 @@ void detectpose_test() {
 	//me::io::FrameProvider cap = me::io::Transcoder();
 	//cap.load("right3.mp4");
 	me::io::FrameProvider cap = me::io::Transcoder();
-	cap.load("shaq.mp4");
+	cap.load("E:/Track/Train1.mp4");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	me::dnn::models::TopDownPoseDetector detectpose_model;
 	detectpose_model.detection_model = me::dnn::models::RTMDetModel();
 	detectpose_model.pose_model = me::dnn::models::RTMPoseModel();
-	detectpose_model.detection_model.load("redis/models/rtmdet/fullbody_320.onnx", me::dnn::Executor::CUDA);
-	detectpose_model.pose_model.load("redis/models/rtmpose/fullbody133-m.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.detection_model.load("rtmdet_markers-s.onnx", me::dnn::Executor::CUDA);
+	detectpose_model.pose_model.load("redis/models/rtmpose/face106-m.onnx", me::dnn::Executor::CUDA);
 	std::cout << (int)detectpose_model.detection_model.get_precision() << std::endl;
 	std::cout << (int)detectpose_model.pose_model.get_precision() << std::endl;
 	std::vector<me::dnn::Pose> poses;
 
 	// Test box detector
-	std::vector<cv::Mat> frames(3);
-	cap.grab_frame(frames[0], cap.frame_count() * 0.25);
-	cap.grab_frame(frames[1], cap.frame_count() * 0.5);
-	cap.grab_frame(frames[2], cap.frame_count() * 0.75);
-	cap.set_frame(0);
-	std::vector<std::vector<me::dnn::Detection>> detections;
-	detectpose_model.detection_model.infer(frames, detections, 0.5, 0.5);
-	auto net_size = detectpose_model.detection_model.net_size();
-	for (int i = 0; i < frames.size(); ++i) {
-		auto& dets = detections[i];
-		auto& testf = frames[i];
-		for (auto& det : dets) {
-			cv::rectangle(testf,
+	cv::VideoWriter box_out;
+	box_out.open("box_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
+	while (cap.is_open()) {
+		bool success = false;
+		cv::Mat frame;
+		success = cap.next_frame(frame);
+		if (!success) {
+			std::cout << "Failed to read from video" << std::endl;
+			break;
+		}
+		std::vector<me::dnn::Detection> detections;
+		detectpose_model.detection_model.infer(frame, detections, 0.5, 0.5);
+
+		auto net_size = detectpose_model.detection_model.net_size();
+		for (auto& det : detections) {
+			cv::rectangle(frame,
 				cv::Point(
-					det.bbox.tl().x / net_size.width * testf.cols,
-					det.bbox.tl().y / net_size.height * testf.rows
+					det.bbox.tl().x / net_size.width * frame.cols,
+					det.bbox.tl().y / net_size.height * frame.rows
 				),
 				cv::Point(
-					det.bbox.br().x / net_size.width * testf.cols,
-					det.bbox.br().y / net_size.height * testf.rows
+					det.bbox.br().x / net_size.width * frame.cols,
+					det.bbox.br().y / net_size.height * frame.rows
 				),
 				cv::Scalar(0, 255, 0)
 			);
 		}
-		cv::imshow("Detections3", testf);
-		cv::waitKey(0);
+		cv::imshow("Detections3", frame);
+		box_out.write(frame);
+		cv::waitKey(1);
 	}
+	box_out.release();
+
+	cap.set_frame(0);
 	cv::VideoWriter video_out;
 	video_out.open("shaq_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
 	while (cap.is_open()) {
@@ -414,7 +421,7 @@ void detectpose_test() {
 			std::cout << "Failed to read from video" << std::endl;
 			break;
 		}
-		detectpose_model.infer(frame, poses, 1);
+		detectpose_model.infer(frame, poses, 1, 0.3);
 		for (auto& pose : poses) {
 			for (int i = 0; i < pose.num_joints(); i++) {
 				auto& joint = pose[i];

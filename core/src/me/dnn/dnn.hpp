@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/tracking.hpp>
 
 namespace me {
 	
@@ -254,11 +255,27 @@ namespace me {
 			std::vector<FeatureSet> feature_sets;
 		};
 
+		struct TrackerState {
+			Feature f;
+			Detection d;
+			size_t t = 0;
+		};
+
 		class FeatureTracker {
 		public:
-
+			std::vector<size_t> assign(std::vector<Detection>& input_boxes, std::vector<Feature>& input_features, double score_threshold = 0.7, double f_space_threshold = 0.4,
+				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN, std::vector<int> mask = std::vector<int>());
 		private:
+			std::vector<std::vector<Detection>> detections;
+			std::vector<TrackerState> predicted_states;
+			std::vector<cv::KalmanFilter> filters;
+			std::vector<int> init_list;
+			size_t last_frame;
 			FeatureSpace f_space;
+			void grow_detections_vector();
+			void grow_state_vector(); // Grows the state vector if the feature space size has increased
+			void grow_filter_vector(); // Grows the filter vector if the feature space size has increased
+			void update_predictions(std::vector<size_t> targets); // Update predicted states for specified feature space targets
 		};
 
 		inline double iou(cv::Rect2d a, cv::Rect2d b);
