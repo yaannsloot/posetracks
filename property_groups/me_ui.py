@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import bpy
 from .me_data import MEPoseTracksClip
 from .me_data import MEPoseTracks
+from .me_data import GOGICollection
 from .me_stats import MotionEngineRunStatistics
 from ..utils import set_select_tracks
 
@@ -319,6 +320,14 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
 
     # Placeholder property. Must always remain empty.
     me_ui_prop_pose_empty_clip: bpy.props.PointerProperty(type=MEPoseTracksClip)
+
+    gen_objs: bpy.props.PointerProperty(type=GOGICollection)
+
+    def get_clip_pose_tracks(self, clip):
+        for element in self.me_ui_prop_pose_clip_collection:
+            if element.clip == clip:
+                return element
+        return None
 
 
 CLASSES = [

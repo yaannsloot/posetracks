@@ -29,7 +29,7 @@ def get_pose_tracks_clip(clip, properties):
 
 
 class TrackManagerUIPanel(bpy.types.Panel):
-    bl_label = "Track Manager"
+    bl_label = "Pose Manager"
     bl_idname = "MOTIONENGINE_TRACK_MANAGER_PT_panel"
     bl_space_type = "CLIP_EDITOR"
     bl_region_type = "UI"
@@ -70,6 +70,18 @@ class TrackManagerUIPanel(bpy.types.Panel):
         row.operator("motionengine.clear_temp_tracks_operator")
 
         row.operator("motionengine.clear_tracks_operator")
+
+        row = layout.row()
+
+        row.operator("motionengine.solve_cameras_operator")
+
+        row = layout.row()
+
+        row.operator("motionengine.filter_tracks_operator")
+
+        row = layout.row()
+
+        row.operator("motionengine.filter_fcurves_operator")
 
 
 CLASSES = [

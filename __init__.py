@@ -67,7 +67,7 @@ def register():
     bpy.types.Scene.motion_engine_data = bpy.props.PointerProperty(type=me_data.MEClipDataCollection)
     bpy.types.Scene.motion_engine_ui_properties = bpy.props.PointerProperty(type=me_ui.MotionEngineUIProperties)
 
-    global_vars.me_detectpose_model = MEPython.dnn.RTMDetPoseBundleModel()
+    global_vars.me_detectpose_model = MEPython.dnn.TopDownPoseDetector()
     global_vars.properties_tracker = None
     global_vars.clip_tracker = None
     global_vars.stats_tracker = None

@@ -23,7 +23,12 @@ from . import calculate_statistics
 from . import report_status
 from . import clear_temp_tracks
 from . import clear_all_tracks
+from . import solve_cameras
+from . import triangulate_points
+from . import filter_tracks
+from . import filter_fcurves
 
 ALL_CLASSES = (model_load.CLASSES + prune_data.CLASSES + pose_estimation.CLASSES + create_tracks.CLASSES
                + calculate_statistics.CLASSES + report_status.CLASSES + clear_temp_tracks.CLASSES
-               + clear_all_tracks.CLASSES)
+               + clear_all_tracks.CLASSES + solve_cameras.CLASSES + triangulate_points.CLASSES
+               + filter_tracks.CLASSES + filter_fcurves.CLASSES)

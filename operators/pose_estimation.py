@@ -99,7 +99,7 @@ class PoseEstimationTaskOperator(bpy.types.Operator):
 
             bpy.ops.motionengine.report_status_operator() # Start the modal info reporter
 
-            MEPython.mt.infer_async(
+            MEPython.threading.infer_async(
                 global_vars.me_detectpose_model,
                 det_path,
                 selected_exec_det,

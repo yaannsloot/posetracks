@@ -278,6 +278,9 @@ class MEClipDataCollection(bpy.types.PropertyGroup):
     items: bpy.props.CollectionProperty(type=MEClipData)
 
 
+# FYI: There are two identifiers because it wouldn't make sense to rename all the
+# tracks if the name property is changed. The UI is programmed such that both
+# are unique, so the PoseTracksClip property group indexes these by name
 class MEPoseTracks(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty()  # can be changed by the user
     track_prefix: bpy.props.StringProperty()  # will be kept throughout property's lifetime
@@ -291,6 +294,75 @@ class MEPoseTracksClip(bpy.types.PropertyGroup):
     clip: bpy.props.PointerProperty(type=bpy.types.MovieClip)
     pose_tracks_list: bpy.props.CollectionProperty(type=MEPoseTracks)
 
+    def __getitem__(self, item):
+        for element in self.pose_tracks_list:
+            if element.name == item:
+                return element
+        return None
+
+
+class GeneratedObjectGroupInfo(bpy.types.PropertyGroup):
+    gen_id: bpy.props.StringProperty()
+
+    def get_objs(self, scene: bpy.types.Scene = None):
+        data_block = bpy.data.objects
+        if scene is not None:
+            data_block = scene.objects
+        target_objs = []
+        for obj in data_block:
+            if hasattr(obj, "me_obj_group_id") and obj.me_obj_group_id == self.gen_id:
+                target_objs.append(obj)
+        return target_objs
+
+
+class GOGICollection(bpy.types.PropertyGroup):
+    gen_id_list: bpy.props.CollectionProperty(type=GeneratedObjectGroupInfo)
+
+    def new(self):
+        keys = self.keys()
+        new_id = MEPython.crypto.random_sha1()
+
+        # Highly likely this will not run but prevents collision with existing entries
+        while new_id in keys:
+            new_id = MEPython.crypto.random_sha1()
+
+        new_info = self.gen_id_list.add()
+
+        new_info.gen_id = new_id
+
+        return new_info, new_id
+
+    def remove(self, key: str):
+        num_elem = len(self.gen_id_list)
+        for i in range(num_elem - 1, -1, -1):
+            if self.gen_id_list[i].gen_id == key:
+                self.gen_id_list.remove(i)
+
+    def clear(self):
+        self.gen_id_list.clear()
+
+    def keys(self):
+        keys = set()
+        for item in self.gen_id_list:
+            keys.add(item.gen_id)
+        return keys
+
+    def prune(self):
+        keys = self.keys()
+        real_keys = set()
+        for obj in bpy.data.objects:
+            if hasattr(obj, "me_obj_group_id"):
+                real_keys.add(obj.me_obj_group_id)
+        target_keys = keys - real_keys
+        for key in target_keys:
+            self.remove(key)
+
+    def __getitem__(self, item: str):
+        for item in self.gen_id_list:
+            if item.gen_id == item:
+                return item
+        return None
+
 
 CLASSES = [
     MEPointBlender,
@@ -300,5 +372,7 @@ CLASSES = [
     MEClipData,
     MEClipDataCollection,
     MEPoseTracks,
-    MEPoseTracksClip
+    MEPoseTracksClip,
+    GeneratedObjectGroupInfo,
+    GOGICollection
 ]

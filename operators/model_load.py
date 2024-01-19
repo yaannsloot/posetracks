@@ -77,7 +77,7 @@ class ModelLoadOperator(bpy.types.Operator):
             callbacks.display_warmup_state_callback(True)
             callbacks.ui_draw_callback()
 
-            MEPython.mt.rtm_load_async(
+            MEPython.threading.rtm_load_async(
                 global_vars.me_detectpose_model,
                 det_path,
                 selected_exec_det,

@@ -15,9 +15,29 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-from . import model_manager
-from . import pose_estimation
-from . import track_manager
-from . import triangulation
+import bpy
+from ... import global_vars
 
-ALL_CLASSES = model_manager.CLASSES + pose_estimation.CLASSES + track_manager.CLASSES + triangulation.CLASSES
+
+class TriangulationUIPanel(bpy.types.Panel):
+    bl_label = "Triangulation"
+    bl_idname = "MOTIONENGINE_TRIANGULATION_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "MotionEngine"
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        ui_lock = global_vars.ui_lock_state
+
+        layout.enabled = not ui_lock
+
+        row = layout.row()
+
+        row.operator("motionengine.triangulate_points_operator")
+
+
+CLASSES = [
+    TriangulationUIPanel
+]
