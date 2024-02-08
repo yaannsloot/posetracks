@@ -14,21 +14,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+import os
+import importlib
 
-from . import model_load
-from . import prune_data
-from . import pose_estimation
-from . import create_tracks
-from . import calculate_statistics
-from . import report_status
-from . import clear_temp_tracks
-from . import clear_all_tracks
-from . import solve_cameras
-from . import triangulate_points
-from . import filter_tracks
-from . import filter_fcurves
+current_dir = os.path.dirname(__file__) if __file__ else '.'
 
-ALL_CLASSES = (model_load.CLASSES + prune_data.CLASSES + pose_estimation.CLASSES + create_tracks.CLASSES
-               + calculate_statistics.CLASSES + report_status.CLASSES + clear_temp_tracks.CLASSES
-               + clear_all_tracks.CLASSES + solve_cameras.CLASSES + triangulate_points.CLASSES
-               + filter_tracks.CLASSES + filter_fcurves.CLASSES)
+modules = [file for file in os.listdir(current_dir) if file.endswith('.py') and file != '__init__.py']
+
+ALL_CLASSES = []
+
+for mod in modules:
+    module_name = os.path.splitext(mod)[0]
+    try:
+        module = importlib.import_module(f'.{module_name}', package=__name__)
+        if hasattr(module, 'CLASSES'):
+            ALL_CLASSES.extend(module.CLASSES)
+    except ImportError as e:
+        print(f"Error importing module {module_name}: {e}")
+

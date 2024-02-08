@@ -318,6 +318,12 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         update=active_pose_update
     )
 
+    me_ui_prop_rigging_avg_locked_axis: bpy.props.IntProperty(
+        min=0,
+        max=2,
+        default=0
+    )
+
     # Placeholder property. Must always remain empty.
     me_ui_prop_pose_empty_clip: bpy.props.PointerProperty(type=MEPoseTracksClip)
 

@@ -14,9 +14,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+import os
+import importlib
 
-from . import me_data
-from . import me_stats
-from . import me_ui
+current_dir = os.path.dirname(__file__) if __file__ else '.'
 
-ALL_CLASSES = me_data.CLASSES + me_stats.CLASSES + me_ui.CLASSES
+modules = [file for file in os.listdir(current_dir) if file.endswith('.py') and file != '__init__.py']
+
+ALL_CLASSES = []
+
+for mod in modules:
+    module_name = os.path.splitext(mod)[0]
+    try:
+        module = importlib.import_module(f'.{module_name}', package=__name__)
+        if hasattr(module, 'CLASSES'):
+            ALL_CLASSES.extend(module.CLASSES)
+    except ImportError as e:
+        print(f"Error importing module {module_name}: {e}")
+

@@ -14,8 +14,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
+import os
+import importlib
 
-from . import lists
-from . import panels
+current_dir = os.path.dirname(__file__) if __file__ else '.'
 
-ALL_CLASSES = lists.ALL_CLASSES + panels.ALL_CLASSES
+modules = [file for file in os.listdir(current_dir) if os.path.isdir(os.path.join(current_dir, file))]
+
+ALL_CLASSES = []
+
+for mod in modules:
+    try:
+        module = importlib.import_module(f'.{mod}', package=__name__)
+        if hasattr(module, 'ALL_CLASSES'):
+            ALL_CLASSES.extend(module.ALL_CLASSES)
+    except ImportError as e:
+        print(f"Error importing module {mod}: {e}")
+
