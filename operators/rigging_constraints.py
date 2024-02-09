@@ -84,7 +84,8 @@ def avgloc_gen_new(self, context):
             constraint.target = obj
             constraint.influence = 1 / (i + 1)
 
-        context.scene.collection.objects.link(new_empty)
+        dest_path = global_vars.resolve_collection_path(["MotionEngine", "Rigging"], context)
+        dest_path.objects.link(new_empty)
 
     return {"FINISHED"}
 
@@ -260,7 +261,11 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
 
     def execute(self, context):
         if not global_vars.ui_lock_state:
+
             active_object = context.active_object
+
+            if active_object not in context.selected_objects:
+                active_object = context.selected_objects[0]
 
             debug = False
 
@@ -276,13 +281,60 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
 
             mesh_data = bpy.data.meshes.new("ME_Gen_Mesh")
 
-            obj = bpy.data.objects.new("ME_Gen_Obj", mesh_data)
+            obj = bpy.data.objects.new("ME_Gen_Loop", mesh_data)
+            norm_obj = bpy.data.objects.new("ME_Gen_Norm", None)
+            norm_obj.empty_display_type = 'SINGLE_ARROW'
+
+            centroid = mathutils.Vector()
+            for point in points:
+                centroid += point
+            centroid /= len(points)
+
+            norm_display_scale = 0
+            for point in points:
+                norm_display_scale += (centroid - point).magnitude
+            norm_display_scale /= len(points)
+
+            norm_obj.empty_display_size = norm_display_scale
+
+            anchor_obj = bpy.data.objects.new("ME_Gen_Anchor", None)
+            anchor_obj.empty_display_type = 'PLAIN_AXES'
+            anchor_obj.empty_display_size = norm_display_scale / 10
+
+            for i, o in enumerate(all_objs):
+                constraint = anchor_obj.constraints.new(type="COPY_LOCATION")
+                constraint.name = "ME_Gen_CopyLoc"
+                constraint.show_expanded = False
+                constraint.target = o
+                constraint.influence = 1 / (i + 1)
+
+            constraint = norm_obj.constraints.new(type="COPY_LOCATION")
+            constraint.name = "ME_Gen_CopyLoc"
+            constraint.show_expanded = False
+            constraint.target = anchor_obj
+            constraint = norm_obj.constraints.new(type="SHRINKWRAP")
+            constraint.name = "ME_Gen_Shrinkwrap"
+            constraint.show_expanded = False
+            constraint.target = obj
+            constraint.use_track_normal = True
+            constraint.track_axis = 'TRACK_Z'
+            constraint = norm_obj.constraints.new(type="COPY_LOCATION")
+            constraint.name = "ME_Gen_CopyLoc"
+            constraint.show_expanded = False
+            constraint.target = anchor_obj
+
+            collection_path = ["MotionEngine", "Rigging", norm_obj.name]
+            dest_collection = global_vars.resolve_collection_path(collection_path, context)
+            dest_collection.objects.link(norm_obj)
+            dest_collection.objects.link(anchor_obj)
+            dest_collection.objects.link(obj)
 
             vertices = points
             edges = []
             faces = []
 
             # If the number of vertices exceeds 3, this can help stabilize the starting trace
+            # Add extended depth search here
 
             indices = []
             indices.extend(range(1, len(points)))
@@ -321,9 +373,9 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
                     else:
                         scores.append((indices[j], score))
                 scores.sort(key=lambda a: a[1])
-                print("Step")
-                for score in scores:
-                    if debug:
+                if debug:
+                    print("Step")
+                    for score in scores:
                         print(vertices[score[0]], score[1],
                               score[1] - score[2] if len(score) > 2 else 'N/A',
                               score[2] if len(score) > 2 else 'N/A'
@@ -348,12 +400,9 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
                 mod.falloff_type = 'CONSTANT'
                 mod.show_expanded = False
 
-            scene = context.scene
-
-            scene.collection.objects.link(obj)
             bpy.ops.object.select_all(action='DESELECT')
             obj.select_set(True)
-            bpy.context.view_layer.objects.active = obj
+            context.view_layer.objects.active = obj
 
             obj.display_type = 'WIRE'
             current_mode = context.object.mode
