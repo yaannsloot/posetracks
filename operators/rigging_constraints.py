@@ -19,34 +19,50 @@ import sys
 import bpy
 import math
 import mathutils
+import itertools
 from .. import global_vars
 
+contexts = {
+    "OBJECT": "objectmode",
+    "POSE": "posemode",
+}
 
-class AvgLocSelectedToActiveOperator(bpy.types.Operator):
-    """Generate constraints for the active object"""
-    bl_idname = "motionengine.avgloc_c_s_to_a_operator"
-    bl_label = "Selected to active"
+gen_ops = []
 
-    def execute(self, context):
-        if not global_vars.ui_lock_state:
-            active_object = context.active_object
 
-            selected_objects = [obj for obj in context.selected_objects if obj != active_object]
+def avg_loc_s_to_a(self, context):
+    if not global_vars.ui_lock_state:
+        active_object = context.active_object
 
-            prev_gen = 0
-            for c in active_object.constraints:
-                if c.name.startswith("ME_Gen_CopyLoc"):
-                    prev_gen += 1
+        selected_objects = [obj for obj in context.selected_objects if obj != active_object]
 
-            for i, obj in enumerate(selected_objects):
-                constraint = active_object.constraints.new(type="COPY_LOCATION")
-                constraint.name = "ME_Gen_CopyLoc"
-                constraint.show_expanded = False
-                constraint.target = obj
-                constraint.influence = 1 / (i + 1 + prev_gen)
+        prev_gen = 0
+        for c in active_object.constraints:
+            if c.name.startswith("ME_Gen_CopyLoc"):
+                prev_gen += 1
 
-        return {"FINISHED"}
+        for i, obj in enumerate(selected_objects):
+            constraint = active_object.constraints.new(type="COPY_LOCATION")
+            constraint.name = "ME_Gen_CopyLoc"
+            constraint.show_expanded = False
+            constraint.target = obj
+            constraint.influence = 1 / (i + 1 + prev_gen)
 
+    return {"FINISHED"}
+
+
+for c in contexts.values():
+    new_op = type(
+        f"AvgLocSelectedToActive{c.capitalize()}Operator",
+        (bpy.types.Operator,),
+        {
+            '__doc__': f"Generate constraints for the active {'bone' if c == 'posemode' else 'object'}",
+            'bl_idname': f"motionengine.avgloc_c_s_to_a_{c.lower()}_operator",
+            'bl_label': 'Selected to active',
+            'execute': lambda self, context: avg_loc_s_to_a(self, context)
+        }
+    )
+    gen_ops.append(new_op)
 
 gen_new_types = {
     "PLAIN_AXES": {"class_name": "Axes", "idname": "axes", "desc": "plain axes", "icon": "EMPTY_AXIS"},
@@ -90,7 +106,6 @@ def avgloc_gen_new(self, context):
     return {"FINISHED"}
 
 
-gen_ops = []
 for item in gen_new_types.items():
     new_op = type(
         f"AvgLocNewFromSelected{item[1]['class_name']}Operator",
@@ -179,33 +194,40 @@ for i_ in range(6):
     else:
         axis = i_
         direction = 0
-    idname = ("motionengine.avgdamped_c_s_to_a_{}_operator"
-              .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower()))
-    label = f"Selected to active: {track_axis_button_lbl[axis].format(track_axis_dir_lbl[direction])}"
-    new_op_a = type(
-        f"AvgDampedOperator{track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).upper()}",
-        (bpy.types.Operator,),
-        {
-            '__doc__': label + "\nGenerate constraints for the active object",
-            'bl_idname': idname,
-            'bl_label': label,
-            'track_axis': track_axis_list[axis].format(track_axis_direction[direction]),
-            'execute': lambda self, context: avgdamped_gen_new(self, context)
-        }
-    )
-    idname = ("motionengine.avglocked_c_s_to_a_{}_operator"
-              .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower()))
-    new_op_b = type(
-        f"AvgLockedOperator{track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).upper()}",
-        (bpy.types.Operator,),
-        {
-            '__doc__': label + "\nGenerate constraints for the active object",
-            'bl_idname': idname,
-            'bl_label': label,
-            'track_axis': track_axis_list[axis].format(track_axis_direction[direction]),
-            'execute': lambda self, context: avglocked_gen_new(self, context)
-        }
-    )
+    for c in contexts.values():
+        idname = ("motionengine.avgdamped_c_s_to_a_{}_{}_operator"
+                  .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower(),
+                          c.lower()))
+        label = f"Selected to active: {track_axis_button_lbl[axis].format(track_axis_dir_lbl[direction])}"
+        new_op_a = type(
+            f"AvgDampedOperator{track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).upper()}"
+            f"{c.capitalize()}",
+            (bpy.types.Operator,),
+            {
+                '__doc__': label + f"\nGenerate constraints for the active {'bone' if c == 'posemode' else 'object'}",
+                'bl_idname': idname,
+                'bl_label': label,
+                'track_axis': track_axis_list[axis].format(track_axis_direction[direction]),
+                'execute': lambda self, context: avgdamped_gen_new(self, context)
+            }
+        )
+        idname = ("motionengine.avglocked_c_s_to_a_{}_{}_operator"
+                  .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower(),
+                          c.lower()))
+        new_op_b = type(
+            f"AvgLockedOperator{track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).upper()}"
+            f"{c.capitalize()}",
+            (bpy.types.Operator,),
+            {
+                '__doc__': label + f"\nGenerate constraints for the active {'bone' if c == 'posemode' else 'object'}",
+                'bl_idname': idname,
+                'bl_label': label,
+                'track_axis': track_axis_list[axis].format(track_axis_direction[direction]),
+                'execute': lambda self, context: avglocked_gen_new(self, context)
+            }
+        )
+        gen_ops.append(new_op_a)
+        gen_ops.append(new_op_b)
     if i_ < 3:
         idname = f"motionengine.avglocked_axis_{track_axis_button_lbl[axis].format('').lower()}_operator"
         label = f"Axis that points upward: {track_axis_button_lbl[axis].format('')}"
@@ -221,8 +243,6 @@ for i_ in range(6):
             }
         )
         gen_ops.append(new_op_c)
-    gen_ops.append(new_op_a)
-    gen_ops.append(new_op_b)
 
 
 def clamp(n, minn, maxn):
@@ -257,7 +277,7 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
     # choosing the point with the minimum di / dmax + 1 - Oi / 180 where d is distance and O is the angle
     # between the last edge and the next edge that would be created. Edge candidates will be placed in a
     # list and sorted in ascending order, with the first being chosen. When a point is chosen, it is removed
-    # from the list of candidates. This ensures an equal emphasis on small distance and wide angle
+    # from the list of candidates.
 
     def execute(self, context):
         if not global_vars.ui_lock_state:
@@ -333,12 +353,47 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
             edges = []
             faces = []
 
-            # If the number of vertices exceeds 3, this can help stabilize the starting trace
-            # Add extended depth search here
-
-            indices = []
-            indices.extend(range(1, len(points)))
+            indices = list(range(1, len(points)))
             last = 0
+
+            # If the number of vertices exceeds 3, this can help stabilize the starting trace
+            if len(points) > 3:
+                adjacent = list(itertools.combinations(list(range(1, len(points))), 2))
+                b = points[0]
+                max_dist = 0
+                angles = []
+                dists = []
+                for adj in adjacent:
+                    a = points[adj[0]]
+                    c = points[adj[1]]
+                    angle = calc_angle(a, b, c)
+                    dist = (b - a).magnitude + (b - c).magnitude
+                    if max_dist < dist:
+                        max_dist = dist
+                    dists.append(dist)
+                    angles.append(angle)
+                costs = []
+                for i in range(len(dists)):
+                    adj = adjacent[i]
+                    dist = normalize(0, max_dist, dists[i])
+                    angle = 1 - normalize(0, 180, angles[i])
+                    score = dist * dist_weight + angle * solver_weight
+                    costs.append((score, adj))
+                costs.sort(key=lambda a: a[0])
+                choice = costs[0]
+                adj = choice[1]
+                rev = (b - points[adj[0]]).magnitude > (b - points[adj[1]]).magnitude
+                if rev:
+                    edges.append((adj[0], 0))
+                    edges.append((0, adj[1]))
+                else:
+                    edges.append((adj[1], 0))
+                    edges.append((0, adj[0]))
+                indices.remove(adj[0])
+                indices.remove(adj[1])
+                last = adj[1] if rev else adj[0]
+
+            # Main quick path loop
             while len(indices) > 0:
                 last_vert = vertices[last]
                 dists = []
@@ -407,7 +462,6 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
             obj.display_type = 'WIRE'
             current_mode = context.object.mode
             bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='DESELECT')
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.fill_holes(sides=0)
             bpy.ops.object.mode_set(mode=current_mode)
@@ -416,7 +470,6 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
 
 
 CLASSES = [
-    AvgLocSelectedToActiveOperator,
     *gen_ops,
     GenNgonSelectedToActiveOperator
 ]
