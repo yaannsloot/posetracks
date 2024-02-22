@@ -263,6 +263,7 @@ namespace me {
 
 		class FeatureTracker {
 		public:
+			FeatureTracker(size_t feature_length) : f_space(feature_length) {}
 			std::vector<size_t> assign(std::vector<Detection>& input_boxes, std::vector<Feature>& input_features, double score_threshold = 0.7, double f_space_threshold = 0.4,
 				FeatureDistanceType dist_type = FeatureDistanceType::NORM_EUCLIDEAN, std::vector<int> mask = std::vector<int>());
 		private:
@@ -270,8 +271,8 @@ namespace me {
 			std::vector<TrackerState> predicted_states;
 			std::vector<cv::KalmanFilter> filters;
 			std::vector<int> init_list;
-			size_t last_frame;
-			FeatureSpace f_space;
+			size_t last_frame = 0;
+			FeatureSpace f_space; // Internal feature space
 			void grow_detections_vector();
 			void grow_state_vector(); // Grows the state vector if the feature space size has increased
 			void grow_filter_vector(); // Grows the filter vector if the feature space size has increased

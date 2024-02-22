@@ -266,25 +266,35 @@ namespace me {
 
 		std::vector<size_t> FeatureSpace::assign(std::vector<Feature>& input, double threshold,
 			FeatureDistanceType dist_type, std::vector<int> mask) {
-			std::vector<size_t> output;
-			output.resize(input.size());
-			std::set<size_t> selected_features;
-			std::vector<std::tuple<double, size_t, size_t>> scores;
+
+			// Check for malformed inputs
 			if (mask.size() > 0 && mask.size() != this->feature_sets.size()) {
 				std::stringstream ss;
 				ss << "Mismatch in expected mask length (" << this->feature_sets.size() << ") and provided length (" << mask.size() << ").";
 				throw std::runtime_error(ss.str());
 			}
 
+			// Gather info about input and obtain pointers to data
+			std::vector<size_t> output;
+			output.resize(input.size());
+			std::set<size_t> selected_features;
+			std::vector<std::tuple<double, size_t, size_t>> scores;
 			size_t num_features = this->feature_sets.size();
 			size_t mask_len = mask.size();
 			int* mask_ptr = mask.data();
+
+			// Obtain a list of indices to feature sets that weren't masked
 			std::vector<size_t> valid_indices;
 			for (size_t i = 0; i < num_features; ++i) {
 				if (mask_len == 0 || mask_ptr[i] == 0) {
 					valid_indices.push_back(i);
 				}
 			}
+
+			// Score input features to the mean feature of preexisting feature sets within this feature space. 
+			// All distances must pass a threshold before being added to the scores
+			// This part is computationally expensive and uses parallel processing to improve performance 
+			// A mutex lock will be used for write synchronization
 			std::mutex lock;
 			std::for_each(std::execution::par_unseq, valid_indices.begin(), valid_indices.end(), [&](size_t i) {
 				const FeatureSet& feature_set = this->feature_sets[i];
@@ -298,16 +308,17 @@ namespace me {
 				}
 			});
 
+			// Sort list of scores in ascending order (smaller score is better and will be used first)
 			auto comp = [](const std::tuple<double, size_t, size_t>& first, 
 				const std::tuple<double, size_t, size_t>& second) {
 				return std::get<0>(first) < std::get<0>(second);
 			};
 			std::sort(scores.begin(), scores.end(), comp);
 
+			// Perform one-to-one assignment of input to existing feature sets that passed the threshold
 			std::set<size_t> spent_features;
 			std::set<size_t> spent_feature_sets;
 			std::vector<int> feature_mask(input.size(), 0);
-
 			for (auto& score_tuple : scores) {
 				if (spent_features.size() == selected_features.size() || 
 					spent_feature_sets.size() == this->feature_sets.size())
@@ -324,6 +335,7 @@ namespace me {
 				output[feature_index] = feature_set_index;
 			}
 
+			// Create new feature sets for the remaining input
 			for (size_t i = 0; i < input.size(); ++i) {
 				if (feature_mask[i] >= 1)
 					continue;
@@ -331,7 +343,7 @@ namespace me {
 				this->feature_sets.back().add(input[i]);
 				output[i] = this->feature_sets.size() - 1;
 			}
-
+			
 			return output;
 		}
 
@@ -361,6 +373,126 @@ namespace me {
 
 		FeatureSet& FeatureSpace::operator[](size_t index) {
 			return this->at(index);
+		}
+
+		std::vector<size_t> FeatureTracker::assign(std::vector<Detection>& input_boxes, std::vector<Feature>& input_features, double score_threshold, double f_space_threshold,
+			FeatureDistanceType dist_type, std::vector<int> mask) {
+
+			// Check for malformed inputs
+			std::vector<size_t> output;
+			if (input_boxes.size() != input_features.size()) {
+				std::stringstream ss;
+				ss << "Error in provided input: num boxes and num features do not match (" << input_boxes.size() << " != " << input_features.size() << ").";
+				throw std::runtime_error(ss.str());
+			}
+			if (mask.size() > 0 && mask.size() != this->f_space.size()) {
+				std::stringstream ss;
+				ss << "Mismatch in expected mask length (" << this->f_space.size() << ") and provided length (" << mask.size() << ").";
+				throw std::runtime_error(ss.str());
+			}
+
+			// Gather info about input and obtain pointers to data
+			size_t input_size = input_boxes.size();
+			output.resize(input_size);
+			size_t num_states = this->predicted_states.size();
+			auto* state_ptr = this->predicted_states.data();
+			auto* boxes_ptr = input_boxes.data();
+			auto* features_ptr = input_features.data();
+			size_t mask_len = mask.size();
+			int* mask_ptr = mask.data();
+			std::set<size_t> selected_input;
+			std::vector<std::tuple<double, size_t, size_t>> scores;
+			std::vector<size_t> valid_states;
+
+			// Obtain list of valid state indices that both were updated on last assignment and were not masked
+			for (size_t i = 0; i < num_states; ++i) {
+				if ((mask_len == 0 || mask_ptr[i] == 0) && (state_ptr[i].t == last_frame)) {
+					valid_states.push_back(i);
+				}
+			}
+
+			// Score predicted states relative to input
+			// Input boxes must overlap predictions and their related features must be within the score threshold
+			// This part is computationally expensive and uses parallel processing to improve performance 
+			// A mutex lock will be used for write synchronization
+			std::mutex lock;
+			std::for_each(std::execution::par_unseq, valid_states.begin(), valid_states.end(), [&](size_t i) {
+				for (size_t j = 0; j < input_size; ++j) {
+					auto& t_state = state_ptr[i];
+					auto& bbox = boxes_ptr[j];
+					auto& feature = features_ptr[j];
+					auto iou_score = iou(bbox.bbox, t_state.d.bbox);
+					if (iou_score > 0) {
+						double dist = t_state.f.dist(feature, dist_type);
+						if (dist < score_threshold) {
+							std::lock_guard<std::mutex> lock_guard(lock);
+							scores.push_back(std::tuple<double, size_t, size_t>(dist, i, j));
+							selected_input.insert(j);
+						}
+					}
+				}
+			});
+
+			// Sort list of scores in ascending order (smaller score is better and will be used first)
+			auto comp = [](const std::tuple<double, size_t, size_t>& first,
+				const std::tuple<double, size_t, size_t>& second) {
+					return std::get<0>(first) < std::get<0>(second);
+			};
+			std::sort(scores.begin(), scores.end(), comp);
+
+			// Perform one-to-one assignment of input to predicted states that passed the threshold
+			std::set<size_t> spent_states;
+			std::set<size_t> spent_input;
+			std::vector<int> masked_indices(this->f_space.size(), 0);
+			std::vector<int> input_mask(input_size, 0);
+			for (auto& score_tuple : scores) {
+				if (spent_input.size() == selected_input.size() ||
+					spent_states.size() == valid_states.size())
+					break;
+				size_t state_index = std::get<1>(score_tuple);
+				size_t input_index = std::get<2>(score_tuple);
+				if (spent_input.find(input_index) != spent_input.end() ||
+					spent_states.find(state_index) != spent_states.end())
+					continue;
+				this->f_space[state_index].add(features_ptr[input_index]);
+				spent_states.insert(state_index);
+				spent_input.insert(input_index);
+				masked_indices[state_index] = 1;
+				input_mask[input_index] = 1;
+				output[input_index] = state_index;
+			}
+
+			// Using the mask generated from the above assignments, re-ID any left over detections to the feature space
+			std::vector<size_t> reid_indices; // Index map
+			std::vector<Feature> reid_features; // Features to pass to next step
+			for (size_t i = 0; i < input_size; ++i) {
+				if (input_mask[i] == 0) {
+					reid_indices.push_back(i);
+					reid_features.push_back(features_ptr[i]);
+				}
+			}
+			// One-to-one assignment function from FeatureSpace slass
+			auto reid_assignments = this->f_space.assign(reid_features, f_space_threshold, dist_type, masked_indices);
+
+			// Merge id vector from feature space assignment to the output vector
+			size_t num_assignments = reid_assignments.size();
+			auto* assn_ptr = reid_assignments.data();
+			for (size_t i = 0; i < num_assignments; ++i) {
+				output[reid_indices[i]] = assn_ptr[i];
+			}
+
+			// Finish up by adjusting the size of all internal state vectors used by the tracker
+			grow_detections_vector();
+			// The detections vector is used by the update_predictions function. We must add the new detections here
+			for (size_t i = 0; i < input_size; ++i) {
+				this->detections[output[i]].push_back(input_boxes[i]);
+			}
+			grow_filter_vector(); // Add filters for new detections that weren't mapped to preexisting tracks
+			grow_state_vector(); // Adjust the size of the state vector to reflect the size of the feature space
+			update_predictions(output); // Update predicted states using the ids from the output. Predicted states will have last_frame + 1
+			last_frame++; // Roll the last frame counter forward to match predicted states
+			return output;
+
 		}
 
 		void FeatureTracker::grow_detections_vector() {
@@ -408,6 +540,18 @@ namespace me {
 			}
 		}
 
+		/// <summary>
+		/// Internal function used to update predicted states within the tracker. 
+		/// These states are of type TrackerState and contain variables f, d, and t, 
+		/// where f is a feature vector of length n, d is a bounding box prediction, 
+		/// and t is the instance in time, last_frame + 1, that that prediction is assumed to occur.
+		/// This function targets specific track ids, or indexes, and is meant to be 
+		/// used after the primary calculations within a tracking iteration. All tracks modified during an iteration 
+		/// are to be specified with the targets vector parameter. Also do note that
+		/// both the filter vector and state vector should be grown with 
+		/// grow_filter_vector() and grow_state_vector() before calling this function.
+		/// </summary>
+		/// <param name="targets">Predicted state indices to update</param>
 		void FeatureTracker::update_predictions(std::vector<size_t> targets) {
 			for (size_t& target : targets) {
 				Feature& last_feature = *(f_space[target].end() - 1);

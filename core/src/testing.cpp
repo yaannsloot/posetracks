@@ -360,6 +360,67 @@ void performance_experiments() {
 //	video_reader2.release();
 //}
 
+void feature_aware_track_test() {
+	me::io::FrameProvider cap = me::io::Transcoder();
+	cap.load("E:/ML Experiments/Tracking tests/video_1.mp4");
+	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
+	me::dnn::models::DetectionModel det_model = me::dnn::models::YOLOXModel();
+	me::dnn::models::FeatureModel feat_model = me::dnn::models::GenericFeatureModel();
+	det_model.load("yolox_m.onnx", me::dnn::Executor::CUDA);
+	feat_model.load("BasicConv6_People_64.onnx", me::dnn::Executor::TENSORRT);
+	auto feat_input_size = feat_model.net_size();
+	cv::Mat init_image(feat_input_size, CV_8UC3);
+	cv::randu(init_image, cv::Scalar::all(0), cv::Scalar::all(255));
+	me::dnn::Feature init_feat;
+	feat_model.infer(init_image, init_feat);
+	me::dnn::FeatureTracker tracker(init_feat.size());
+	cv::VideoWriter box_out;
+	box_out.open("box_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
+	while (cap.is_open()) {
+		bool success = false;
+		cv::Mat frame;
+		success = cap.next_frame(frame);
+		if (!success) {
+			std::cout << "Failed to read from video" << std::endl;
+			break;
+		}
+		std::vector<me::dnn::Detection> det_first;
+		det_model.infer(frame, det_first, 0.5, 0.5);
+		std::vector<me::dnn::Detection> detections;
+		for (auto& det : det_first) {
+			if (det.class_id == 0)
+				detections.push_back(det);
+		}
+		std::vector<cv::Mat> ROIs;
+		for (auto& det : detections) {
+			ROIs.push_back(me::dnn::getRoiWithPadding(frame, det.bbox));
+		}
+		std::vector<me::dnn::Feature> features;
+		me::dnn::models::strict_batch_infer(1, feat_model, ROIs, features);
+		std::vector<size_t> ids = tracker.assign(detections, features, 1.4, 1.0);
+		auto net_size = det_model.net_size();
+		size_t det_num = detections.size();
+		auto* det_ptr = detections.data();
+		auto* id_ptr = ids.data();
+		for (size_t i = 0; i < det_num; ++i) {
+			auto& det = det_ptr[i];
+			auto& id = id_ptr[i];
+			cv::Point adj_tl(
+				det.bbox.tl().x / net_size.width * frame.cols,
+				det.bbox.tl().y / net_size.height * frame.rows
+			);
+			cv::Point adj_br(
+				det.bbox.br().x / net_size.width * frame.cols,
+				det.bbox.br().y / net_size.height * frame.rows
+			);
+			cv::rectangle(frame, adj_tl, adj_br, cv::Scalar(0, 255, 0));
+			cv::putText(frame, std::to_string(id), cv::Point(adj_tl.x, adj_br.y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 0, 255), 2);
+		}
+		cv::imshow("Detections3", frame);
+		box_out.write(frame);
+		cv::waitKey(1);
+	}
+}
 
 void detectpose_test() {
 	//me::io::FrameProvider cap = me::io::Transcoder();
@@ -846,7 +907,8 @@ int main() {
 		}
 		// primary_tests();
 		performance_experiments();
-		detectpose_test();
+		//detectpose_test();
+		feature_aware_track_test();
 		std::cout << "Starting pool..." << std::endl;
 		auto pool = me::threading::SimplePool();
 		pool.Start();
