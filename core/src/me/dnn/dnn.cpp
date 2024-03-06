@@ -39,6 +39,77 @@ namespace me {
 			this->score = score;
 		}
 
+		void Detection::scale_detection(double scale_factor)
+		{
+			auto size = this->bbox.size();
+			auto center = (this->bbox.tl() + this->bbox.br()) / 2;
+			size *= scale_factor;
+			cv::Point2d new_tl(
+				center.x - size.width / 2,
+				center.y - size.height / 2
+			);
+			this->bbox = cv::Rect2d(new_tl, size);
+		}
+
+		void iou_ratio(std::vector<Detection>& detections, cv::Size& src_net_size, int& norm_count, int& net_size_count) {
+			cv::Rect2d norm_rect(0, 0, 1, 1);
+			cv::Rect2d net_rect(0, 0, src_net_size.width, src_net_size.height);
+			norm_count = 0;
+			net_size_count = 0;
+			for (auto& det : detections) {
+				double iou_a = iou(det.bbox, norm_rect);
+				double iou_b = iou(det.bbox, net_rect);
+				if (iou_a > iou_b)
+					++norm_count;
+				else
+					++net_size_count;
+			}
+		}
+
+		void fixDetectionCoordinates(std::vector<Detection>& detections, cv::Size src_net_size, cv::Size target_frame_size, ScalingMode scaling_mode)
+		{
+			if (scaling_mode == ScalingMode::AUTO) {
+				int norm_count = 0;
+				int net_size_count = 0;
+				iou_ratio(detections, src_net_size, norm_count, net_size_count);
+				if (norm_count > net_size_count)
+					scaling_mode = ScalingMode::DIRECT;
+				else
+					scaling_mode = ScalingMode::NORMALIZE_INPUT;
+			}
+			for (auto& det : detections) {
+				auto& src_bbox = det.bbox;
+				if (scaling_mode == ScalingMode::NORMALIZE_INPUT) {
+					src_bbox.x /= src_net_size.width;
+					src_bbox.y /= src_net_size.height;
+					src_bbox.width /= src_net_size.width;
+					src_bbox.height /= src_net_size.height;
+				}
+				src_bbox.x *= target_frame_size.width;
+				src_bbox.y *= target_frame_size.height;
+				src_bbox.width *= target_frame_size.width;
+				src_bbox.height *= target_frame_size.height;
+			}
+		}
+
+		void fixDetectionCoordinates(std::vector<std::vector<Detection>>& detections, cv::Size src_net_size, cv::Size target_frame_size, ScalingMode scaling_mode)
+		{
+			if (scaling_mode == ScalingMode::AUTO) {
+				int norm_count = 0;
+				int net_size_count = 0;
+				for (auto& dets : detections) {
+					iou_ratio(dets, src_net_size, norm_count, net_size_count);
+				}
+				if (norm_count > net_size_count)
+					scaling_mode = ScalingMode::DIRECT;
+				else
+					scaling_mode = ScalingMode::NORMALIZE_INPUT;
+			}
+			for (auto& dets : detections) {
+				fixDetectionCoordinates(dets, src_net_size, target_frame_size, scaling_mode);
+			}
+		}
+
 		Joint::Joint() {
 			this->pt = cv::Point2d(0, 0);
 			this->prob = 0;
@@ -897,6 +968,42 @@ namespace me {
 			image(intersection).copyTo(crop(inter_roi));
 
 			return crop;
+		}
+
+		cv::Mat getRoiNoPadding(const cv::Mat& image, cv::Rect roi) {
+			// Create rects representing the image and the ROI
+			auto image_rect = cv::Rect(0, 0, image.cols, image.rows);
+
+			// Find intersection, i.e. valid crop region
+			auto intersection = image_rect & roi;
+
+			return image(intersection);
+		}
+
+		bool isRoiOutsideImage(const cv::Size& imageSize, const cv::Rect& roi) {
+			// Check if the ROI is completely to the left, right, above, or below the image
+			bool isLeft = roi.x + roi.width <= 0;
+			bool isRight = roi.x >= imageSize.width;
+			bool isAbove = roi.y + roi.height <= 0;
+			bool isBelow = roi.y >= imageSize.height;
+
+			// If any of these conditions is true, the ROI is completely outside the image
+			return isLeft || isRight || isAbove || isBelow;
+		}
+
+		void drawTags(cv::Mat& out_image, std::vector<Tag>& tags)
+		{
+			for (auto& tag : tags) {
+				for (size_t i = 0; i < 3; ++i) {
+					auto& pt1 = tag[i];
+					auto& pt2 = tag[i + 1];
+					cv::line(out_image, pt1, pt2, cv::Scalar(0, 255, 0), 2);
+				}
+				cv::line(out_image, tag[0], tag[3], cv::Scalar(0, 255, 0), 2);
+				cv::drawMarker(out_image, tag[0], cv::Scalar(255, 0, 255), cv::MarkerTypes::MARKER_SQUARE, 20, 2);
+				auto center = (tag[0] + tag[1] + tag[2] + tag[3]) / 4;
+				cv::putText(out_image, std::to_string(tag.id), center, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 255, 0), 2);
+			}
 		}
 
 	}

@@ -276,6 +276,20 @@ namespace me {
 				}
 			}
 
+			void TagModel::infer(const cv::Mat& image, std::vector<Tag>& tags) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<TagModelImpl> t_model_ptr = std::dynamic_pointer_cast<TagModelImpl>(model_ptr);
+					t_model_ptr->infer(image, tags);
+				}
+			}
+
+			void TagModel::infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) {
+				if (model_ptr != nullptr) {
+					std::shared_ptr<TagModelImpl> t_model_ptr = std::dynamic_pointer_cast<TagModelImpl>(model_ptr);
+					t_model_ptr->infer(images, tags);
+				}
+			}
+
 		}
 		
 	}

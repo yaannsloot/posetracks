@@ -37,8 +37,8 @@ namespace me {
 			class ModelImpl {
 			public:
 				virtual void load(const std::string& model_path, Executor target_executor = Executor::TENSORRT);
-				void unload();
-				bool is_loaded();
+				virtual void unload();
+				virtual bool is_loaded();
 				Precision get_precision();
 				Executor get_executor();
 			protected:
@@ -90,6 +90,12 @@ namespace me {
 			public:
 				virtual void infer(const cv::Mat& image, Feature& feature) = 0;
 				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features) = 0;
+			};
+
+			class TagModelImpl : public ImageModelImpl {
+			public:
+				virtual void infer(const cv::Mat& image, std::vector<Tag>& tags) = 0;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) = 0;
 			};
 
 
@@ -208,6 +214,15 @@ namespace me {
 				/// <param name="images">Input vector containing images to process</param>
 				/// <param name="features">Output vector containing the feature extracted for each image</param>
 				void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features);
+			};
+
+			/// <summary>
+			/// Tag detector model class
+			/// </summary>
+			class TagModel : public ImageModel {
+			public:
+				void infer(const cv::Mat& image, std::vector<Tag>& tags);
+				void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags);
 			};
 
 

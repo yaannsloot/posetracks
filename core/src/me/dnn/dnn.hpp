@@ -67,7 +67,41 @@ namespace me {
 			int class_id;
 			cv::Rect2d bbox;
 			float score;
+			void scale_detection(double scale_factor);
 		};
+
+		enum class ScalingMode {
+			/// <summary>
+			/// Use scale detection to determine original coordinate scale.
+			/// </summary>
+			AUTO,
+			/// <summary>
+			/// Normalize input using source net size before scaling to frame dimensions.
+			/// </summary>
+			NORMALIZE_INPUT,
+			/// <summary>
+			/// Scale directly to frame dimensions. Input must be normalized before using this option.
+			/// </summary>
+			DIRECT
+		};
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="detections"></param>
+		/// <param name="src_net_size"></param>
+		/// <param name="target_frame_size"></param>
+		/// <param name="scaling_mode"></param>
+		void fixDetectionCoordinates(std::vector<Detection>& detections, cv::Size src_net_size, cv::Size target_frame_size, ScalingMode scaling_mode = ScalingMode::NORMALIZE_INPUT);
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="detections"></param>
+		/// <param name="src_net_size"></param>
+		/// <param name="target_frame_size"></param>
+		/// <param name="scaling_mode"></param>
+		void fixDetectionCoordinates(std::vector<std::vector<Detection>>& detections, cv::Size src_net_size, cv::Size target_frame_size, ScalingMode scaling_mode = ScalingMode::NORMALIZE_INPUT);
 
 		struct Joint {
 			Joint();
@@ -102,6 +136,16 @@ namespace me {
 			Feature& operator=(const Feature& other);
 			double dist(const Feature& other, FeatureDistanceType d_type = FeatureDistanceType::NORM_EUCLIDEAN) const;
 			size_t size() const;
+		};
+
+		struct Tag {
+			Tag() {}
+			Tag(int id) : id(id) {}
+			Tag(cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : corners{ca, cb, cc, cd} {}
+			Tag(int id, cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : id(id), corners{ ca, cb, cc, cd } {}
+			cv::Point2d corners[4];
+			cv::Point2d& operator[](const size_t& index) { return corners[index]; }
+			int id = 0;
 		};
 
 		/// <summary>
@@ -303,6 +347,12 @@ namespace me {
 		bool checkForProvider(const std::string provider_str);
 
 		cv::Mat getRoiWithPadding(const cv::Mat& image, cv::Rect roi);
+
+		cv::Mat getRoiNoPadding(const cv::Mat& image, cv::Rect roi);
+
+		bool isRoiOutsideImage(const cv::Size& imageSize, const cv::Rect& roi);
+
+		void drawTags(cv::Mat& out_image, std::vector<Tag>& tags);
 
 	}
 

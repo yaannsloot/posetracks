@@ -22,6 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/dnn/rtmpose.hpp>
 #include <me/dnn/yolox.hpp>
 #include <me/dnn/pose_topdown.hpp>
+#include <me/dnn/cv_tag_detector.hpp>
 #include <me/dnn/feature_extractor.hpp>
 #include <me/io/imagelist.hpp>
 #include <me/io/transcoder.hpp>
@@ -362,13 +363,14 @@ void performance_experiments() {
 
 void feature_aware_track_test() {
 	me::io::FrameProvider cap = me::io::Transcoder();
-	cap.load("E:/ML Experiments/Tracking tests/video_1.mp4");
+	cap.load("right3.mp4");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	me::dnn::models::DetectionModel det_model = me::dnn::models::YOLOXModel();
 	me::dnn::models::FeatureModel feat_model = me::dnn::models::GenericFeatureModel();
-	det_model.load("yolox_m.onnx", me::dnn::Executor::CUDA);
+	det_model.load("targets_m_dynamic.onnx", me::dnn::Executor::CUDA);
 	feat_model.load("BasicConv6_People_64.onnx", me::dnn::Executor::TENSORRT);
 	auto feat_input_size = feat_model.net_size();
+	auto net_size = det_model.net_size();
 	cv::Mat init_image(feat_input_size, CV_8UC3);
 	cv::randu(init_image, cv::Scalar::all(0), cv::Scalar::all(255));
 	me::dnn::Feature init_feat;
@@ -385,37 +387,119 @@ void feature_aware_track_test() {
 			break;
 		}
 		std::vector<me::dnn::Detection> det_first;
-		det_model.infer(frame, det_first, 0.5, 0.5);
+		det_model.infer(frame, det_first, 0.2, 0.5);
 		std::vector<me::dnn::Detection> detections;
 		for (auto& det : det_first) {
-			if (det.class_id == 0)
+			if (det.class_id == 0) {
+				cv::Point adj_tl(
+					det.bbox.tl().x / net_size.width * frame.cols,
+					det.bbox.tl().y / net_size.height * frame.rows
+				);
+				cv::Point adj_br(
+					det.bbox.br().x / net_size.width * frame.cols,
+					det.bbox.br().y / net_size.height * frame.rows
+				);
+				det.bbox = cv::Rect2d(adj_tl, adj_br);
 				detections.push_back(det);
+			}
 		}
 		std::vector<cv::Mat> ROIs;
 		for (auto& det : detections) {
 			ROIs.push_back(me::dnn::getRoiWithPadding(frame, det.bbox));
 		}
 		std::vector<me::dnn::Feature> features;
-		me::dnn::models::strict_batch_infer(1, feat_model, ROIs, features);
+		me::dnn::models::strict_batch_infer(2, feat_model, ROIs, features);
 		std::vector<size_t> ids = tracker.assign(detections, features, 1.4, 1.0);
-		auto net_size = det_model.net_size();
 		size_t det_num = detections.size();
 		auto* det_ptr = detections.data();
 		auto* id_ptr = ids.data();
 		for (size_t i = 0; i < det_num; ++i) {
 			auto& det = det_ptr[i];
 			auto& id = id_ptr[i];
-			cv::Point adj_tl(
-				det.bbox.tl().x / net_size.width * frame.cols,
-				det.bbox.tl().y / net_size.height * frame.rows
-			);
-			cv::Point adj_br(
-				det.bbox.br().x / net_size.width * frame.cols,
-				det.bbox.br().y / net_size.height * frame.rows
-			);
-			cv::rectangle(frame, adj_tl, adj_br, cv::Scalar(0, 255, 0));
-			cv::putText(frame, std::to_string(id), cv::Point(adj_tl.x, adj_br.y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 0, 255), 2);
+			cv::rectangle(frame, det.bbox.tl(), det.bbox.br(), cv::Scalar(0, 255, 0));
+			cv::putText(frame, std::to_string(id), cv::Point(det.bbox.tl().x, det.bbox.br().y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 0, 255), 2);
 		}
+		cv::imshow("Detections3", frame);
+		box_out.write(frame);
+		cv::waitKey(1);
+	}
+}
+
+void aruco_test() {
+	me::io::FrameProvider cap = me::io::Transcoder();
+	cap.load("E:/ArUco samples/MVI_8270.MP4");
+	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
+	cv::Size frame_size = cap.frame_size();
+	me::dnn::models::DetectionModel det_model = me::dnn::models::YOLOXModel();
+	me::dnn::models::TagModel tag_model;
+	me::dnn::models::CVTagDetector cv_setup;
+	double detection_scale_factor = 1.2;
+	cv_setup.set_preprocess_size(cv::Size(224, 224));
+	tag_model = cv_setup;
+	det_model.load("aruco1_s_dynamic.onnx", me::dnn::Executor::CUDA);
+	auto net_size = det_model.net_size();
+	cv::VideoWriter box_out;
+	box_out.open("tag_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
+	while (cap.is_open()) {
+		bool success = false;
+		cv::Mat frame;
+		success = cap.next_frame(frame);
+		if (!success) {
+			std::cout << "Failed to read from video" << std::endl;
+			break;
+		}
+		std::vector<me::dnn::Detection> det_first;
+		det_model.infer(frame, det_first, 0.2, 0.5);
+		me::dnn::fixDetectionCoordinates(det_first, net_size, frame_size, me::dnn::ScalingMode::AUTO);
+		std::vector<me::dnn::Detection> detections;
+		for (auto& det : det_first) {
+			if (det.class_id == 0) {
+				det.scale_detection(detection_scale_factor);
+				detections.push_back(det);
+			}
+		}
+		std::vector<cv::Mat> ROIs;
+		std::vector<size_t> roi_indices;
+		auto* det_ptr = detections.data();
+		size_t num_dets = detections.size();
+		for (size_t i = 0; i < num_dets; ++i) {
+			if (!me::dnn::isRoiOutsideImage(frame_size, det_ptr[i].bbox)) {
+				ROIs.push_back(me::dnn::getRoiNoPadding(frame, det_ptr[i].bbox));
+				roi_indices.push_back(i);
+			}
+		}
+		std::vector<std::vector<me::dnn::Tag>> tags;
+		tag_model.infer(ROIs, tags);
+		std::vector<me::dnn::Tag> frame_tags;
+		auto* tags_ptr = tags.data();
+		size_t num_tags = tags.size();
+		for (size_t i = 0; i < num_tags; ++i) {
+			auto& tag_list = tags_ptr[i];
+			if (tag_list.size() > 0) {
+				auto& in_tag = tag_list[0];
+				auto& tag_roi = det_ptr[roi_indices[i]];
+				me::dnn::Tag out_tag;
+				out_tag.id = in_tag.id;
+				out_tag[0] = cv::Point2d(
+					in_tag[0].x * tag_roi.bbox.width + tag_roi.bbox.tl().x,
+					in_tag[0].y * tag_roi.bbox.height + tag_roi.bbox.tl().y
+				);
+				out_tag[1] = cv::Point2d(
+					in_tag[1].x * tag_roi.bbox.width + tag_roi.bbox.tl().x,
+					in_tag[1].y * tag_roi.bbox.height + tag_roi.bbox.tl().y
+				);
+				out_tag[2] = cv::Point2d(
+					in_tag[2].x * tag_roi.bbox.width + tag_roi.bbox.tl().x,
+					in_tag[2].y * tag_roi.bbox.height + tag_roi.bbox.tl().y
+				);
+				out_tag[3] = cv::Point2d(
+					in_tag[3].x * tag_roi.bbox.width + tag_roi.bbox.tl().x,
+					in_tag[3].y * tag_roi.bbox.height + tag_roi.bbox.tl().y
+				);
+				frame_tags.push_back(out_tag);
+			}
+		}
+		me::dnn::drawTags(frame, frame_tags);
 		cv::imshow("Detections3", frame);
 		box_out.write(frame);
 		cv::waitKey(1);
@@ -908,7 +992,8 @@ int main() {
 		// primary_tests();
 		performance_experiments();
 		//detectpose_test();
-		feature_aware_track_test();
+		//feature_aware_track_test();
+		aruco_test();
 		std::cout << "Starting pool..." << std::endl;
 		auto pool = me::threading::SimplePool();
 		pool.Start();
