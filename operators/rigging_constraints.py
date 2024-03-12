@@ -442,6 +442,13 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
             if len(vertices) > 2:
                 edges.append((last, edges[0][0]))
 
+            face = []
+            for edge in edges:
+                v = edge[0]
+                if v not in face:
+                    face.append(v)
+            faces.append(face)
+
             mesh_data.from_pydata(vertices, edges, faces)
 
             mesh_data.update()
@@ -455,16 +462,12 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
                 mod.falloff_type = 'CONSTANT'
                 mod.show_expanded = False
 
-            bpy.ops.object.select_all(action='DESELECT')
-            obj.select_set(True)
-            context.view_layer.objects.active = obj
-
             obj.display_type = 'WIRE'
-            current_mode = context.object.mode
-            bpy.ops.object.mode_set(mode='EDIT')
-            bpy.ops.mesh.select_all(action='SELECT')
-            bpy.ops.mesh.fill_holes(sides=0)
-            bpy.ops.object.mode_set(mode=current_mode)
+
+            if context.object.mode == 'OBJECT':
+                bpy.ops.object.select_all(action='DESELECT')
+                obj.select_set(True)
+                context.view_layer.objects.active = obj
 
         return {"FINISHED"}
 
