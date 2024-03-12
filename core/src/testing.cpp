@@ -23,6 +23,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <me/dnn/yolox.hpp>
 #include <me/dnn/pose_topdown.hpp>
 #include <me/dnn/cv_tag_detector.hpp>
+#include <me/dnn/tag_net.hpp>
 #include <me/dnn/feature_extractor.hpp>
 #include <me/io/imagelist.hpp>
 #include <me/io/transcoder.hpp>
@@ -427,7 +428,7 @@ void feature_aware_track_test() {
 
 void aruco_test() {
 	me::io::FrameProvider cap = me::io::Transcoder();
-	cap.load("E:/ArUco samples/MVI_8270.MP4");
+	cap.load("E:/ArUco samples/GH010033.MP4");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	cv::Size frame_size = cap.frame_size();
 	me::dnn::models::DetectionModel det_model = me::dnn::models::YOLOXModel();
@@ -435,7 +436,10 @@ void aruco_test() {
 	me::dnn::models::CVTagDetector cv_setup;
 	double detection_scale_factor = 1.2;
 	cv_setup.set_preprocess_size(cv::Size(224, 224));
-	tag_model = cv_setup;
+	//cv_setup.set_dict_type(cv::aruco::DICT_ARUCO_ORIGINAL);
+	//tag_model = cv_setup;
+	tag_model = me::dnn::models::TagNetModel();
+	tag_model.load("basic_regression4_best.onnx", me::dnn::Executor::CUDA);
 	det_model.load("aruco1_s_dynamic.onnx", me::dnn::Executor::CUDA);
 	auto net_size = det_model.net_size();
 	cv::VideoWriter box_out;
@@ -477,6 +481,8 @@ void aruco_test() {
 			auto& tag_list = tags_ptr[i];
 			if (tag_list.size() > 0) {
 				auto& in_tag = tag_list[0];
+				if (in_tag.conf < 0.9)
+					continue;
 				auto& tag_roi = det_ptr[roi_indices[i]];
 				me::dnn::Tag out_tag;
 				out_tag.id = in_tag.id;

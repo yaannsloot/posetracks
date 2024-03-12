@@ -143,9 +143,13 @@ namespace me {
 			Tag(int id) : id(id) {}
 			Tag(cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : corners{ca, cb, cc, cd} {}
 			Tag(int id, cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : id(id), corners{ ca, cb, cc, cd } {}
+			Tag(int id, double conf) : id(id), conf(conf) {}
+			Tag(double conf, cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : conf(conf), corners{ ca, cb, cc, cd } {}
+			Tag(int id, double conf, cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : id(id), conf(conf), corners{ca, cb, cc, cd} {}
 			cv::Point2d corners[4];
 			cv::Point2d& operator[](const size_t& index) { return corners[index]; }
 			int id = 0;
+			double conf = 1.0;
 		};
 
 		/// <summary>

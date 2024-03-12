@@ -25,17 +25,17 @@ namespace me {
 
 		namespace models {
 
-			class RTMDetModelImpl : public DetectionModelImpl {
+			class TagNetModelImpl : public TagModelImpl {
 			public:
-				RTMDetModelImpl();
+				TagNetModelImpl();
 				virtual cv::Size net_size() override;
-				virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
-				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
+				virtual void infer(const cv::Mat& image, std::vector<Tag>& tags) override;
+				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) override;
 			};
 
-			class RTMDetModel : public DetectionModel {
+			class TagNetModel : public TagModel {
 			public:
-				RTMDetModel();
+				TagNetModel();
 			};
 
 		}
