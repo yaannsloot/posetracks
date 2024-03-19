@@ -16,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "transcoder.hpp"
-#include <me/threading/simplepool.hpp>
+#include "../threading/simplepool.hpp"
 
 namespace me {
 

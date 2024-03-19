@@ -16,8 +16,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "rtmpose.hpp"
+#include "../data/memory.hpp"
 #include <opencv2/dnn.hpp>
-#include <me/data/memory.hpp>
+
 
 namespace me {
 

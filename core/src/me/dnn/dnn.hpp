@@ -146,6 +146,14 @@ namespace me {
 			Tag(int id, double conf) : id(id), conf(conf) {}
 			Tag(double conf, cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : conf(conf), corners{ ca, cb, cc, cd } {}
 			Tag(int id, double conf, cv::Point2d& ca, cv::Point2d& cb, cv::Point2d& cc, cv::Point2d& cd) : id(id), conf(conf), corners{ca, cb, cc, cd} {}
+			Tag(std::pair<double, double>& ca, std::pair<double, double>& cb, std::pair<double, double>& cc, std::pair<double, double>& cd) :
+				corners{ cv::Point2d(ca.first, ca.second), cv::Point2d(cb.first, cb.second), cv::Point2d(cc.first, cc.second), cv::Point2d(cd.first, cd.second) } {}
+			Tag(int id, std::pair<double, double>& ca, std::pair<double, double>& cb, std::pair<double, double>& cc, std::pair<double, double>& cd) : 
+				id(id), corners{ cv::Point2d(ca.first, ca.second), cv::Point2d(cb.first, cb.second), cv::Point2d(cc.first, cc.second), cv::Point2d(cd.first, cd.second) } {}
+			Tag(double conf, std::pair<double, double>& ca, std::pair<double, double>& cb, std::pair<double, double>& cc, std::pair<double, double>& cd) :
+				conf(conf), corners{ cv::Point2d(ca.first, ca.second), cv::Point2d(cb.first, cb.second), cv::Point2d(cc.first, cc.second), cv::Point2d(cd.first, cd.second) } {}
+			Tag(int id, double conf, std::pair<double, double>& ca, std::pair<double, double>& cb, std::pair<double, double>& cc, std::pair<double, double>& cd) :
+				id(id), conf(conf), corners{cv::Point2d(ca.first, ca.second), cv::Point2d(cb.first, cb.second), cv::Point2d(cc.first, cc.second), cv::Point2d(cd.first, cd.second)} {}
 			cv::Point2d corners[4];
 			cv::Point2d& operator[](const size_t& index) { return corners[index]; }
 			int id = 0;

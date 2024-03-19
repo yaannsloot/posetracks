@@ -134,8 +134,8 @@ void performance_experiments() {
 
 	// Generate vector of images
 	std::vector<cv::Mat> images;
-	for (int i = 0; i < 10; i++) {
-		cv::Mat img(1500, 1500, CV_8UC3);
+	for (int i = 0; i < 32; i++) {
+		cv::Mat img(500, 500, CV_8UC3);
 		cv::randu(img, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 		images.push_back(img);
 	}
@@ -666,6 +666,17 @@ void rotate_insert(std::vector<T>& vec) {
 
 int main() {
 	try {
+		cv::Mat test_mat = (cv::Mat_<double>(4, 5) <<
+			1, 2, 3, 4, 5,
+			5, 6, 7, 8, 9,
+			9, 10, 11, 12, 13,
+			13, 14, 15, 16, 17);
+		af::array test_arr(test_mat.cols, test_mat.rows, (double*)test_mat.data);
+		//test_arr = af::moddims(test_arr, test_mat.cols, test_mat.rows);
+		test_arr = af::reorder(test_arr, 1, 0);
+		test_arr = test_arr.as(af::dtype::f32);
+		af_print(test_arr);
+
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;

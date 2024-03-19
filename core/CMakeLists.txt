@@ -107,7 +107,7 @@ target_link_libraries(MEPoseTest PRIVATE
     CUDA::cuda_driver
     ${CUDNN_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
-	me_objects
+    me_objects
     ArrayFire::af
 )
 

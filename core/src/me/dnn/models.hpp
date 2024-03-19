@@ -243,7 +243,6 @@ namespace me {
 				if (!model.is_loaded())
 					return;
 				output.clear();
-				auto* images_ptr = images.data();
 				size_t image_num = images.size();
 				for (size_t i = 0; i < image_num; i += batch_size) {
 					size_t end = i + batch_size;

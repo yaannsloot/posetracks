@@ -15,13 +15,15 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define NOMINMAX
+
 #include "dnn.hpp"
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/cudaarithm.hpp>
-#include <me/threading/simplepool.hpp>
 #include <onnxruntime_cxx_api.h>
 #include <execution>
+#include <arrayfire.h>
 
 namespace me {
 
@@ -693,6 +695,8 @@ namespace me {
 			return selected_indices;
 		}
 
+
+
 		void blobifyImages(const std::vector<cv::Mat>& images,
 			std::vector<float>& output,
 			double scale,
@@ -703,154 +707,32 @@ namespace me {
 			bool use_cuda,
 			CropMethod crop_method,
 			BlobLayout layout) {
-			// Guards
-			double std_dev_a = (std_dev[0] == 0) ? 1.0 : std_dev[0];
-			double std_dev_b = (std_dev[1] == 0) ? 1.0 : std_dev[1];
-			double std_dev_c = (std_dev[2] == 0) ? 1.0 : std_dev[2];
-			const cv::Scalar new_std(std_dev_a, std_dev_b, std_dev_c); // Prevents divide by 0
-			// Setup
-			size_t N = images.size();
-			size_t C = 3;
-			size_t H = out_size.height;
-			size_t W = out_size.width;
-			size_t stride_a;
-			size_t stride_b;
-			size_t stride_c;
-			switch (layout) {
-			case BlobLayout::NCHW:
-				stride_a = C * H * W;
-				stride_b = H * W;
-				stride_c = W;
-				break;
-			case BlobLayout::NHWC:
-				stride_a = H * W * C;
-				stride_b = W * C;
-				stride_c = C;
-				break;
-			case BlobLayout::CHWN:
-				stride_a = H * W * N;
-				stride_b = W * N;
-				stride_c = N;
-				break;
-			default:
-				std::stringstream ss;
-				ss << "Unknown blob layout: " << (int)layout;
-				throw std::runtime_error(ss.str());
+			af::array batch;
+			for (auto& image : images) {
+				cv::Mat image_f32; 
+				image.convertTo(image_f32, CV_32F);
+				af::array af_arr(image.channels(), image.cols, image.rows, image_f32.data);
+				af_arr = af::reorder(af_arr, 2, 1, 0);
+				af_arr = af_arr.as(af::dtype::f32);
+				af_arr = af::resize(af_arr, out_size.width, out_size.height, af::interpType::AF_INTERP_NEAREST);
+				if (batch.isempty())
+					batch = af_arr;
+				else
+					batch = af::join(3, batch, af_arr);
 			}
-
-			size_t blob_size = N * C * H * W;
-
-			output.resize(blob_size);
-			float* output_ptr = output.data();
-
-			auto pool_size = std::thread::hardware_concurrency();
-			if (!me::threading::global_pool.Running())
-				me::threading::global_pool.Start();
-
-			auto resize_segments = me::threading::calculateSegments(N, pool_size);
-			std::vector<cv::Mat> resized_images;
-			std::vector<std::future<void>> resize_tasks;
-			resized_images.resize(N);
-
-			// Queue segment tasks
-			for (auto& seg : resize_segments) {
-				auto task = me::threading::global_pool.QueueJob([](const std::pair<size_t, size_t> segment,
-					const std::vector<cv::Mat> *src_images,
-					std::vector<cv::Mat> *dst_images,
-					CropMethod method,
-					const cv::Size dst_size,
-					bool cuda) {
-
-					for (size_t i = segment.first; i < segment.second; ++i) {
-						
-						// Preprocess image ops
-						switch (method) {
-						case CropMethod::FIT:
-							FitImage(src_images->at(i), dst_images->at(i), dst_size, cuda);
-							break;
-						case CropMethod::LETTERBOX:
-							LetterboxImage(src_images->at(i), dst_images->at(i), dst_size, cuda);
-							break;
-						default:
-							StretchImage(src_images->at(i), dst_images->at(i), dst_size, cuda);
-						}
-
-					}
-
-				}, seg, &images, &resized_images, crop_method, out_size, use_cuda);
-				resize_tasks.emplace_back(std::move(task));
+			if (mean != cv::Scalar()) {
+				double avg_mean = (mean[0] + mean[1] + mean[2]) / 3;
+				batch -= avg_mean;
 			}
-
-			// Wait for tasks to complete
-			for (auto& task : resize_tasks) {
-				task.wait();
+			if (std_dev != cv::Scalar()) {
+				double avg_std = (std_dev[0] + std_dev[1] + std_dev[2]) / 3;
+				batch /= avg_std;
 			}
-
-			// Copy tasks
-			auto copy_segments = me::threading::calculateSegments(blob_size, pool_size);
-			std::vector<std::future<void>> copy_tasks;
-
-			for (auto& seg : copy_segments) {
-				auto task = me::threading::global_pool.QueueJob([](const std::pair<size_t, size_t> segment,
-					float *blob,
-					const std::vector<cv::Mat> *src_images,
-					BlobLayout l_type,
-					bool swapRB,
-					size_t N,
-					size_t C,
-					size_t H,
-					size_t W,
-					double scale,
-					const cv::Scalar mean,
-					const cv::Scalar new_std) {
-
-						for (size_t i = segment.first; i < segment.second; ++i) {
-
-							// Calculate indices
-							size_t n, h, w, c;
-							switch (l_type) {
-							case BlobLayout::NCHW:
-								n = i / (C * H * W);
-								c = (i / (H * W)) % C;
-								h = (i / W) % H;
-								w = i % W;
-								break;
-							case BlobLayout::NHWC:
-								n = i / (H * W * C);
-								h = (i / (W * C)) % H;
-								w = (i / C) % W;
-								c = i % C;
-								break;
-							default:
-								c = i / (H * W * N);
-								h = (i / (W * N)) % H;
-								w = (i / N) % W;
-								n = i % N;
-							}
-
-							// Channel swap
-							if (swapRB) {
-								if (c == 0)
-									c = 2;
-								else if (c == 2)
-									c = 0;
-							}
-
-							float tmp = src_images->at(n).ptr<uchar>(h)[w * 3 + c];
-
-							blob[i] = scale * ((tmp - mean[c]) / new_std[c]);
-
-						}
-
-				}, seg, output_ptr, &resized_images, layout, swapRB, N, C, H, W, scale, mean, new_std);
-				copy_tasks.emplace_back(std::move(task));
-			}
-
-			// Wait for tasks to complete
-			for (auto& task : copy_tasks) {
-				task.wait();
-			}
-
+			batch *= scale;
+			batch = af::reorder(batch, 3, 2, 1, 0);
+			output.resize(batch.elements());
+			batch.eval();
+			batch.host(output.data());
 		}
 
 		std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {

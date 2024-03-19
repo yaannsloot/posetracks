@@ -13,6 +13,7 @@ target_link_libraries(MEPython.cp310 PRIVATE
     ${CUDNN_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
     me_objects
+    ArrayFire::af
 )
 
 target_compile_features(MEPython.cp310 PRIVATE cxx_std_17)
