@@ -30,7 +30,7 @@ namespace me {
 		class CardinalCubicHermiteSpline : public Curve {
 		public:
 			using Curve::Curve;
-			void setTension(double c);
+			void setTension(double new_c);
 			cv::Point2d solve(double x);
 		private:
 			double c = 0.5; // Cardinal spline tension parameter. Changes the tangents in the spline. 1 yields all zero tangents and 0.5 yields a Catmull-Rom spline

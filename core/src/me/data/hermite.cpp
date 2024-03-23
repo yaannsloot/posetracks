@@ -21,7 +21,7 @@ namespace me {
 	
 	namespace data {
 		
-		cv::Point2d Pk(double x, int offset, std::vector<cv::Point2d>& points) {
+		cv::Point2d Pk(double x, int offset, const std::vector<cv::Point2d>& points) {
 			if (points.empty())
 				return cv::Point2d(0, 0);
 			auto it = points.begin();
@@ -51,21 +51,21 @@ namespace me {
 		double h11(double t) { return pow(t, 3) - pow(t, 2); }
 
 		// Additional spline functions
-		double t0(double x, std::vector<cv::Point2d>& points) { return Pk(x, 1, points).x - Pk(x, 0, points).x; }
-		double t(double x, std::vector<cv::Point2d>& points) { return (x - Pk(x, 0, points).x) / t0(x, points); }
-		double mk(double x, double c, int offset, std::vector<cv::Point2d>& points) { return (1 - c) * ((Pk(x, 1 + offset, points).y - Pk(x, -1 + offset, points).y) / (Pk(x, 1 + offset, points).x - Pk(x, -1 + offset, points).x)); }
-		double y(double x, double c, std::vector<cv::Point2d>& points) { return h00(t(x, points)) * Pk(x, 0, points).y + h10(t(x, points)) * t0(x, points) * mk(x, c, 0, points) + h01(t(x, points)) * Pk(x, 1, points).y + h11(t(x, points)) * t0(x, points) * mk(x, c, 1, points); }
+		double t0(double x, const std::vector<cv::Point2d>& points) { return Pk(x, 1, points).x - Pk(x, 0, points).x; }
+		double t(double x, const std::vector<cv::Point2d>& points) { return (x - Pk(x, 0, points).x) / t0(x, points); }
+		double mk(double x, double c, int offset, const std::vector<cv::Point2d>& points) { return (1 - c) * ((Pk(x, 1 + offset, points).y - Pk(x, -1 + offset, points).y) / (Pk(x, 1 + offset, points).x - Pk(x, -1 + offset, points).x)); }
+		double y(double x, double c, const std::vector<cv::Point2d>& points) { return h00(t(x, points)) * Pk(x, 0, points).y + h10(t(x, points)) * t0(x, points) * mk(x, c, 0, points) + h01(t(x, points)) * Pk(x, 1, points).y + h11(t(x, points)) * t0(x, points) * mk(x, c, 1, points); }
 
 		cv::Point2d CardinalCubicHermiteSpline::solve(double x) {
 			return cv::Point2d(x, y(x, this->c, this->getPoints()));
 		}
 
-		void CardinalCubicHermiteSpline::setTension(double c) {
-			if (c > 1)
-				c = 1;
-			if (c < 0)
-				c = 0;
-			this->c = c;
+		void CardinalCubicHermiteSpline::setTension(double new_c) {
+			if (new_c > 1)
+				new_c = 1;
+			if (new_c < 0)
+				new_c = 0;
+			this->c = new_c;
 		}
 		
 	}
