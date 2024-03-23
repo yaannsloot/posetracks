@@ -24,13 +24,13 @@ namespace me {
 		
 		size_t nCk(size_t n, size_t k) { return factorial(n) / (factorial(k) * factorial(n - k)); }
 
-		cv::Point2d B(double t, std::vector<cv::Point2d*>& pts) {
+		cv::Point2d B(double t, const std::vector<cv::Point2d>& pts) {
 			cv::Point2d result(0, 0);
 			if (pts.size() > 0) {
 				size_t n = pts.size() - 1;
 				for (size_t i = 0; i <= n; i++) {
-					result.x += nCk(n, i) * pow(1 - t, n - i) * pow(t, i) * pts[i]->x;
-					result.y += nCk(n, i) * pow(1 - t, n - i) * pow(t, i) * pts[i]->y;
+					result.x += nCk(n, i) * pow(1 - t, n - i) * pow(t, i) * pts[i].x;
+					result.y += nCk(n, i) * pow(1 - t, n - i) * pow(t, i) * pts[i].y;
 				}
 			}
 			return result;

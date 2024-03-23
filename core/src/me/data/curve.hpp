@@ -58,7 +58,7 @@ namespace me {
 			cv::Point2d getPoint(int index);
 
 
-			std::vector<cv::Point2d*> getPoints();
+			std::vector<cv::Point2d> getPoints();
 
 
 			size_t size();

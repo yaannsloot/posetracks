@@ -21,27 +21,27 @@ namespace me {
 
 	namespace tracking {
 
-		TDataPair find_common_data(TrackingData& data_a, TrackingData& data_b) {
+		TDataPair find_common_data(const TrackingData& data_a, const TrackingData& data_b) {
 			TrackingData output_a;
 			TrackingData output_b;
 
 			// Find pose intersections
 			auto common_pose_frames = findCommonKeys(data_a.poses, data_b.poses);
 			for (auto& f_id : common_pose_frames) {
-				auto& id_map_a = data_a.poses[f_id];
-				auto& id_map_b = data_b.poses[f_id];
+				auto& id_map_a = data_a.poses.at(f_id);
+				auto& id_map_b = data_b.poses.at(f_id);
 				auto common_ids = findCommonKeys(id_map_a, id_map_b);
 				PoseIDMap new_map_a;
 				PoseIDMap new_map_b;
 				for (auto& p_id : common_ids) {
-					auto& pose_a = id_map_a[p_id];
-					auto& pose_b = id_map_b[p_id];
+					auto& pose_a = id_map_a.at(p_id);
+					auto& pose_b = id_map_b.at(p_id);
 					auto common_joints = findCommonKeys(pose_a.joints, pose_b.joints);
 					dnn::Pose new_pose_a;
 					dnn::Pose new_pose_b;
 					for (auto& j_id : common_joints) {
-						new_pose_a[j_id] = pose_a[j_id];
-						new_pose_b[j_id] = pose_b[j_id];
+						new_pose_a[j_id] = pose_a.joints.at(j_id);
+						new_pose_b[j_id] = pose_b.joints.at(j_id);
 					}
 					if (!common_joints.empty()) {
 						new_map_a[p_id] = new_pose_a;
@@ -57,14 +57,14 @@ namespace me {
 			// Find detection_intersections
 			auto common_detection_frames = findCommonKeys(data_a.detections, data_b.detections);
 			for (auto& f_id : common_detection_frames) {
-				auto& id_map_a = data_a.detections[f_id];
-				auto& id_map_b = data_b.detections[f_id];
+				auto& id_map_a = data_a.detections.at(f_id);
+				auto& id_map_b = data_b.detections.at(f_id);
 				auto common_ids = findCommonKeys(id_map_a, id_map_b);
 				DetectionIDMap new_map_a;
 				DetectionIDMap new_map_b;
 				for (auto& d_id : common_ids) {
-					new_map_a[d_id] = id_map_a[d_id];
-					new_map_b[d_id] = id_map_b[d_id];
+					new_map_a[d_id] = id_map_a.at(d_id);
+					new_map_b[d_id] = id_map_b.at(d_id);
 				}
 				if (!new_map_a.empty() && !new_map_b.empty()) {
 					output_a.detections[f_id] = new_map_a;
@@ -75,14 +75,14 @@ namespace me {
 			// Find tag intersections
 			auto common_tag_frames = findCommonKeys(data_a.tags, data_b.tags);
 			for (auto& f_id : common_tag_frames) {
-				auto& id_map_a = data_a.tags[f_id];
-				auto& id_map_b = data_b.tags[f_id];
+				auto& id_map_a = data_a.tags.at(f_id);
+				auto& id_map_b = data_b.tags.at(f_id);
 				auto common_ids = findCommonKeys(id_map_a, id_map_b);
 				TagIDMap new_map_a;
 				TagIDMap new_map_b;
 				for (auto& t_id : common_ids) {
-					new_map_a[t_id] = id_map_a[t_id];
-					new_map_b[t_id] = id_map_b[t_id];
+					new_map_a[t_id] = id_map_a.at(t_id);
+					new_map_b[t_id] = id_map_b.at(t_id);
 				}
 				if (!new_map_a.empty() && !new_map_b.empty()) {
 					output_a.tags[f_id] = new_map_a;
@@ -93,7 +93,7 @@ namespace me {
 			return TDataPair(output_a, output_b);
 		}
 
-		TrackedPoints TrackingData::to_points(bool reduce_boxes, bool reduce_tags) {
+		TrackedPoints TrackingData::to_points(bool reduce_tags) {
 			TrackedPoints result;
 
 			// Pose points
@@ -111,18 +111,10 @@ namespace me {
 			for (auto& ddd : this->detections) {
 				for (auto& dd : ddd.second) {
 					auto& d = dd.second;
-					if (reduce_boxes) {
-						result.push_back(cv::Point2f(
-							static_cast<float>(d.bbox.x + d.bbox.width / 2),
-							static_cast<float>(d.bbox.y + d.bbox.height / 2)
-						));
-					}
-					else {
-						auto tl = d.bbox.tl();
-						auto br = d.bbox.br();
-						result.push_back(cv::Point2f(static_cast<float>(tl.x), static_cast<float>(tl.y)));
-						result.push_back(cv::Point2f(static_cast<float>(br.x), static_cast<float>(br.y)));
-					}
+					result.push_back(cv::Point2f(
+						static_cast<float>(d.bbox.x + d.bbox.width / 2),
+						static_cast<float>(d.bbox.y + d.bbox.height / 2)
+					));
 				}
 			}
 
@@ -144,6 +136,30 @@ namespace me {
 			}
 
 			return result;
+		}
+
+		void Rt::invert()
+		{
+			cv::Mat T_orig = to4x4();
+
+			cv::Mat T_inv;
+			cv::invert(T_orig, T_inv, cv::DECOMP_SVD);
+
+			R = T_inv(cv::Rect(0, 0, 3, 3));
+			t = T_inv(cv::Rect(3, 0, 1, 3));
+		}
+
+		cv::Mat Rt::to4x4()
+		{
+			cv::Mat T = cv::Mat::eye(4, 4, CV_64F);
+			R.copyTo(T(cv::Rect(0, 0, 3, 3)));
+			t.copyTo(T(cv::Rect(3, 0, 1, 3)));
+			return T;
+		}
+
+		void Rt::from4x4(const cv::Mat& src) {
+			R = src(cv::Rect(0, 0, 3, 3));
+			t = src(cv::Rect(3, 0, 1, 3));
 		}
 
 	}

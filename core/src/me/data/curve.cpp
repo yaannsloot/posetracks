@@ -45,10 +45,10 @@ namespace me {
 			return cv::Point2d(0, 0);
 		}
 
-		std::vector<cv::Point2d*> Curve::getPoints() {
-			std::vector<cv::Point2d*> pts;
+		std::vector<cv::Point2d> Curve::getPoints() {
+			std::vector<cv::Point2d> pts;
 			for (auto it = points.begin(); it != points.end(); it++) {
-				pts.push_back(&it._Ptr->_Myval);
+				pts.push_back(*it);
 			}
 			return pts;
 		}

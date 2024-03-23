@@ -32,11 +32,17 @@ namespace me {
 		}
 
 		void Range::setMin(double min) {
-			*curve.getPoints()[0] = cv::Point2d(0, min);
+			auto points = curve.getPoints();
+			points[0] = cv::Point2d(0, min);
+			curve.clearPoints();
+			curve.addPoints(points);
 		}
 
 		void Range::setMax(double max) {
-			*curve.getPoints()[1] = cv::Point2d(1, max);
+			auto points = curve.getPoints();
+			points[1] = cv::Point2d(1, max);
+			curve.clearPoints();
+			curve.addPoints(points);
 		}
 
 		bool Range::contains(double val) {

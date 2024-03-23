@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <iomanip>
 #include <sstream>
 #include <random>
+#include <cstring>
 
 namespace me {
 

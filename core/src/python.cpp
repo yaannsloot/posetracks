@@ -681,7 +681,7 @@ PYBIND11_MODULE(MEPython, m)
 		.def_readwrite("poses", &me::tracking::TrackingData::poses)
 		.def_readwrite("detections", &me::tracking::TrackingData::detections)
 		.def_readwrite("tags", &me::tracking::TrackingData::tags)
-		.def("to_points", &me::tracking::TrackingData::to_points, py::arg("reduce_boxes") = true, py::arg("reduce_tags") = false);
+		.def("to_points", &me::tracking::TrackingData::to_points, py::arg("reduce_tags") = false);
 
 	// Function bindings
 
