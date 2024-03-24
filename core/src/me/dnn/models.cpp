@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "models.hpp"
 #include <cpu_provider_factory.h>
+#include <thread>
 
 namespace me {
 
