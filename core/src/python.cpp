@@ -556,10 +556,10 @@ PYBIND11_MODULE(MEPython, m)
 		.def(py::init<int, double>())
 		.def(py::init<double, cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
 		.def(py::init<int, double, cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
-		.def(py::init<std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&>())
-		.def(py::init<int, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&>())
-		.def(py::init<double, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&>())
-		.def(py::init<int, double, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&, std::pair<double, double>&>())
+		.def(py::init<const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
+		.def(py::init<int, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
+		.def(py::init<double, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
+		.def(py::init<int, double, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
 		.def("__getitem__", [](me::dnn::Tag& self, size_t index) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			return self.corners[index];
@@ -568,7 +568,7 @@ PYBIND11_MODULE(MEPython, m)
 			if (index >= 4 || index < 0) throw py::index_error();
 			self[index] = value;
 		})
-		.def("__setitem__", [](me::dnn::Tag& self, size_t index, std::pair<double, double> value) {
+		.def("__setitem__", [](me::dnn::Tag& self, size_t index, const std::pair<double, double> value) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			self[index] = cv::Point2d(value.first, value.second);
 		})
