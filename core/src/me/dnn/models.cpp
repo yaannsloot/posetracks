@@ -86,7 +86,7 @@ namespace me {
 
 				// Create the session
 				try {
-#ifdef _WIN32 || _WIN64 || __WINDOWS__
+#if defined _WIN32 || defined _WIN64 || defined __WINDOWS__
 					std::wstring wide_path = std::wstring(model_path.begin(), model_path.end());
 					this->session = std::make_shared<Ort::Session>(*this->env, wide_path.c_str(), *this->session_options);
 #else

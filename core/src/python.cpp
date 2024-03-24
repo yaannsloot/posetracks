@@ -87,9 +87,11 @@ void warmup_models(
 			cv::randn(wu_det, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 			cv::randn(wu_pose, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
 			std::cout << "[MotionEngine] Starting warmup phase of detection model..." << std::endl;
-			model->detection_model.infer(wu_det, std::vector<me::dnn::Detection>(), 0, 0);
+			std::vector<me::dnn::Detection> dummy_det;
+			model->detection_model.infer(wu_det, dummy_det, 0, 0);
 			std::cout << "[MotionEngine] Starting warmup phase of pose model..." << std::endl;
-			model->pose_model.infer(wu_pose, me::dnn::Pose());
+			me::dnn::Pose dummy_pose;
+			model->pose_model.infer(wu_pose, dummy_pose);
 			std::cout << "[MotionEngine] Warmup phase complete." << std::endl;
 		}
 	}
@@ -1353,7 +1355,7 @@ PYBIND11_MODULE(MEPython, m)
 				keyframes_y.attr("add")(track_points.size());
 				keyframes_z.attr("add")(track_points.size());
 
-				auto& current_frame = track_points.begin();
+				auto current_frame = track_points.begin();
 
 				for (int i = 0; i < track_points.size(); ++i) {
 					py::object key_x = keyframes_x.attr("__getitem__")(i);
