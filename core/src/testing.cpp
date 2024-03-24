@@ -36,7 +36,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <filesystem>
 #include <numeric>
 #include <random>
-#include <arrayfire.h>
 
 void performance_experiments() {
 	// Accessor vs true N dimensionsal heap memory structure performance
@@ -151,33 +150,6 @@ void performance_experiments() {
 	cv::dnn::blobFromImages(images, 1, cv::Size(320, 320));
 	end = std::chrono::high_resolution_clock::now();
 	std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-
-	for (int i = 1; i <= 4; ++i) {
-		std::cout << "Testing MotionEngine blob function(letterbox)[" << i << "]...";
-		std::vector<float> output_float;
-		start = std::chrono::high_resolution_clock::now();
-		me::dnn::blobifyImages(images, output_float, 1.0, cv::Scalar(), cv::Scalar(), cv::Size(320, 320), false, false, me::dnn::CropMethod::LETTERBOX);
-		end = std::chrono::high_resolution_clock::now();
-		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-	}
-
-	for (int i = 1; i <= 4; ++i) {
-		std::cout << "Testing MotionEngine blob function(fit)[" << i << "]...";
-		std::vector<float> output_float;
-		start = std::chrono::high_resolution_clock::now();
-		me::dnn::blobifyImages(images, output_float, 1.0, cv::Scalar(), cv::Scalar(), cv::Size(320, 320), false, false, me::dnn::CropMethod::FIT);
-		end = std::chrono::high_resolution_clock::now();
-		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-	}
-
-	for (int i = 1; i <= 4; ++i) {
-		std::cout << "Testing MotionEngine blob function(stretch)[" << i << "]...";
-		std::vector<float> output_float;
-		start = std::chrono::high_resolution_clock::now();
-		me::dnn::blobifyImages(images, output_float, 1.0, cv::Scalar(), cv::Scalar(), cv::Size(320, 320), false, false, me::dnn::CropMethod::NONE);
-		end = std::chrono::high_resolution_clock::now();
-		std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
-	}
 
 }
 
@@ -440,7 +412,7 @@ void aruco_test() {
 	//tag_model = cv_setup;
 	tag_model = me::dnn::models::TagNetModel();
 	tag_model.load("basic_regression4_best.onnx", me::dnn::Executor::CUDA);
-	det_model.load("aruco1_s_dynamic.onnx", me::dnn::Executor::CUDA);
+	det_model.load("aruco1_s_dynamic.onnx", me::dnn::Executor::TENSORRT);
 	auto net_size = det_model.net_size();
 	cv::VideoWriter box_out;
 	box_out.open("tag_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
@@ -666,16 +638,6 @@ void rotate_insert(std::vector<T>& vec) {
 
 int main() {
 	try {
-		cv::Mat test_mat = (cv::Mat_<double>(4, 5) <<
-			1, 2, 3, 4, 5,
-			5, 6, 7, 8, 9,
-			9, 10, 11, 12, 13,
-			13, 14, 15, 16, 17);
-		af::array test_arr(test_mat.cols, test_mat.rows, (double*)test_mat.data);
-		//test_arr = af::moddims(test_arr, test_mat.cols, test_mat.rows);
-		test_arr = af::reorder(test_arr, 1, 0);
-		test_arr = test_arr.as(af::dtype::f32);
-		af_print(test_arr);
 
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
 		std::cout << me::crypto::generateRandomSHA1().to_string() << std::endl;
@@ -692,39 +654,6 @@ int main() {
 		for (double& val : random_numbers) {
 			val = steve(jerry);
 		}
-		af::array af_rand(random_numbers.size(), random_numbers.data());
-		me::dnn::Feature rand_feat(random_numbers);
-		std::cout << rand_feat.norm() << ' ' << af::norm(af_rand) << std::endl;
-
-		start = std::chrono::high_resolution_clock::now();
-		rand_feat.norm();
-		end = std::chrono::high_resolution_clock::now();
-		double feat = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		start = std::chrono::high_resolution_clock::now();
-		af::norm(af_rand);
-		end = std::chrono::high_resolution_clock::now();
-		double fire = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		std::cout << "ME Feature norm: " << feat << "us, ArrayFire norm: " << fire << "us" << std::endl;
-
-		start = std::chrono::high_resolution_clock::now();
-		rand_feat.norm();
-		end = std::chrono::high_resolution_clock::now();
-		feat = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		start = std::chrono::high_resolution_clock::now();
-		af::norm(af_rand);
-		end = std::chrono::high_resolution_clock::now();
-		fire = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		std::cout << "ME Feature norm: " << feat << "us, ArrayFire norm: " << fire << "us" << std::endl;
-
-		start = std::chrono::high_resolution_clock::now();
-		rand_feat.norm();
-		end = std::chrono::high_resolution_clock::now();
-		feat = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		start = std::chrono::high_resolution_clock::now();
-		af::norm(af_rand);
-		end = std::chrono::high_resolution_clock::now();
-		fire = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-		std::cout << "ME Feature norm: " << feat << "us, ArrayFire norm: " << fire << "us" << std::endl;
 
 		int test_steps = 100;
 		std::vector<double> test_vector;

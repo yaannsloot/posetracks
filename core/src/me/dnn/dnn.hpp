@@ -339,22 +339,11 @@ namespace me {
 
 		std::vector<size_t> nms(std::vector<Detection>& detections, float iou_thresh);
 
-		void blobifyImages(const std::vector<cv::Mat>& images,
-			std::vector<float>& output,
-			double scale = 1.0,
-			const cv::Scalar& mean = cv::Scalar(),
-			const cv::Scalar& std_dev = cv::Scalar(),
-			const cv::Size& out_size = cv::Size(),
-			bool swapRB = false,
-			bool use_cuda = false,
-			CropMethod crop_method = CropMethod::NONE,
-			BlobLayout layout = BlobLayout::NCHW);
+		std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = false);
 
-		std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = true);
+		std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = false);
 
-		std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = true);
-
-		void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = true);
+		void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = false);
 
 		bool checkForProvider(const std::string provider_str);
 

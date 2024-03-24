@@ -31,6 +31,10 @@ namespace me {
 
 				this->env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, this->logid.c_str());
 
+#ifndef ME_CUDA_ENABLED
+				target_executor = Executor::CPU
+#endif 
+
 				// Start a new onnx session on the specified device.
 				// For systems with NVIDIA GPU, the GPU device option will use the TensorRT provider.
 				// For systems without an NVIDIA GPU, the GPU device option will default to the CPU provider.

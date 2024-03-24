@@ -1,4 +1,9 @@
-find_package(Python 3.9 EXACT REQUIRED COMPONENTS Interpreter Development)
+message("Configuring build target for Python 3.9...")
+
+find_package(Python 3.9 EXACT COMPONENTS Interpreter Development)
+
+if(Python_FOUND)
+
 find_package(pybind11 REQUIRED)
 add_library(MEPython.cp39 SHARED ${SOURCES_MOTIONENGINE_PYBIND})
 
@@ -6,32 +11,12 @@ target_link_libraries(MEPython.cp39 PRIVATE
     ${OpenCV_LIBS}
     Python::Python
     pybind11::module
-    CUDA::cudart
-    CUDA::curand
-    CUDA::cublas
-    CUDA::cuda_driver
-    ${CUDNN_LIBRARIES}
+    ${CUDA_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
     me_objects
-    ArrayFire::af
 )
 
 target_compile_features(MEPython.cp39 PRIVATE cxx_std_17)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(MEPython.cp39 PRIVATE
-        /arch:AVX2
-        /Ob2
-        /Oi
-        /openmp:llvm
-    )
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(MEPython.cp39 PRIVATE
-        -mavx2
-        -O2
-        -fopenmp
-    )
-endif()
 
 set_target_properties(MEPython.cp39 PROPERTIES
     OUTPUT_NAME "MEPython"
@@ -39,3 +24,8 @@ set_target_properties(MEPython.cp39 PROPERTIES
 )
 
 install(TARGETS MEPython.cp39 RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/redis/cp39)
+
+else()
+message("No valid Python 3.9 installation found. Build target skipped.")
+
+endif()

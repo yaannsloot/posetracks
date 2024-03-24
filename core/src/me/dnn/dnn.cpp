@@ -18,12 +18,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define NOMINMAX
 
 #include "dnn.hpp"
+
+#ifdef ME_CUDA_ENABLED
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/cudaarithm.hpp>
+#endif
+
 #include <onnxruntime_cxx_api.h>
 #include <execution>
-#include <arrayfire.h>
 
 namespace me {
 
@@ -695,46 +698,6 @@ namespace me {
 			return selected_indices;
 		}
 
-
-
-		void blobifyImages(const std::vector<cv::Mat>& images,
-			std::vector<float>& output,
-			double scale,
-			const cv::Scalar& mean,
-			const cv::Scalar& std_dev,
-			const cv::Size& out_size,
-			bool swapRB,
-			bool use_cuda,
-			CropMethod crop_method,
-			BlobLayout layout) {
-			af::array batch;
-			for (auto& image : images) {
-				cv::Mat image_f32; 
-				image.convertTo(image_f32, CV_32F);
-				af::array af_arr(image.channels(), image.cols, image.rows, image_f32.data);
-				af_arr = af::reorder(af_arr, 2, 1, 0);
-				af_arr = af_arr.as(af::dtype::f32);
-				af_arr = af::resize(af_arr, out_size.width, out_size.height, af::interpType::AF_INTERP_NEAREST);
-				if (batch.isempty())
-					batch = af_arr;
-				else
-					batch = af::join(3, batch, af_arr);
-			}
-			if (mean != cv::Scalar()) {
-				double avg_mean = (mean[0] + mean[1] + mean[2]) / 3;
-				batch -= avg_mean;
-			}
-			if (std_dev != cv::Scalar()) {
-				double avg_std = (std_dev[0] + std_dev[1] + std_dev[2]) / 3;
-				batch /= avg_std;
-			}
-			batch *= scale;
-			batch = af::reorder(batch, 3, 2, 1, 0);
-			output.resize(batch.elements());
-			batch.eval();
-			batch.host(output.data());
-		}
-
 		std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {
 			auto in_h = static_cast<float>(src.rows);
 			auto in_w = static_cast<float>(src.cols);
@@ -751,6 +714,7 @@ namespace me {
 			int left = (static_cast<int>(out_w) - mid_w) / 2;
 			int right = (static_cast<int>(out_w) - mid_w + 1) / 2;
 
+#ifdef ME_CUDA_ENABLED
 			if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
 				cv::cuda::GpuMat gpuIn;
 				cv::cuda::GpuMat gpuOut;
@@ -762,6 +726,11 @@ namespace me {
 				cv::cuda::copyMakeBorder(gpuOut, gpuOut, top, down, left, right, cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
 
 				gpuOut.download(dst);
+#else
+			if (use_cuda) {
+				cv::resize(src, dst, cv::Size(mid_w, mid_h));
+				cv::copyMakeBorder(dst, dst, top, down, left, right, cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
+#endif
 			}
 			else {
 				cv::resize(src, dst, cv::Size(mid_w, mid_h));
@@ -788,6 +757,7 @@ namespace me {
 			int top = (mid_h - static_cast<int>(out_h)) / 2;
 			int left = (mid_w - static_cast<int>(out_w)) / 2;
 
+#ifdef ME_CUDA_ENABLED
 			if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
 				cv::cuda::GpuMat gpuIn;
 				cv::cuda::GpuMat gpuOut;
@@ -800,6 +770,13 @@ namespace me {
 				cv::cuda::GpuMat gpuCrop(gpuOut, cv::Rect(left, top, out_w, out_h));
 				gpuCrop.download(dst);
 			}
+#else
+			if (use_cuda) {
+				cv::resize(src, dst, cv::Size(mid_w, mid_h));
+				// Crop the image to the output size
+				dst = dst(cv::Rect(left, top, out_w, out_h));
+			}
+#endif
 			else {
 				cv::resize(src, dst, cv::Size(mid_w, mid_h));
 				// Crop the image to the output size
@@ -811,6 +788,7 @@ namespace me {
 		}
 
 		void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {
+#ifdef ME_CUDA_ENABLED
 			if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
 				cv::cuda::GpuMat gpuIn;
 				cv::cuda::GpuMat gpuOut;
@@ -821,6 +799,11 @@ namespace me {
 
 				gpuOut.download(dst);
 			}
+#else
+			if (use_cuda) {
+				cv::resize(src, dst, out_size);
+			}
+#endif
 			else {
 				cv::resize(src, dst, out_size);
 			}
