@@ -85,9 +85,13 @@ namespace me {
 				this->session_options->SetLogSeverityLevel(4);
 
 				// Create the session
-				std::wstring wide_path = std::wstring(model_path.begin(), model_path.end());
 				try {
+#ifdef _WIN32 || _WIN64 || __WINDOWS__
+					std::wstring wide_path = std::wstring(model_path.begin(), model_path.end());
 					this->session = std::make_shared<Ort::Session>(*this->env, wide_path.c_str(), *this->session_options);
+#else
+					this->session = std::make_shared<Ort::Session>(*this->env, model_path.c_str(), *this->session_options);
+#endif
 
 					// Get the input and output names
 					size_t num_input_nodes = this->session->GetInputCount();
