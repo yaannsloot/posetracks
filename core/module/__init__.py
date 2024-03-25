@@ -22,11 +22,14 @@ import importlib
 # Temporarily add module directory to environment
 _old_path = os.environ.get('PATH', '')
 _init_path = os.path.dirname(os.path.abspath(__file__))
-_dll_path = os.path.join(_init_path, "bin")
-os.environ['PATH'] = _init_path + os.pathsep + _dll_path + os.pathsep + _old_path
 if os.name == 'nt':
+    _dll_path = os.path.join(_init_path, "bin")
+    os.environ['PATH'] = _init_path + os.pathsep + _dll_path + os.pathsep + _old_path
     os.add_dll_directory(_init_path)
     os.add_dll_directory(_dll_path)
+else:
+    # Library will be rpathed to lib dir, so no need to add to path
+    os.environ['PATH'] = _init_path + os.pathsep + _old_path
 
 # Get the current Python version
 _python_version = f"cp{sys.version_info.major}{sys.version_info.minor}"
@@ -41,8 +44,7 @@ sys.path.insert(0, _module_dir)
 _pyc = importlib.import_module("MEPython")
 
 # Remove the module directory from sys.path
-sys.path.pop(0)
-sys.path.pop(0)
+sys.path.remove(_module_dir)
 
 _model_dir = os.path.join(_init_path, "models")
 

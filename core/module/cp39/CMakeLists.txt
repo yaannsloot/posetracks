@@ -26,6 +26,7 @@ set_target_properties(MEPython.cp39 PROPERTIES
 if(UNIX AND NOT APPLE)
     set_target_properties(MEPython.cp39 PROPERTIES
         SUFFIX ".so"
+        INSTALL_RPATH "$ORIGIN/../lib"
     )
     install(TARGETS MEPython.cp39 LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/redis/cp39)
 else()

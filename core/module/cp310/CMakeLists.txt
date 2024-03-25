@@ -26,6 +26,7 @@ set_target_properties(MEPython.cp310 PROPERTIES
 if(UNIX AND NOT APPLE)
     set_target_properties(MEPython.cp310 PROPERTIES
         SUFFIX ".so"
+        INSTALL_RPATH "$ORIGIN/../lib"
     )
     install(TARGETS MEPython.cp310 LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/redis/cp310)
 else()
