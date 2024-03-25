@@ -32,7 +32,7 @@ namespace me {
 				this->env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, this->logid.c_str());
 
 #ifndef ME_CUDA_ENABLED
-				target_executor = Executor::CPU
+				target_executor = Executor::CPU;
 #endif 
 
 				// Start a new onnx session on the specified device.

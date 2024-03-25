@@ -24,8 +24,9 @@ _old_path = os.environ.get('PATH', '')
 _init_path = os.path.dirname(os.path.abspath(__file__))
 _dll_path = os.path.join(_init_path, "bin")
 os.environ['PATH'] = _init_path + os.pathsep + _dll_path + os.pathsep + _old_path
-os.add_dll_directory(_init_path)
-os.add_dll_directory(_dll_path)
+if os.name == 'nt':
+    os.add_dll_directory(_init_path)
+    os.add_dll_directory(_dll_path)
 
 # Get the current Python version
 _python_version = f"cp{sys.version_info.major}{sys.version_info.minor}"
