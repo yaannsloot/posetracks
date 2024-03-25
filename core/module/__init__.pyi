@@ -26,6 +26,7 @@ from . import dnn
 from . import io
 from . import threading
 from . import tracking
+import numpy as np
 
 DICT_4X4_100: TagDictionary
 DICT_4X4_1000: TagDictionary
@@ -59,6 +60,11 @@ class Mat:
     def __init__(self) -> None:
         """
         Create a new empty matrix
+        """
+    def from_array(self, im_data: np.ndarray) -> None:
+        """
+        Copy numpy array data into mat
+        :param im_data: Source data
         """
 
 class Point:

@@ -40,6 +40,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <opencv2/sfm/triangulation.hpp>
 #include <opencv2/sfm/projection.hpp>
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 #include <filesystem>
 #include <algorithm>
@@ -419,6 +420,20 @@ PYBIND11_MODULE(MEPython, m)
 	// Base (used in submodules)
 	py::class_<cv::Mat>(m, "Mat")
 		.def(py::init<>())
+		.def("from_array", [](cv::Mat& self, py::array_t<uint8_t>& im_data) {
+			if (im_data.ndim() == 2) {
+				cv::Mat mat(im_data.shape(0), im_data.shape(1), CV_8UC1, const_cast<uint8_t*>(im_data.data()), im_data.strides(0));
+				self = mat;
+			}
+			else if (im_data.ndim() == 3) {
+				cv::Mat mat(im_data.shape(0), im_data.shape(1), CV_MAKETYPE(CV_8U, im_data.shape(2)), 
+					const_cast<uint8_t*>(im_data.data()), im_data.strides(0));
+				self = mat;
+			}
+			else {
+				throw std::invalid_argument("im_data.ndim != 2 || 3");
+			}
+		})
 		.def("__repr__", [](cv::Mat& self) {
 		std::stringstream ss;
 		ss << "<cv::Mat: size=(" << self.cols << ',' << self.rows << "), type=" << self.type() << '>';
