@@ -24,58 +24,54 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <queue>
 #include <future>
 
-namespace me {
+namespace me::threading {
 
-    namespace threading {
-
-        // https://stackoverflow.com/a/32593825
-        // Modified to use std::future
-        class SimplePool {
-        public:
-            void Start(const uint32_t numthreads = std::thread::hardware_concurrency());
-            template<typename F, typename... Args>
-            inline auto QueueJob(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
-            void Stop();
-            bool Busy();
-            bool Running();
-            size_t NumThreads();
-            ~SimplePool();
-        private:
-            void ThreadLoop();
-            bool should_terminate = false;           // Tells threads to stop looking for jobs
-            std::mutex queue_mutex;                  // Prevents data races to the job queue
-            std::condition_variable mutex_condition; // Allows threads to wait on new jobs or termination 
-            std::vector<std::thread> threads;
-            std::queue<std::function<void()>> jobs;
-        };
-
+    // https://stackoverflow.com/a/32593825
+    // Modified to use std::future
+    class SimplePool {
+    public:
+        void Start(const uint32_t numthreads = std::thread::hardware_concurrency());
         template<typename F, typename... Args>
-        inline auto SimplePool::QueueJob(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>
+        inline auto QueueJob(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>;
+        void Stop();
+        bool Busy();
+        bool Running();
+        size_t NumThreads();
+        ~SimplePool();
+    private:
+        void ThreadLoop();
+        bool should_terminate = false;           // Tells threads to stop looking for jobs
+        std::mutex queue_mutex;                  // Prevents data races to the job queue
+        std::condition_variable mutex_condition; // Allows threads to wait on new jobs or termination 
+        std::vector<std::thread> threads;
+        std::queue<std::function<void()>> jobs;
+    };
+
+    template<typename F, typename... Args>
+    inline auto SimplePool::QueueJob(F&& f, Args&&... args) -> std::future<typename std::invoke_result<F, Args...>::type>
+    {
+        using return_type = typename std::invoke_result<F, Args...>::type;
+
+        auto task = std::make_shared<std::packaged_task<return_type()> >(
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+        );
+
+        std::future<return_type> res = task->get_future();
         {
-            using return_type = typename std::invoke_result<F, Args...>::type;
+            std::unique_lock<std::mutex> lock(queue_mutex);
 
-            auto task = std::make_shared<std::packaged_task<return_type()> >(
-                std::bind(std::forward<F>(f), std::forward<Args>(args)...)
-            );
+            // don't allow enqueueing after stopping the pool
+            if (should_terminate)
+                throw std::runtime_error("enqueue on stopped ThreadPool");
 
-            std::future<return_type> res = task->get_future();
-            {
-                std::unique_lock<std::mutex> lock(queue_mutex);
-
-                // don't allow enqueueing after stopping the pool
-                if (should_terminate)
-                    throw std::runtime_error("enqueue on stopped ThreadPool");
-
-                jobs.emplace([task]() { (*task)(); });
-            }
-            mutex_condition.notify_one();
-            return res;
+            jobs.emplace([task]() { (*task)(); });
         }
-
-        std::vector<std::pair<size_t, size_t>> calculateSegments(size_t total_size, size_t num_threads);
-
-        static SimplePool global_pool;
-
+        mutex_condition.notify_one();
+        return res;
     }
+
+    std::vector<std::pair<size_t, size_t>> calculateSegments(size_t total_size, size_t num_threads);
+
+    static SimplePool global_pool;
 
 }

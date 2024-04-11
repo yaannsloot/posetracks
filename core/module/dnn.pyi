@@ -190,6 +190,142 @@ class GenericFeatureModel(FeatureModel):
         Create a new generic feature model instance
         """
 
+class FeatureSet:
+    """
+    Specialized container for fast mean operations on a managed set of feature vectors.
+
+    Tracks the mean by updating it on every insertion. Each inserted feature updates the mean through weighted addition.
+    If a feature is removed, the mean is recalculated using the internal list of features.
+    This means it is much faster to insert a new feature than it is to remove one.
+    """
+    def __init__(self, feature_length: int) -> None:
+        """
+        Specialized container for fast mean operations on a managed set of feature vectors.
+
+        Tracks the mean by updating it on every insertion. Each inserted feature updates the mean through weighted addition.
+        If a feature is removed, the mean is recalculated using the internal list of features.
+        This means it is much faster to insert a new feature than it is to remove one.
+        :param feature_length: Length of individual features within this feature set
+        """
+    def add(self, f: Feature) -> None:
+        """
+        Insert a new feature into this feature set, updating the mean
+        :param f: Feature to add. Must match the feature length of this feature set
+        """
+    def at(self, index: int) -> Feature:
+        """
+        Retrieve a copy of the feature at the specified index
+        :param index: Index to reference
+        :return: A copy of the indexed feature
+        """
+    def remove(self, index: int) -> None:
+        """
+        Remove the feature at the specified index. This set's mean feature will be recalculated.
+        :param index: Index to remove
+        """
+    def mean(self) -> Feature:
+        """
+        Returns a copy of this set's mean feature
+        """
+    def size(self) -> int:
+        """
+        Returns the number of features in this set
+        """
+    def length(self) -> int:
+        """
+        Returns the expected feature length of this feature set
+        """
+    def __getitem__(self, item: int) -> Feature:
+        """
+        Retrieve a copy of the feature at the specified index
+        :param item: Index to reference
+        :return: A copy of the indexed feature
+        """
+
+class FeatureSpace:
+    """
+    Specialized container that assigns new features to feature sets within the feature space
+    """
+    def __init__(self, feature_length: int) -> None:
+        """
+        Specialized container that assigns new features to feature sets within the feature space
+        :param feature_length: Length of individual features within this feature space
+        """
+    @overload
+    def assign(self, input: Feature, threshold: float = 0.4, dist_type: FeatureDistanceType = NORM_EUCLIDEAN) -> int:
+        """
+        Performs a single feature assignment into this feature space.
+
+        This is not a temporally stable operation. If two features from
+        the same time frame are added using this function and are similar
+        enough, they will be assigned the same id.
+        :param input: Feature to be added to this feature space
+        :param threshold: Maximum distance to potential feature sets within this space
+        :param dist_type: Distance operation to use
+        :return: An Index pointing to the feature set the input was assigned to
+        """
+    @overload
+    def assign(self, input: List[Feature], threshold: float = 0.4, dist_type: FeatureDistanceType = NORM_EUCLIDEAN,
+               mask: List[int] = None) -> List[int]:
+        """
+        Performs a one-to-one assignment of a vector of features to this feature space.
+
+        All provided features are scored relative to existing feature sets and assigned
+        in ascending order based on distance, continuing until all selected features are
+        exhausted or existing feature sets are exhausted, whichever comes first.
+        If there are leftover input features, they will be assigned to new feature sets.
+        :param input: List of features to be added to this feature space
+        :param threshold: Maximum distance to potential feature sets within this space
+        :param dist_type: Distance operation to use
+        :param mask: Optional mask list for excluding existing sets from assignment
+        :return: A list of indexes that reference the set each input feature was assigned to
+        """
+    def size(self) -> int:
+        """
+        Returns the number of tracked feature sets in this feature space
+        """
+    def length(self) -> int:
+        """
+        Returns the expected feature length of this feature space
+        """
+    def clear(self) -> None:
+        """
+        Removes all feature sets from this feature space
+        """
+    def at(self, index: int) -> FeatureSet:
+        """
+        Returns a reference to the feature set at the specified position within this feature space
+        :param index: Index of the desired feature set
+        """
+    def __getitem__(self, item: int) -> FeatureSet:
+        """
+        Returns a reference to the feature set at the specified position within this feature space
+        :param item: Index of the desired feature set
+        """
+
+class FeatureTracker:
+    """
+    Tracks object detections over time using an internal feature space and predictive bounding box filter
+    """
+    def __init__(self, feature_length: int) -> None:
+        """
+        Tracks object detections over time using an internal feature space and predictive bounding box filter
+        :param feature_length: Length of individual features within this tracker's feature space
+        """
+    def assign(self, input_boxes: List[Detection], input_features: List[Feature], score_threshold: float = 0.7,
+               f_space_threshold: float = 0.4, dist_type: FeatureDistanceType = NORM_EUCLIDEAN,
+               mask: List[int] = None) -> List[int]:
+        """
+
+        :param input_boxes: Bounding box detections from last frame
+        :param input_features: Extracted features from bounding box regions
+        :param score_threshold: Maximum feature distance of boxes that overlap predicted box states
+        :param f_space_threshold: Maximum feature space distance of boxes that failed to meet overlap criteria
+        :param dist_type: Distance operation to use
+        :param mask: Optional mask list for excluding existing sets from assignment
+        :return: A list of indexes that reference the set each input feature was assigned to
+        """
+
 class ImageModel(Model):
     def __init__(self) -> None:
         """
@@ -518,23 +654,23 @@ class YOLOXModel(DetectionModel):
         Create a new YOLOX model instance
         """
 
-def LetterboxImage(src: Mat, dst: Mat, out_size: tuple) -> List[float]:
+def letterbox_image(src: Mat, dst: Mat, out_size: tuple) -> List[float]:
     """
     Resize an image with letterboxing
     :param src: Image to resize
     :param dst: Image to write results to
     :param out_size: New image dimensions
     """
-def drawTags(arg0: Mat, arg1: List[Tag]) -> Mat:
+def draw_tags(arg0: Mat, arg1: List[Tag]) -> Mat:
     """
     Draw tags on a provided image
     :param arg0: Image to draw tags onto
     :param arg1: Tags to draw
     """
 @overload
-def fixDetectionCoordinates(detections: List[Detection], src_net_size: Tuple[int, int],
-                            target_frame_size: Tuple[int, int],
-                            scaling_mode: ScalingMode = NORMALIZE_INPUT) -> List[Detection]:
+def fix_detection_coordinates(detections: List[Detection], src_net_size: Tuple[int, int],
+                              target_frame_size: Tuple[int, int],
+                              scaling_mode: ScalingMode = NORMALIZE_INPUT) -> List[Detection]:
     """
     Fix the bounding box coordinates for a list of detections.
     These detections will often be scaled and/or normalized to the
@@ -558,9 +694,9 @@ def fixDetectionCoordinates(detections: List[Detection], src_net_size: Tuple[int
     :param scaling_mode: Scaling mode to use
     """
 @overload
-def fixDetectionCoordinates(detections: List[List[Detection]], src_net_size: Tuple[int, int],
-                            target_frame_size: Tuple[int, int],
-                            scaling_mode: ScalingMode = NORMALIZE_INPUT) -> List[List[Detection]]:
+def fix_detection_coordinates(detections: List[List[Detection]], src_net_size: Tuple[int, int],
+                              target_frame_size: Tuple[int, int],
+                              scaling_mode: ScalingMode = NORMALIZE_INPUT) -> List[List[Detection]]:
     """
     Fix the bounding box coordinates for a list of detections.
     These detections will often be scaled and/or normalized to the
@@ -583,19 +719,19 @@ def fixDetectionCoordinates(detections: List[List[Detection]], src_net_size: Tup
     :param target_frame_size: Target image frame size
     :param scaling_mode: Scaling mode to use
     """
-def getRoiNoPadding(arg0: Mat, arg1: Rect) -> Mat:
+def get_roi_no_padding(arg0: Mat, arg1: Rect) -> Mat:
     """
     Get ROI image sample without padding for overhang
     :param arg0: Source image
     :param arg1: ROI region
     """
-def getRoiWithPadding(arg0: Mat, arg1: Rect) -> Mat:
+def get_roi_with_padding(arg0: Mat, arg1: Rect) -> Mat:
     """
     Get ROI image sample, padding for overhang if the region extends out of bounds
     :param arg0: Source image
     :param arg1: ROI region
     """
-def isRoiOutsideImage(arg0: Tuple[int, int], arg1: Rect) -> bool:
+def is_roi_outside_image(arg0: Tuple[int, int], arg1: Rect) -> bool:
     """
     Check if an ROI is entirely outside the bounds of an image
     :param arg0: Image size

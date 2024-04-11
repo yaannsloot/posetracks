@@ -19,27 +19,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "models.hpp"
 
-namespace me {
+namespace me::dnn::models {
 
-	namespace dnn {
+	class GenericFeatureModelImpl : public FeatureModelImpl {
+	public:
+		GenericFeatureModelImpl();
+		virtual cv::Size net_size() override;
+		virtual void infer(const cv::Mat& image, Feature& feature) override;
+		virtual void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features) override;
+	};
 
-		namespace models {
-
-			class GenericFeatureModelImpl : public FeatureModelImpl {
-			public:
-				GenericFeatureModelImpl();
-				virtual cv::Size net_size() override;
-				virtual void infer(const cv::Mat& image, Feature& feature) override;
-				virtual void infer(const std::vector<cv::Mat>& images, std::vector<Feature>& features) override;
-			};
-
-			class GenericFeatureModel : public FeatureModel {
-			public:
-				GenericFeatureModel();
-			};
-
-		}
-
-	}
+	class GenericFeatureModel : public FeatureModel {
+	public:
+		GenericFeatureModel();
+	};
 
 }

@@ -936,9 +936,9 @@ int main() {
 			std::cout << provider << std::endl;
 		}
 		// primary_tests();
-		performance_experiments();
+		//performance_experiments();
 		//detectpose_test();
-		//feature_aware_track_test();
+		feature_aware_track_test();
 		aruco_test();
 		std::cout << "Starting pool..." << std::endl;
 		auto pool = me::threading::SimplePool();

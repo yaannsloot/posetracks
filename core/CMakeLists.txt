@@ -141,6 +141,7 @@ target_compile_features(MEPoseTest PRIVATE cxx_std_17)
 # Pybind Subdirectories
 add_subdirectory(module/cp39)
 add_subdirectory(module/cp310)
+add_subdirectory(module/cp311)
 
 # INSTALL Target setup
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/module/

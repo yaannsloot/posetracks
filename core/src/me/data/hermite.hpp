@@ -19,23 +19,18 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "curve.hpp"
 
-namespace me {
-	
-	namespace data {
-		
-		// BULLSHIT MATH FOR INTERPOLATION WHICH I NEED BC NONE OF THE FRAME TIMES ARE GOING TO LINE UP BUT WHATEVER
-		// Sources: https://en.wikipedia.org/wiki/Cubic_Hermite_spline, https://www.desmos.com/calculator/th2kg7mb1b
+namespace me::data {
 
-		// Cardinal Cubic Hermite Spline implementation
-		class CardinalCubicHermiteSpline : public Curve {
-		public:
-			using Curve::Curve;
-			void setTension(double new_c);
-			cv::Point2d solve(double x);
-		private:
-			double c = 0.5; // Cardinal spline tension parameter. Changes the tangents in the spline. 1 yields all zero tangents and 0.5 yields a Catmull-Rom spline
-		};
-		
-	}
+	// Sources: https://en.wikipedia.org/wiki/Cubic_Hermite_spline, https://www.desmos.com/calculator/th2kg7mb1b
+
+	// Cardinal Cubic Hermite Spline implementation
+	class CardinalCubicHermiteSpline : public Curve {
+	public:
+		using Curve::Curve;
+		void setTension(double new_c);
+		cv::Point2d solve(double x);
+	private:
+		double c = 0.5; // Cardinal spline tension parameter. Changes the tangents in the spline. 1 yields all zero tangents and 0.5 yields a Catmull-Rom spline
+	};
 	
 }

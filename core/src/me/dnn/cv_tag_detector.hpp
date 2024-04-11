@@ -20,44 +20,36 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "models.hpp"
 #include <opencv2/aruco.hpp>
 
-namespace me {
+namespace me::dnn::models {
 
-	namespace dnn {
+	class CVTagDetectorImpl : public TagModelImpl {
+	public:
+		CVTagDetectorImpl();
+		virtual void load(const std::string& model_path, Executor target_executor) override;
+		virtual void unload() override;
+		virtual bool is_loaded() override;
+		virtual cv::Size net_size() override;
+		virtual void infer(const cv::Mat& image, std::vector<Tag>& tags) override;
+		virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) override;
+		void set_params(cv::aruco::DetectorParameters new_params);
+		void set_dict_type(cv::aruco::PredefinedDictionaryType dict_type);
+		void set_preprocess_size(cv::Size new_size);
+	private:
+		cv::aruco::DetectorParameters det_params;
+		cv::aruco::Dictionary det_dict;
+		cv::aruco::ArucoDetector detector;
+		cv::Size preprocess_size;
+	};
 
-		namespace models {
-
-			class CVTagDetectorImpl : public TagModelImpl {
-			public:
-				CVTagDetectorImpl();
-				virtual void load(const std::string& model_path, Executor target_executor) override;
-				virtual void unload() override;
-				virtual bool is_loaded() override;
-				virtual cv::Size net_size() override;
-				virtual void infer(const cv::Mat& image, std::vector<Tag>& tags) override;
-				virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) override;
-				void set_params(cv::aruco::DetectorParameters new_params);
-				void set_dict_type(cv::aruco::PredefinedDictionaryType dict_type);
-				void set_preprocess_size(cv::Size new_size);
-			private:
-				cv::aruco::DetectorParameters det_params;
-				cv::aruco::Dictionary det_dict;
-				cv::aruco::ArucoDetector detector;
-				cv::Size preprocess_size;
-			};
-
-			/// <summary>
-			/// Dummy module that uses OpenCV's ArUco detector in place of an actual machine learning model
-			/// </summary>
-			class CVTagDetector : public TagModel {
-			public:
-				CVTagDetector();
-				void set_params(cv::aruco::DetectorParameters new_params);
-				void set_dict_type(cv::aruco::PredefinedDictionaryType dict_type);
-				void set_preprocess_size(cv::Size new_size);
-			};
-
-		}
-
-	}
+	/// <summary>
+	/// Dummy module that uses OpenCV's ArUco detector in place of an actual machine learning model
+	/// </summary>
+	class CVTagDetector : public TagModel {
+	public:
+		CVTagDetector();
+		void set_params(cv::aruco::DetectorParameters new_params);
+		void set_dict_type(cv::aruco::PredefinedDictionaryType dict_type);
+		void set_preprocess_size(cv::Size new_size);
+	};
 
 }

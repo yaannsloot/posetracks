@@ -19,24 +19,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "bezier.hpp"
 
-namespace me {
-	
-	namespace data {
+namespace me::data {
 		
-		class Range {
-		public:
-			Range();
-			Range(double min, double max);
-			double solve(double t) { return curve.solve(t).y; }
-			void setMin(double min);
-			void setMax(double max);
-			bool contains(double val);
-			bool checkForOverlap(Range& other);
-			Range getOverlapRange(Range& other);
-		private:
-			BezierCurve curve;
-		};
-		
-	}
+	class Range {
+	public:
+		Range();
+		Range(double min, double max);
+		double solve(double t) { return curve.solve(t).y; }
+		void setMin(double min);
+		void setMax(double max);
+		bool contains(double val);
+		bool checkForOverlap(Range& other);
+		Range getOverlapRange(Range& other);
+	private:
+		BezierCurve curve;
+	};
 	
 }

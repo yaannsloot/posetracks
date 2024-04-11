@@ -337,3 +337,15 @@ def model_path(model_file: str) -> str:
     Path shortcut to model directory located within MotionEngine package
     :param model_file: Path to model relative to model directory root
     """
+
+def rand_img_rgb(size: Tuple[int, int]) -> Mat:
+    """
+    Returns a randomly generated RGB image
+    :param size: Size of the image
+    """
+
+def rand_img_gray(size: Tuple[int, int]) -> Mat:
+    """
+    Returns a randomly generated grayscale image
+    :param size: Size of the image
+    """

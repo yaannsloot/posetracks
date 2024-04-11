@@ -16,7 +16,79 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 from . import dnn, Pointf
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, overload
+
+class Mat3x1:
+    def __init__(self) -> None:
+        """
+        Create a new 3x1 column matrix
+        """
+    def __getitem__(self, row: int) -> float: ...
+    def __setitem__(self, row: int, value: float) -> None: ...
+    def __str__(self) -> str: ...
+
+class Mat1x3:
+    def __init__(self) -> None:
+        """
+        Create a new 1x3 row matrix
+        """
+    def __getitem__(self, row: int) -> float: ...
+    def __setitem__(self, row: int, value: float) -> None: ...
+    def __str__(self) -> str: ...
+
+class Mat3x3:
+    def __init__(self) -> None:
+        """
+        Create a new 3x3 matrix
+        """
+    def __getitem__(self, pos: Tuple[int, int]) -> float: ...
+    def __setitem__(self, pos: Tuple[int, int], value: float) -> None: ...
+    def __str__(self) -> str: ...
+
+class Mat4x4:
+    def __init__(self) -> None:
+        """
+        Create a new 4x4 matrix
+        """
+    def __getitem__(self, pos: Tuple[int, int]) -> float: ...
+    def __setitem__(self, pos: Tuple[int, int], value: float) -> None: ...
+    def __str__(self) -> str: ...
+
+class Rt:
+    R: Mat3x3
+    t: Mat3x1
+    def __init__(self):
+        """
+        Create a new Rt transformation pair
+        """
+    def invert(self) -> None:
+        """
+        Invert this transformation
+        """
+    def to4x4(self) -> Mat4x4:
+        """
+        Compose a 4x4 transformation matrix from this Rt pair
+        """
+    def from4x4(self, src: Mat4x4) -> None:
+        """
+        Decomposes a 4x4 transformation matrix and assigns the resulting components to this Rt pair
+        :param src: The source 4x4 matrix
+        """
+    def is_identity(self) -> bool:
+        """
+        Checks if this Rt pair is identical to the identity transformation.
+        If true, this means that the transformation has not been modified,
+        which can indicate a failure in certain operations.
+        :return: True if identical to identity transformation
+        """
+
+class Kk:
+    K: Mat3x3
+    k: Mat1x3
+    def __init__(self):
+        """
+        Create a new object for storing camera intrinsic information
+        """
 
 class TrackingData:
     detections: Dict[int, Dict[str, dnn.Detection]]
@@ -39,4 +111,34 @@ def find_common_data(arg0: TrackingData, arg1: TrackingData) -> Tuple[TrackingDa
     Create a pair of tracking data blocks that contain common keys\
     :param arg0: First data block
     :param arg1: Second data block
+    """
+
+@overload
+def solve_static_pair(t_data_a: TrackingData, t_data_b: TrackingData, cam_Kk_a: Kk, cam_Kk_b: Kk) -> Rt:
+    """
+    Solve the position of a camera relative to another using tracked point correspondences
+    :param t_data_a: Tracking data from the origin camera
+    :param t_data_b: Tracking data from the target camera
+    :param cam_Kk_a: Camera matrix and distortion data from the origin camera
+    :param cam_Kk_b: Camera matrix and distortion data from the target camera
+    :return: Transformation of the target camera relative to the origin camera
+    """
+
+@overload
+def solve_static_pair(t_points_a: List[Pointf], t_points_b: List[Pointf], cam_Kk_a: Kk, cam_Kk_b: Kk) -> Rt:
+    """
+    Solve the position of a camera relative to another using tracked point correspondences
+    :param t_points_a: Tracked points from the origin camera
+    :param t_points_b: Tracked points from the target camera
+    :param cam_Kk_a: Camera matrix and distortion data from the origin camera
+    :param cam_Kk_b: Camera matrix and distortion data from the target camera
+    :return: Transformation of the target camera relative to the origin camera
+    """
+
+def solve_static_set(t_data: List[TrackingData], cam_Kk: List[Kk]) -> List[Rt]:
+    """
+    Solve the positions for a set of cameras relative to an anchor view using tracked point correspondences
+    :param t_data: List of tracking data. The first element in the list is treated as tracking data from the anchor
+    :param cam_Kk: List of camera intrinsic information. Must be the same size as t_data
+    :return: A list of transformations for each camera relative to the first.
     """
