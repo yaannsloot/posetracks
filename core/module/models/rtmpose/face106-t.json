@@ -1,0 +1,13 @@
+{
+	"pose_estimation": {
+		"face106-t": {
+			"model_family": "RTMPose",
+			"driver": "dnn.RTMPoseModel",
+			"target_class": "face",
+			"precision_nme": 1.67,
+			"depth_class": 0,
+			"gflops": 0.652,
+			"keypoints": 106
+		}
+	}
+}

@@ -19,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-from typing import ClassVar, List, Tuple, Iterator, overload
+from typing import Union, ClassVar, List, Tuple, Iterator, Dict, overload
 from . import crypto
 from . import data
 from . import dnn
@@ -52,6 +52,11 @@ DICT_ARUCO_ORIGINAL: TagDictionary
 deferred: future_status
 ready: future_status
 timeout: future_status
+
+models: Dict[str, Dict[str, Dict[str, ...]]]
+"""
+Dictionary of models bundled with module. Includes various performance metrics.
+"""
 
 class Mat:
     """
@@ -271,6 +276,32 @@ def filter_3D(bpy_obj: object, measurement_noise_cov: float = 0.01, process_nois
     :param bpy_obj: Target object to apply smoothing effect
     :param measurement_noise_cov: Kalman filter measurement noise covariance scale
     :param process_noise_cov: Kalman filter process noise covariance scale
+    """
+
+def get_models(model_category: str, attributes: Union[str, List[str], None] = None,
+               values: Union[Dict[str, ...], None] = None,
+               sorting_criteria: Union[List[str], None] = None) -> Union[List[Tuple[str, Dict[str, ...]]], None]:
+    """
+    Function used to access the standard model collection included with MotionEngine
+
+    Attributes filter:
+    Searches for all models that contain the attribute or attributes specified.
+    If None, will not filter for attributes.
+
+    Values filter:
+    If a specified value is a list, will search for all models with the specified
+    attribute that contain AT LEAST these values.
+    If None, will not filter for values.
+
+    Sorting criteria:
+    Specified attributes must be fully present in the filtered model list,
+    else that attribute is ignored. If None, will not sort the output.
+
+    :param model_category: Which model category to access
+    :param attributes: Which attributes to filter for.
+    :param values:  Which attribute value pairs to filter for.
+    :param sorting_criteria: Which numerical attributes to use as sorting criteria for the output.
+    :return: A list of tuples containing a model name and its attributes, or None if no models matched the specified filters
     """
 
 def imread(arg0: str) -> Mat:

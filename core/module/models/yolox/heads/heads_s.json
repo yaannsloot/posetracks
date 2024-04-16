@@ -1,0 +1,15 @@
+{
+	"object_detection": {
+		"heads_s": {
+			"model_family": "YOLOX",
+			"driver": "dnn.YOLOXModel",
+			"classes": [
+				"Head"
+			],
+			"precision_ap": 68.348,
+			"depth_class": 2,
+			"gflops": 26.8,
+			"mparams": 9.0
+		}
+	}
+}

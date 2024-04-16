@@ -1,0 +1,14 @@
+{
+	"pose_estimation": {
+		"fullbody17-l_double": {
+			"model_family": "RTMPose",
+			"driver": "dnn.RTMPoseModel",
+			"target_class": "person",
+			"precision_ap": 78.3,
+			"depth_class": 3,
+			"gflops": 9.35,
+			"mparams": 27.79,
+			"keypoints": 17
+		}
+	}
+}

@@ -1,0 +1,15 @@
+{
+	"object_detection": {
+		"fullbody_320": {
+			"model_family": "RTMDet",
+			"driver": "dnn.RTMDetModel",
+			"classes": [
+				"Person"
+			],
+			"precision_ap": 40.3,
+			"depth_class": 0,
+			"gflops": 0.31,
+			"mparams": 0.99
+		}
+	}
+}

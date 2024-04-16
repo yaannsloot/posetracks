@@ -1,0 +1,13 @@
+{
+	"pose_estimation": {
+		"animal17-m": {
+			"model_family": "RTMPose",
+			"driver": "dnn.RTMPoseModel",
+			"target_class": "animal",
+			"precision_ap": 72.2,
+			"depth_class": 2,
+			"gflops": 2.57,
+			"keypoints": 17
+		}
+	}
+}

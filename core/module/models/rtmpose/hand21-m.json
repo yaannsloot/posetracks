@@ -1,0 +1,13 @@
+{
+	"pose_estimation": {
+		"hand21-m": {
+			"model_family": "RTMPose",
+			"driver": "dnn.RTMPoseModel",
+			"target_class": "hand",
+			"precision_ap": 81.5,
+			"depth_class": 2,
+			"gflops": 2.581,
+			"keypoints": 21
+		}
+	}
+}

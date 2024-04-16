@@ -1,0 +1,14 @@
+{
+	"pose_estimation": {
+		"fullbody26-l": {
+			"model_family": "RTMPose",
+			"driver": "dnn.RTMPoseModel",
+			"target_class": "person",
+			"precision_ap": 73.19,
+			"depth_class": 3,
+			"gflops": 4.19,
+			"mparams": 28.11,
+			"keypoints": 26
+		}
+	}
+}

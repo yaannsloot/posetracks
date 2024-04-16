@@ -17,7 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
 import sys
+import json
 import importlib
+from typing import Union
 
 # Temporarily add module directory to environment
 _old_path = os.environ.get('PATH', '')
@@ -107,6 +109,111 @@ _pyc.Pointf.__iter__ = _point_iter_func
 _pyc.Pointf.__getitem__ = _point_getitem_func
 _pyc.Pointf.__setitem__ = _point_setitem_func
 _pyc.Pointf.__len__ = _point_len_func
+
+
+# Bundled model library functions
+def _find_driver(drv_attr_path):
+    attributes = drv_attr_path.split('.')
+    result = _pyc
+    try:
+        for attr in attributes:
+            result = getattr(result, attr)
+    except AttributeError:
+        return None
+    return result
+
+
+def _update_model_dict():
+    m = {}
+    for dirpath, dirnames, filenames in os.walk(_model_dir):
+        for filename in filenames:
+            if not filename.endswith('.json'):
+                continue
+            model_def_json = os.path.join(dirpath, filename)
+            with open(model_def_json, 'r') as f:
+                try:
+                    model_def = json.load(f)
+                except json.JSONDecodeError as e:
+                    continue
+            for category in model_def:
+                cat_models = model_def[category]
+                for cat_model in cat_models:
+                    cat_model_path = f'{os.path.join(dirpath, cat_model)}.onnx'
+                    cat_model_def = cat_models[cat_model]
+                    if not os.path.exists(cat_model_path):
+                        continue
+                    resolved_driver = _find_driver(cat_model_def['driver'])
+                    if resolved_driver is None:
+                        continue
+                    cat_model_def['driver'] = resolved_driver
+                    cat_model_def['path'] = cat_model_path
+                    if category not in m:
+                        m[category] = {}
+                    m[category][cat_model] = cat_model_def
+    return m
+
+
+models = _update_model_dict()
+
+
+def _normalize(x):
+    i_max = max(x)
+    i_min = min(x)
+    margin = i_max - i_min
+    return [(a - i_min) / margin for a in x]
+
+
+def _is_a_number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _score_priority(cat_models, sorting_criteria):
+    if sorting_criteria is None or not cat_models:
+        return
+    cat_models = list(cat_models.values())
+    criteria_scores = []
+    if isinstance(sorting_criteria, str):
+        sorting_criteria = [sorting_criteria]
+    for criteria in sorting_criteria:
+        if not all(criteria in model and _is_a_number(model[criteria]) for model in cat_models):
+            continue
+        scores = _normalize([model[criteria] for model in cat_models])
+        if criteria.startswith('precision'):
+            scores = [1 - x for x in scores]
+        criteria_scores.append(scores)
+    if len(criteria_scores) == 0:
+        return
+    return _normalize([sum(all_values) for all_values in zip(*criteria_scores)])
+
+
+def _compare_values(model, key, value):
+    if key not in model:
+        return False
+    if isinstance(value, list):
+        if not isinstance(model[key], list):
+            return False
+        return all(v in model[key] for v in value)
+    return model[key] == value
+
+
+def get_models(model_category, attributes=None, values=None, sorting_criteria=None):
+    if model_category not in models:
+        return
+    cat_models = models[model_category]
+    if attributes is not None:
+        if isinstance(attributes, str):
+            attributes = [attributes]
+        cat_models = {k: v for (k, v) in cat_models.items() if all(attr in v for attr in attributes)}
+    if values is not None:
+        cat_models = {k: v for (k, v) in cat_models.items() if
+                      all(_compare_values(v, kv, vv) for (kv, vv) in values.items())}
+    if not cat_models:
+        return
+    scores = _score_priority(cat_models, sorting_criteria)
+    cat_models = list(cat_models.items())
+    if scores is not None:
+        return [model for _, model in sorted(zip(scores, cat_models), key=lambda pair: pair[0])]
+    return cat_models
 
 
 # Merge compiled module namespace with globals

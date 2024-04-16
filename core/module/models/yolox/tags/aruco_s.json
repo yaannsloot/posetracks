@@ -1,0 +1,15 @@
+{
+	"object_detection": {
+		"aruco_s": {
+			"model_family": "YOLOX",
+			"driver": "dnn.YOLOXModel",
+			"classes": [
+				"Tag"
+			],
+			"precision_ap": 87.108,
+			"depth_class": 2,
+			"gflops": 26.8,
+			"mparams": 9.0
+		}
+	}
+}
