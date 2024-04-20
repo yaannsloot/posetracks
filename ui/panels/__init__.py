@@ -32,3 +32,10 @@ for mod in modules:
     except ImportError as e:
         print(f"Error importing module {module_name}: {e}")
 
+for CLASS in ALL_CLASSES:
+    if hasattr(CLASS, 'display_priority'):
+        continue
+    CLASS.display_priority = 999
+
+ALL_CLASSES = sorted(ALL_CLASSES, key=lambda CLASS: CLASS.display_priority)
+

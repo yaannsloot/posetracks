@@ -16,8 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
-from .. import MotionEngine
-from ..MotionEngine import MEPython
+from .. import MotionEngine as me
 from .. import global_vars
 from .. import callbacks
 
@@ -33,17 +32,17 @@ class ModelLoadOperator(bpy.types.Operator):
             scene = context.scene
             properties = scene.motion_engine_ui_properties
 
-            selected_exec_det = MEPython.dnn.Executor.CPU
+            selected_exec_det = me.dnn.Executor.CPU
             if properties.me_ui_prop_exe_det_enum == "CUDA":
-                selected_exec_det = MEPython.dnn.Executor.CUDA
+                selected_exec_det = me.dnn.Executor.CUDA
             elif properties.me_ui_prop_exe_det_enum == "TENSORRT":
-                selected_exec_det = MEPython.dnn.Executor.TENSORRT
+                selected_exec_det = me.dnn.Executor.TENSORRT
 
-            selected_exec_pose = MEPython.dnn.Executor.CPU
+            selected_exec_pose = me.dnn.Executor.CPU
             if properties.me_ui_prop_exe_pose_enum == "CUDA":
-                selected_exec_pose = MEPython.dnn.Executor.CUDA
+                selected_exec_pose = me.dnn.Executor.CUDA
             elif properties.me_ui_prop_exe_pose_enum == "TENSORRT":
-                selected_exec_pose = MEPython.dnn.Executor.TENSORRT
+                selected_exec_pose = me.dnn.Executor.TENSORRT
 
             kp_str = properties.me_ui_prop_pose_keypoints_enum
             depth_str = ""
@@ -66,8 +65,8 @@ class ModelLoadOperator(bpy.types.Operator):
                 if depth_str == "l" and properties.me_ui_prop_pose_precision133l_enum == "DOUBLE":
                     precision_str = "_double"
 
-            det_path = MotionEngine.model_path("rtmdet/fullbody_" + properties.me_ui_prop_det_size_enum + ".onnx")
-            pose_path = MotionEngine.model_path("rtmpose/fullbody" + kp_str + "-" + depth_str + precision_str + ".onnx")
+            det_path = me.model_path("rtmdet/fullbody_" + properties.me_ui_prop_det_size_enum + ".onnx")
+            pose_path = me.model_path("rtmpose/fullbody" + kp_str + "-" + depth_str + precision_str + ".onnx")
 
             global_vars.me_detectpose_model.unload_all()
 
@@ -77,7 +76,7 @@ class ModelLoadOperator(bpy.types.Operator):
             callbacks.display_warmup_state_callback(True)
             callbacks.ui_draw_callback()
 
-            MEPython.threading.rtm_load_async(
+            me.threading.rtm_load_async(
                 global_vars.me_detectpose_model,
                 det_path,
                 selected_exec_det,

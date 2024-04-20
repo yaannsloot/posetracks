@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 
-from ..MotionEngine import MEPython
+from .. import MotionEngine as me
 from .. import global_vars
 from .. import utils
 
@@ -45,7 +45,7 @@ class TriangulatePointsOperator(bpy.types.Operator):
                 cam_matrices.append(cam_mtx)
                 dist_vectors.append(dist_vector)
 
-            MEPython.triangulate_points(
+            me.triangulate_points(
                 clips,
                 pose_tracks_list,
                 cam_matrices,

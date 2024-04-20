@@ -18,9 +18,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import bpy
 import mathutils
 
-from ..MotionEngine import MEPython
+from .. import MotionEngine as me
 from .. import global_vars
-from .. import utils
+from ..utils import get_clip_tracking_data, get_clip_Kk, prepare_camera_for_clip
+
 
 class SolveCamerasOperator(bpy.types.Operator):
     """Solve cameras"""
@@ -28,51 +29,69 @@ class SolveCamerasOperator(bpy.types.Operator):
     bl_label = "Solve cameras"
 
     def execute(self, context):
-        if not global_vars.ui_lock_state:
-            scene = context.scene
-            properties = scene.motion_engine_ui_properties
+        if global_vars.ui_lock_state:
+            return {'FINISHED'}
 
-            clips = bpy.data.movieclips
+        anchor_cam = None
 
+        space_type = context.area.type
+        if space_type == 'CLIP_EDITOR':
             current_clip = context.edit_movieclip
-
-            pose_tracks_a = properties.get_clip_pose_tracks(current_clip)["Pose 0"]
-
-            other_clip = None
-
-            for clip in clips:
-                if clip != current_clip:
-                    other_clip = clip
-                    break
-
-            pose_tracks_b = properties.get_clip_pose_tracks(other_clip)["Pose 0"]
-
-            if pose_tracks_a is None or pose_tracks_b is None:
+        elif space_type == 'VIEW_3D':
+            active_obj = context.active_object
+            if active_obj.type != 'CAMERA' or bpy.data.movieclips.get(active_obj.data.name) is None:
                 return {'FINISHED'}
+            current_clip = bpy.data.movieclips.get(active_obj.data.name)
+            anchor_cam = active_obj
+        else:
+            return {'FINISHED'}
 
-            cam_mtx_a, dist_coeffs_a = utils.get_cv_camera_intrinsics(current_clip)
-            cam_mtx_b, dist_coeffs_b = utils.get_cv_camera_intrinsics(other_clip)
+        scene = context.scene
 
-            scene_cam_a = scene.objects[current_clip.name]
-            scene_cam_b = scene.objects[other_clip.name]
+        clips = [current_clip] + [clip for clip in bpy.data.movieclips if clip is not current_clip]
 
-            if scene_cam_a is None or scene_cam_b is None or scene_cam_a.type != 'CAMERA' or scene_cam_b.type != 'CAMERA':
-                return {'FINISHED'}
+        if len(clips) < 2:
+            return {'FINISHED'}
 
-            local_transform_b = MEPython.solve_cameras(
-                current_clip,
-                other_clip,
-                pose_tracks_a,
-                pose_tracks_b,
-                cam_mtx_a,
-                cam_mtx_b,
-                dist_coeffs_a,
-                dist_coeffs_b
-            )
+        t_data = []
+        cam_Kk = []
 
-            scene_cam_b.matrix_world = mathutils.Matrix(local_transform_b) @ scene_cam_a.matrix_world
+        for clip in clips:
+            t_data.append(get_clip_tracking_data(clip))
+            cam_Kk.append(get_clip_Kk(clip))
+
+        cam_transforms = me.tracking.solve_static_set(t_data, cam_Kk)
+
+        flip_mtx = [
+            [1, -1, -1, 1],
+            [-1, 1, 1, -1],
+            [-1, 1, 1, -1],
+            [1, 1, 1, 1]
+        ]
+
+        for i in range(len(cam_transforms)):
+            tf = cam_transforms[i]
+            clip = clips[i + 1]
+            if tf.is_identity():
+                self.debug(f"TF IS IDENTITY, {str(tf.to4x4())}")
+                continue
+            if anchor_cam is None:
+                anchor_cam = prepare_camera_for_clip(current_clip, context)
+            clip_cam = prepare_camera_for_clip(clip, context)
+            tf.invert()
+            tf = tf.to4x4()
+            blend_mtx = mathutils.Matrix()
+            for r in range(4):
+                for c in range(4):
+                    blend_mtx[r][c] = tf[r, c] * flip_mtx[r][c]
+            clip_cam.matrix_world = anchor_cam.matrix_world @ blend_mtx
+
+        self.debug("FINISHED")
 
         return {'FINISHED'}
+
+    def debug(self, msg):
+        self.report({'INFO'}, str(msg))
 
 
 CLASSES = [

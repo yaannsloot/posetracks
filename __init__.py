@@ -17,12 +17,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 import gc
+import concurrent.futures
 
 if 'MotionEngine' in locals():
     import importlib
 
     importlib.reload(MotionEngine)
-    importlib.reload(MEPython)
     importlib.reload(global_vars)
     importlib.reload(ui)
     importlib.reload(operators)
@@ -31,7 +31,6 @@ if 'MotionEngine' in locals():
     importlib.reload(me_ui)
 else:
     from . import MotionEngine
-    from .MotionEngine import MEPython
     from . import global_vars
     from . import ui
     from . import operators
@@ -67,13 +66,16 @@ def register():
     bpy.types.Scene.motion_engine_data = bpy.props.PointerProperty(type=me_data.MEClipDataCollection)
     bpy.types.Scene.motion_engine_ui_properties = bpy.props.PointerProperty(type=me_ui.MotionEngineUIProperties)
 
-    global_vars.me_detectpose_model = MEPython.dnn.TopDownPoseDetector()
+    global_vars.me_detectpose_model = MotionEngine.dnn.TopDownPoseDetector()
     global_vars.properties_tracker = None
     global_vars.clip_tracker = None
     global_vars.stats_tracker = None
     global_vars.context_tracker = None
     global_vars.warmup_state = False
     global_vars.ui_lock_state = False
+    global_vars.shutdown_state = False
+
+    global_vars.executor = concurrent.futures.ThreadPoolExecutor()
 
     gc.collect()
 
@@ -100,6 +102,10 @@ def unregister():
 
     del bpy.types.Scene.motion_engine_ui_properties
     del bpy.types.Scene.motion_engine_data
+
+    global_vars.shutdown_state = True
+
+    global_vars.executor.shutdown()
 
     gc.collect()
 

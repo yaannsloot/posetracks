@@ -83,6 +83,10 @@ class TrackManagerUIPanel(bpy.types.Panel):
 
         row.operator("motionengine.filter_fcurves_operator")
 
+        row = layout.row()
+
+        row.operator("motionengine.detect_objects_operator")
+
 
 CLASSES = [
     TrackManagerUIPanel

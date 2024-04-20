@@ -40,6 +40,54 @@ ui_lock_state = False
 analysis_data = None
 """Used on async analysis functions to store resulting data"""
 
+pose_types = {'wb17', 'wb26', 'wb133', 'f106', 'h21', 'a17'}
+"""
+All valid pose types. Used for track identification. 
+More can be added during initialization for additional pose models.
+"""
+
+"""finish this"""
+joint_groups = {
+    'wb17': {
+        'head': {(0, 4)},
+        'arms': {
+            'left': {5, 7, 9},
+            'right': {6, 8, 10}
+        },
+        'legs': {
+            'left': {11, 13, 15},
+            'right': {12, 14, 16}
+        }
+    },
+    'wb26': {
+        'head': {(0, 5), 17},
+        'arms': {
+            'left': {5, 7, 9},
+            'right': {6, 8, 10}
+        },
+        'legs': {
+            'left': {11, 13, 15},
+            'right': {12, 14, 16}
+        },
+        'torso': {18, 19},
+        'feet': {
+            'left': {20, 22, 24},
+            'right': {21, 23, 25}
+        }
+    },
+    'wb133': {
+        'head': {(0, 4)},
+        'arms': {
+            'left': {5, 7, 9},
+            'right': {6, 8, 10}
+        },
+        'legs': {
+            'left': {11, 13, 15},
+            'right': {12, 14, 16}
+        }
+    }
+}
+
 
 class InfoMessage:
     """Modifiable container for python bindings"""
@@ -72,3 +120,8 @@ def unlink_from_all_collections(obj):
     for collection in bpy.data.collections:
         if obj.name in collection.objects:
             collection.objects.unlink(obj)
+
+
+executor = None
+
+shutdown_state = False

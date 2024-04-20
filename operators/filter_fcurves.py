@@ -16,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
-from ..MotionEngine import MEPython
+from .. import MotionEngine as me
 from .. import global_vars
 
 
@@ -34,7 +34,7 @@ class FilterFCurvesOperator(bpy.types.Operator):
 
             if me_collection is not None:
                 for obj in me_collection.objects:
-                    MEPython.filter_3D(obj, 1e-2, 5e-4)
+                    me.filter_3D(obj, 1e-2, 5e-4)
 
         return {"FINISHED"}
 

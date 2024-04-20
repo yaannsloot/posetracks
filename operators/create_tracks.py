@@ -101,7 +101,6 @@ class CreateTracksOperator(bpy.types.Operator):
                                                               (x2, y2),
                                                               (x1, y2))
 
-
         return {'FINISHED'}
 
 

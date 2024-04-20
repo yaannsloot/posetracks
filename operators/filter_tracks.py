@@ -16,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
-from ..MotionEngine import MEPython
+from .. import MotionEngine as me
 from .. import global_vars
 
 
@@ -39,9 +39,9 @@ class FilterTracksOperator(bpy.types.Operator):
         if not global_vars.ui_lock_state:
             current_clip = context.edit_movieclip
 
-            #MEPython.filter_2D(current_clip, 1e-2, 5e-4)
+            #me.filter_2D(current_clip, 1e-2, 5e-4)
 
-            MEPython.z_thresh_2D(current_clip)
+            me.z_thresh_2D(current_clip)
 
         return {"FINISHED"}
 

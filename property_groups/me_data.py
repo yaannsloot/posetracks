@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 from .. import utils
-from ..MotionEngine import MEPython
+from .. import MotionEngine as me
 
 
 def point_to_blend(source, target):
@@ -86,42 +86,18 @@ def check_data_for_clip(me_data, movie_clip):
 
 
 def blend_to_point(source):
-    return MEPython.Point(source.x, source.y)
+    return me.Point(source.x, source.y)
 
 
 def blend_to_joint(source):
-    return MEPython.dnn.Joint(blend_to_point(source.pt), source.prob)
+    return me.dnn.Joint(blend_to_point(source.pt), source.prob)
 
 
 def blend_to_pose(source):
-    pose = MEPython.dnn.Pose()
+    pose = me.dnn.Pose()
     for s_joint in source.joints:
         pose.set_joint(s_joint.id, blend_to_joint(s_joint))
     return pose
-
-
-def blend_to_frame(source):
-    frame = MEPython.dnn.PoseCollection()
-    for s_pose in source.poses:
-        frame.set_pose(s_pose.id, blend_to_pose(s_pose))
-    return frame
-
-
-def blend_to_clip_data(source):
-    data = MEPython.dnn.PoseFrames()
-    for s_frame in source.frames:
-        data.set_pose_frame(s_frame.id, blend_to_frame(s_frame))
-    return data
-
-
-def raw_to_frames(source, start_index):
-    frames = MEPython.dnn.PoseFrames()
-    for f, frame in enumerate(source):
-        collection = MEPython.dnn.PoseCollection()
-        for p, pose in enumerate(frame):
-            collection.set_pose(p, pose)
-        frames.set_pose_frame(f + start_index, collection)
-    return frames
 
 
 def clear_blend_pose(source):
@@ -320,11 +296,11 @@ class GOGICollection(bpy.types.PropertyGroup):
 
     def new(self):
         keys = self.keys()
-        new_id = MEPython.crypto.random_sha1()
+        new_id = me.crypto.random_sha1()
 
         # Highly likely this will not run but prevents collision with existing entries
         while new_id in keys:
-            new_id = MEPython.crypto.random_sha1()
+            new_id = me.crypto.random_sha1()
 
         new_info = self.gen_id_list.add()
 
@@ -374,5 +350,5 @@ CLASSES = [
     MEPoseTracks,
     MEPoseTracksClip,
     GeneratedObjectGroupInfo,
-    GOGICollection
+    GOGICollection,
 ]
