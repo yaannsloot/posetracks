@@ -340,7 +340,7 @@ void feature_aware_track_test() {
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	me::dnn::models::DetectionModel det_model = me::dnn::models::YOLOXModel();
 	me::dnn::models::FeatureModel feat_model = me::dnn::models::GenericFeatureModel();
-	det_model.load("targets_m_dynamic.onnx", me::dnn::Executor::CUDA);
+	det_model.load("redis/models/YOLOX/standard_models/yolox_s.onnx", me::dnn::Executor::CUDA);
 	feat_model.load("BasicConv6_People_64.onnx", me::dnn::Executor::TENSORRT);
 	auto feat_input_size = feat_model.net_size();
 	auto net_size = det_model.net_size();
@@ -363,18 +363,16 @@ void feature_aware_track_test() {
 		det_model.infer(frame, det_first, 0.2, 0.5);
 		std::vector<me::dnn::Detection> detections;
 		for (auto& det : det_first) {
-			if (det.class_id == 0) {
-				cv::Point adj_tl(
-					det.bbox.tl().x / net_size.width * frame.cols,
-					det.bbox.tl().y / net_size.height * frame.rows
-				);
-				cv::Point adj_br(
-					det.bbox.br().x / net_size.width * frame.cols,
-					det.bbox.br().y / net_size.height * frame.rows
-				);
-				det.bbox = cv::Rect2d(adj_tl, adj_br);
-				detections.push_back(det);
-			}
+			cv::Point adj_tl(
+				det.bbox.tl().x / net_size.width * frame.cols,
+				det.bbox.tl().y / net_size.height * frame.rows
+			);
+			cv::Point adj_br(
+				det.bbox.br().x / net_size.width * frame.cols,
+				det.bbox.br().y / net_size.height * frame.rows
+			);
+			det.bbox = cv::Rect2d(adj_tl, adj_br);
+			detections.push_back(det);
 		}
 		std::vector<cv::Mat> ROIs;
 		for (auto& det : detections) {
@@ -391,6 +389,7 @@ void feature_aware_track_test() {
 			auto& id = id_ptr[i];
 			cv::rectangle(frame, det.bbox.tl(), det.bbox.br(), cv::Scalar(0, 255, 0));
 			cv::putText(frame, std::to_string(id), cv::Point(det.bbox.tl().x, det.bbox.br().y), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 0, 255), 2);
+			cv::putText(frame, std::to_string(det.class_id), cv::Point(det.bbox.tl().x, det.bbox.br().y - 30), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(255, 0, 255), 2);
 		}
 		cv::imshow("Detections3", frame);
 		box_out.write(frame);

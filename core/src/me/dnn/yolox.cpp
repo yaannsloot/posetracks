@@ -164,7 +164,7 @@ namespace me::dnn::models {
 				int class_ = 0;
 				float conf = 0;
 				for (int c = 0; c < num_classes; ++c) {
-					float class_score = output(b, i, 5 + i);
+					float class_score = output(b, i, 5 + c);
 					if (class_score > conf) {
 						conf = class_score;
 						class_ = c;
