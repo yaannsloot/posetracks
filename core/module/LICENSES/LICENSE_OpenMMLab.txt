@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------------
-OpenMMLab and its projects (RTMPose, RTMDet) are released under the Apache 2.0 license unless
-otherwise specified.
+RTMPose and RTMDet models are from OpenMMLab
+Their models and training code are released under the Apache 2.0 license
 https://github.com/open-mmlab/mmpose
 https://github.com/open-mmlab/mmpose/tree/main/projects/rtmpose
 ----------------------------------------------------------------------------------

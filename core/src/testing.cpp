@@ -399,7 +399,7 @@ void feature_aware_track_test() {
 
 void aruco_test() {
 	me::io::FrameProvider cap = me::io::Transcoder();
-	cap.load("E:/ArUco samples/GH010033.MP4");
+	cap.load("E:/ArUco samples/MVI_8269.MP4");
 	std::cout << cap.frame_size().width << " " << cap.frame_size().height << std::endl;
 	cv::Size frame_size = cap.frame_size();
 	me::dnn::models::DetectionModel det_model = me::dnn::models::YOLOXModel();
@@ -407,11 +407,11 @@ void aruco_test() {
 	me::dnn::models::CVTagDetector cv_setup;
 	double detection_scale_factor = 1.2;
 	cv_setup.set_preprocess_size(cv::Size(224, 224));
-	//cv_setup.set_dict_type(cv::aruco::DICT_ARUCO_ORIGINAL);
-	//tag_model = cv_setup;
-	tag_model = me::dnn::models::TagNetModel();
-	tag_model.load("basic_regression4_best.onnx", me::dnn::Executor::CUDA);
-	det_model.load("aruco1_s_dynamic.onnx", me::dnn::Executor::TENSORRT);
+	cv_setup.set_dict_type(cv::aruco::DICT_ARUCO_ORIGINAL);
+	tag_model = cv_setup;
+	//tag_model = me::dnn::models::TagNetModel();
+	//tag_model.load("basic_regression4_best.onnx", me::dnn::Executor::CUDA);
+	det_model.load("redis/models/YOLOX/tags/aruco_s.onnx", me::dnn::Executor::CUDA);
 	auto net_size = det_model.net_size();
 	cv::VideoWriter box_out;
 	box_out.open("tag_out.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), cap.fps(), cap.frame_size());
@@ -937,7 +937,7 @@ int main() {
 		// primary_tests();
 		//performance_experiments();
 		//detectpose_test();
-		feature_aware_track_test();
+		//feature_aware_track_test();
 		aruco_test();
 		std::cout << "Starting pool..." << std::endl;
 		auto pool = me::threading::SimplePool();

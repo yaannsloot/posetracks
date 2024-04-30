@@ -69,7 +69,7 @@ namespace me::dnn::models {
 			else {
 				normalize_dims = preprocess_size;
 				cv::Mat resized_img;
-				cv::resize(img_ptr[i], resized_img, preprocess_size);
+				cv::resize(img_ptr[i], resized_img, preprocess_size, 0.0, 0.0);
 				detector.detectMarkers(resized_img, corners, ids, rejected);
 			}
 			auto* corners_ptr = corners.data();
