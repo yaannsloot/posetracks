@@ -36,6 +36,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // Tracking module headers
 #include "me/tracking/data.hpp"
 #include "me/tracking/camera.hpp"
+#include "me/tracking/triangulation.hpp"
 
 // Dependencies
 #include <opencv2/sfm/triangulation.hpp>
@@ -128,12 +129,16 @@ PYBIND11_MODULE(MEPython, m)
 		.def(py::init<>())
 		.def("from_array", [](cv::Mat& self, py::array_t<uint8_t>& im_data) {
 			if (im_data.ndim() == 2) {
-				cv::Mat mat(im_data.shape(0), im_data.shape(1), CV_8UC1, const_cast<uint8_t*>(im_data.data()), im_data.strides(0));
+				cv::Mat mat(static_cast<int>(im_data.shape(0)), static_cast<int>(im_data.shape(1)), CV_8UC1, 
+					const_cast<uint8_t*>(im_data.data()), 
+					static_cast<int>(im_data.strides(0)));
 				self = mat;
 			}
 			else if (im_data.ndim() == 3) {
-				cv::Mat mat(im_data.shape(0), im_data.shape(1), CV_MAKETYPE(CV_8U, im_data.shape(2)), 
-					const_cast<uint8_t*>(im_data.data()), im_data.strides(0));
+				cv::Mat mat(static_cast<int>(im_data.shape(0)), static_cast<int>(im_data.shape(1)), CV_MAKETYPE(CV_8U, 
+					static_cast<int>(im_data.shape(2))),
+					const_cast<uint8_t*>(im_data.data()), 
+					static_cast<int>(im_data.strides(0)));
 				self = mat;
 			}
 			else {
@@ -148,6 +153,9 @@ PYBIND11_MODULE(MEPython, m)
 	py::class_<cv::Point2d>(m, "Point")
 		.def(py::init<>())
 		.def(py::init<double, double>())
+		.def(py::init([](std::pair<double, double> tuple) {
+			return new cv::Point2d(tuple.first, tuple.second);
+		}))
 		.def_readwrite("x", &cv::Point2d::x)
 		.def_readwrite("y", &cv::Point2d::y)
 		.def("__repr__", [](cv::Point2d& self) {
@@ -155,9 +163,13 @@ PYBIND11_MODULE(MEPython, m)
 			ss << '(' << self.x << ", " << self.y << ')';
 			return ss.str();
 		});
+		py::implicitly_convertible<py::tuple, cv::Point2d>();
 	py::class_<cv::Point2f>(m, "Pointf")
 		.def(py::init<>())
 		.def(py::init<float, float>())
+		.def(py::init([](std::pair<float, float> tuple) {
+			return new cv::Point2f(tuple.first, tuple.second);
+		}))
 		.def_readwrite("x", &cv::Point2f::x)
 		.def_readwrite("y", &cv::Point2f::y)
 		.def("__repr__", [](cv::Point2f& self) {
@@ -165,6 +177,37 @@ PYBIND11_MODULE(MEPython, m)
 			ss << '(' << self.x << ", " << self.y << ')';
 			return ss.str();
 		});
+		py::implicitly_convertible<py::tuple, cv::Point2f>();
+	py::class_<cv::Point3d>(m, "Point3D")
+		.def(py::init<>())
+		.def(py::init<double, double, double>())
+		.def(py::init([](std::tuple<double, double, double> tuple) {
+			return new cv::Point3d(std::get<0>(tuple), std::get<1>(tuple), std::get<2>(tuple));
+		}))
+		.def_readwrite("x", &cv::Point3d::x)
+		.def_readwrite("y", &cv::Point3d::y)
+		.def_readwrite("z", &cv::Point3d::z)
+		.def("__repr__", [](cv::Point3d& self) {
+			std::stringstream ss;
+			ss << '(' << self.x << ", " << self.y << ", " << self.z << ')';
+			return ss.str();
+		});
+		py::implicitly_convertible<py::tuple, cv::Point3d>();
+	py::class_<cv::Point3f>(m, "Pointf3D")
+		.def(py::init<>())
+		.def(py::init<float, float, float>())
+		.def(py::init([](std::tuple<float, float, float> tuple) {
+			return new cv::Point3f(std::get<0>(tuple), std::get<1>(tuple), std::get<2>(tuple));
+		}))
+		.def_readwrite("x", &cv::Point3f::x)
+		.def_readwrite("y", &cv::Point3f::y)
+		.def_readwrite("z", &cv::Point3f::z)
+		.def("__repr__", [](cv::Point3f& self) {
+			std::stringstream ss;
+			ss << '(' << self.x << ", " << self.y << ", " << self.z << ')';
+			return ss.str();
+		});
+		py::implicitly_convertible<py::tuple, cv::Point3f>();
 	py::class_<cv::Rect2d>(m, "Rect")
 		.def(py::init<>())
 		.def(py::init<double, double, double, double>())
@@ -277,10 +320,6 @@ PYBIND11_MODULE(MEPython, m)
 		.def(py::init<int, double>())
 		.def(py::init<double, cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
 		.def(py::init<int, double, cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
-		.def(py::init<const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
-		.def(py::init<int, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
-		.def(py::init<double, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
-		.def(py::init<int, double, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&, const std::pair<double, double>&>())
 		.def("__getitem__", [](me::dnn::Tag& self, size_t index) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			return self.corners[index];
@@ -288,10 +327,6 @@ PYBIND11_MODULE(MEPython, m)
 		.def("__setitem__", [](me::dnn::Tag& self, size_t index, cv::Point2d& value) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			self[index] = value;
-		})
-		.def("__setitem__", [](me::dnn::Tag& self, size_t index, const std::pair<double, double> value) {
-			if (index >= 4 || index < 0) throw py::index_error();
-			self[index] = cv::Point2d(value.first, value.second);
 		})
 		.def_readwrite("id", &me::dnn::Tag::id)
 		.def_readwrite("conf", &me::dnn::Tag::conf);
@@ -495,12 +530,32 @@ PYBIND11_MODULE(MEPython, m)
 		.def(py::init<>())
 		.def_readwrite("K", &me::tracking::Kk::K)
 		.def_readwrite("k", &me::tracking::Kk::k);
+	py::class_<me::tracking::Tag3D>(m_tracking, "Tag3D")
+		.def(py::init<>())
+		.def(py::init<int>())
+		.def(py::init<cv::Point3d&, cv::Point3d&, cv::Point3d&, cv::Point3d&>())
+		.def(py::init<int, cv::Point3d&, cv::Point3d&, cv::Point3d&, cv::Point3d&>())
+		.def("__getitem__", [](me::tracking::Tag3D& self, size_t index) {
+			if (index >= 4 || index < 0) throw py::index_error();
+			return self.corners[index];
+			})
+		.def("__setitem__", [](me::tracking::Tag3D& self, size_t index, cv::Point3d& value) {
+			if (index >= 4 || index < 0) throw py::index_error();
+			self[index] = value;
+			})
+		.def_readwrite("id", &me::tracking::Tag3D::id);
 	py::class_<me::tracking::TrackingData>(m_tracking, "TrackingData")
 		.def(py::init<>())
 		.def_readwrite("poses", &me::tracking::TrackingData::poses)
 		.def_readwrite("detections", &me::tracking::TrackingData::detections)
 		.def_readwrite("tags", &me::tracking::TrackingData::tags)
 		.def("to_points", &me::tracking::TrackingData::to_points, py::call_guard<py::gil_scoped_release>(), py::arg("reduce_tags") = false);
+	py::class_<me::tracking::TrackingData3D>(m_tracking, "TrackingData3D")
+		.def(py::init<>())
+		.def_readwrite("poses", &me::tracking::TrackingData3D::poses)
+		.def_readwrite("detections", &me::tracking::TrackingData3D::detections)
+		.def_readwrite("tags", &me::tracking::TrackingData3D::tags);
+
 
 	// Function bindings
 
@@ -524,461 +579,6 @@ PYBIND11_MODULE(MEPython, m)
 			return result;
 		});
 		m.def("waitKey", &cv::waitKey);
-
-
-	// Needs adjustments future Ian please fix
-	m.def("triangulate_points", [](
-		py::object clips,
-		py::object pose_tracks_list,
-		py::object cam_matrices,
-		py::object dist_vectors,
-		py::object bpy_scene,
-		py::object bpy_data,
-		bool use_all_tracks,
-		bool non_destructive
-		) {
-
-			std::chrono::microseconds init(0);
-			std::chrono::microseconds blend_read(0);
-			std::chrono::microseconds blend_write(0);
-			std::chrono::microseconds triangulate(0);
-
-			auto start = std::chrono::high_resolution_clock::now();
-			
-			// SAME OMEGA NOTE FROM THE SOLVE CAMERAS FUNCTION.
-			// This NEEDS to be modified to take into account frame offsets in future versions when that gets implemented
-			// It currently DOES NOT DO THAT
-			// Also, add pose/non-pose filtering and implement bool flags. Besides that, works as expected. Supports multiple camera views
-
-			// PART 0:
-			// Get preliminary information and variables
-
-			// Clip information
-			std::vector<py::object> clip_list = clips.cast<std::vector<py::object>>();
-			auto clip_count = clip_list.size();
-			std::vector<cv::Size> clip_sizes;
-			std::vector<std::string> clip_names;
-			std::vector<py::object> clip_tracking_tracks;
-			std::vector<py::object> clip_pose_tracks_list;
-
-			for (int i = 0; i < clip_count; ++i) {
-				py::object clip_obj = clip_list[i];
-				py::list clip_size = clip_obj.attr("size");
-				clip_sizes.push_back(cv::Size(clip_size[0].cast<int>(), clip_size[1].cast<int>()));
-				clip_names.push_back(clip_obj.attr("name").cast<std::string>());
-				clip_tracking_tracks.push_back(clip_obj.attr("tracking").attr("tracks"));
-				py::object pose_tracks = py::none();
-				for (auto& pose_tracks_entry : pose_tracks_list) {
-					py::object entry = pose_tracks_entry.cast<py::object>();
-					py::object entry_clip = entry.attr("clip");
-					if (entry_clip.equal(clip_obj)) {
-						pose_tracks = entry.attr("pose_tracks_list");
-						break;
-					}
-				}
-				clip_pose_tracks_list.push_back(pose_tracks);
-			}
-
-			// Convert camera matrices and distortion vectors to opencv compatible formats
-			py::list cam_matrix_list = cam_matrices.cast<py::list>();
-			py::list dist_vector_list = dist_vectors.cast<py::list>();
-			std::vector<cv::Mat> cv_cam_matrices;
-			std::vector<std::vector<float>> cv_dist_vectors;
-
-			for (int i = 0; i < cam_matrix_list.size(); ++i) {
-				py::object py_cam_mtx = cam_matrix_list[i];
-				py::list py_dist_vector = dist_vector_list[i];
-				cv::Mat cv_cam_mtx(3, 3, CV_64FC1);
-				std::vector<float> cv_dist_vector;
-				for (int r = 0; r < cv_cam_mtx.rows; ++r) {
-					for (int c = 0; c < cv_cam_mtx.cols; ++c) {
-						cv_cam_mtx.at<double>(r, c) = py_cam_mtx.attr("__getitem__")(r).attr("__getitem__")(c).cast<float>();
-					}
-				}
-				for (int j = 0; j < py_dist_vector.size(); ++j) {
-					cv_dist_vector.push_back(py_dist_vector[j].cast<float>());
-				}
-				cv_cam_matrices.push_back(cv_cam_mtx);
-				cv_dist_vectors.push_back(cv_dist_vector);
-			}
-
-			// Get scene cameras
-			std::vector<py::object> scene_cameras;
-			py::object scene_objects = bpy_scene.attr("objects");
-			for (auto& obj : scene_objects) {
-				py::object object = obj.cast<py::object>();
-				if (object.attr("type").cast<std::string>() == "CAMERA")
-					scene_cameras.push_back(object);
-			}
-
-			// Create a vector of camera objects indexed the same way as clip_names
-			// Each index will either contain a camera object with a matching name, or None
-			std::vector<py::object> clip_cameras;
-			for (auto& name : clip_names) {
-				py::object clip_camera = py::none();
-				for (auto& cam : scene_cameras) {
-					py::object camera = cam.cast<py::object>();
-					if (camera.attr("name").cast<std::string>() == name) {
-						clip_camera = camera;
-						break;
-					}
-				}
-				clip_cameras.push_back(clip_camera);
-			}
-
-			// Remove elements from other vectors if their index references a None object in the clip_cameras vector
-			for (int i = clip_cameras.size() - 1; i >= 0; --i) {
-				if (clip_cameras[i].is_none()) {
-					clip_list.erase(clip_list.begin() + i);
-					clip_sizes.erase(clip_sizes.begin() + i);
-					clip_names.erase(clip_names.begin() + i);
-					clip_tracking_tracks.erase(clip_tracking_tracks.begin() + i);
-					clip_pose_tracks_list.erase(clip_pose_tracks_list.begin() + i);
-					cv_cam_matrices.erase(cv_cam_matrices.begin() + i);
-					cv_dist_vectors.erase(cv_dist_vectors.begin() + i);
-					clip_cameras.erase(clip_cameras.begin() + i);
-				}
-			}
-
-			if(clip_cameras.empty())
-				throw std::runtime_error("No valid cameras were found in the current scene");
-
-			if(clip_cameras.size() < 2)
-				throw std::runtime_error("A minimum of two valid cameras are required for triangulation");
-
-			
-			// Coordinate conversion matrix obtained from experimentation with OpenCV <-> Blender transforms
-			cv::Mat coordinate_flip = (cv::Mat_<double>(4, 4) <<
-				1, -1, -1, 1,
-				-1, 1, 1, -1,
-				-1, 1, 1, -1,
-				1, -1, -1, 1);
-
-			// Finally, obtain projection matrices from cameras
-			std::vector<cv::Mat> cv_proj_matrices;
-			for (int i = 0; i < clip_cameras.size(); ++i) {
-				py::object cam = clip_cameras[i];
-				py::object bpy_cam_mtx = cam.attr("matrix_world").attr("normalized")();
-				cv::Mat cv_bpy_cam_mtx(4, 4, CV_64FC1);
-
-				for (int r = 0; r < cv_bpy_cam_mtx.rows; ++r) {
-					for (int c = 0; c < cv_bpy_cam_mtx.cols; ++c) {
-						cv_bpy_cam_mtx.at<double>(r, c) = bpy_cam_mtx.attr("__getitem__")(r).attr("__getitem__")(c).cast<float>();
-					}
-				}
-
-				cv::multiply(cv_bpy_cam_mtx, coordinate_flip, cv_bpy_cam_mtx);
-
-				cv::Mat R = cv_bpy_cam_mtx(cv::Rect(0, 0, 3, 3)).clone();
-				cv::Mat t = cv_bpy_cam_mtx(cv::Rect(3, 0, 1, 3)).clone();
-
-				R = R.t();
-				t = -R * t;
-
-				cv::Mat P;
-				cv::sfm::projectionFromKRt(cv::Mat::eye(3, 3, CV_64FC1), R, t, P);
-				cv_proj_matrices.push_back(P);
-			}
-
-			// PART 1:
-			// Triangulation
-
-			// Build track map vector. The vector is indexed the same as the other vectors obtained from PART 0.
-			// Each map will be index as [trackname] = track_obj
-			std::vector<std::unordered_map<std::string, py::object>> track_map;
-			for (int i = 0; i < clip_list.size(); ++i) {
-				std::unordered_map<std::string, py::object> clip_map;
-				py::object clip_tracks = clip_list[i].attr("tracking").attr("tracks");
-				for (auto& trk : clip_tracks) {
-					py::object track = trk.cast<py::object>();
-					clip_map[track.attr("name").cast<std::string>()] = track;
-				}
-				track_map.push_back(clip_map);
-			}
-
-			// List of names that have matching frames in at least two clips
-			std::unordered_set<std::string> target_tracks;
-
-
-			auto end = std::chrono::high_resolution_clock::now();
-
-			init += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-			std::unordered_map<std::string, std::unordered_map<int, cv::Point3d>> animation_data;
-
-			// Loop through each frame in the scene
-			int frame_start = bpy_scene.attr("frame_start").cast<int>();
-			int frame_end = bpy_scene.attr("frame_end").cast<int>();
-
-			for (int f = frame_start; f <= frame_end; ++f) {
-
-				// Find tracks with matching names on two or more clips and make sure they have markers present on the current frame
-
-				start = std::chrono::high_resolution_clock::now();
-
-				// Subset of track_map that contains only references to tracks on the current frame
-				std::vector<std::unordered_map<std::string, py::object>> tracks_on_frame;
-
-				// Fill tracks_on_frame
-				// The clip may not actually have any relevant track data for the current frame.
-				// If so, it will just be indexed with an empty map
-				for (int i = 0; i < track_map.size(); ++i) {
-					std::unordered_map<std::string, py::object> clip_tracks_on_frame;
-					auto& clip_track_map = track_map[i];
-					for (auto& element : clip_track_map) {
-						if (!element.second.attr("markers").attr("find_frame")(f).is_none())
-							clip_tracks_on_frame.insert(element);
-					}
-					tracks_on_frame.push_back(clip_tracks_on_frame);
-				}
-
-				// Identical to tracks_on_frame, except information is rearranged
-				// This is a map indexed by track name that contains a vector of the indices of each clip the track appears on in the current frame
-				std::unordered_map<std::string, std::vector<int>> track_buckets;
-
-				// Fill track_buckets
-				for (int i = 0; i < tracks_on_frame.size(); ++i) {
-					auto& clip_tracks_on_frame = tracks_on_frame[i];
-					for (auto& element : clip_tracks_on_frame) {
-						if (track_buckets.find(element.first) == track_buckets.end())
-							track_buckets[element.first] = std::vector<int>();
-						track_buckets[element.first].push_back(i);
-					}
-				}
-
-				// Trim track_buckets.
-				// This is important as some tracks may not have the minimum number of views needed for triangulation
-				for (auto it = track_buckets.begin(); it != track_buckets.end(); ) {
-					if (it->second.size() < 2) {
-						it = track_buckets.erase(it);
-					}
-					else {
-						++it;
-					}
-				}
-
-				end = std::chrono::high_resolution_clock::now();
-
-				blend_read += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-
-				// Iterate over each track bucket and triangulate referenced points
-
-				for (auto& element : track_buckets) {
-					auto& track_name = element.first;
-					auto& clip_indices = element.second;
-
-					std::vector<cv::Mat> track_points;
-					std::vector<cv::Mat> proj_matrices;
-
-					// Read the point referenced in each track, 
-					// convert its frame coordinates to opencv, 
-					// undistort and normalize these coordinates, 
-					// and add them to the track_points vector.
-					// Also, add the projection matrix for this track's view to the proj_matrices vector
-					for (auto& index : clip_indices) {
-
-						start = std::chrono::high_resolution_clock::now();
-
-						auto& track = tracks_on_frame[index][track_name];
-						py::object marker = track.attr("markers").attr("find_frame")(f);
-						py::object co = marker.attr("co");
-						py::object pattern_bbox = marker.attr("pattern_bound_box");
-						auto& clip_size = clip_sizes[index];
-						float x = co.attr("__getitem__")(0).cast<float>() * clip_size.width;
-						float y = clip_size.height - co.attr("__getitem__")(1).cast<float>() * clip_size.height;
-						cv::Point2f tl(
-							pattern_bbox.attr("__getitem__")(0).attr("__getitem__")(0).cast<float>() * clip_size.width,
-							pattern_bbox.attr("__getitem__")(0).attr("__getitem__")(1).cast<float>() * clip_size.height
-						);
-						cv::Point2f br(
-							pattern_bbox.attr("__getitem__")(1).attr("__getitem__")(0).cast<float>()* clip_size.width,
-							pattern_bbox.attr("__getitem__")(1).attr("__getitem__")(1).cast<float>()* clip_size.height
-						);
-
-						// prob var has no use rn. If no use is decided upon in the future please remove this part
-						double prob = std::abs(tl.x - br.x) * std::abs(tl.y - br.y) / 100;
-
-						auto& cam_mtx = cv_cam_matrices[index];
-						auto& dist_vector = cv_dist_vectors[index];
-						std::vector<cv::Point2f> src = { cv::Point2f(x, y) };
-						cv::Mat dst;
-
-						end = std::chrono::high_resolution_clock::now();
-
-						blend_read += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-						start = std::chrono::high_resolution_clock::now();
-
-						cv::undistortPoints(src, dst, cam_mtx, dist_vector);
-
-						cv::Mat dst_mat(dst);
-						dst_mat = dst_mat.reshape(1, 2); // reshape to a 2xN matrix
-						track_points.push_back(dst_mat);
-						proj_matrices.push_back(cv_proj_matrices[index]);
-
-						end = std::chrono::high_resolution_clock::now();
-
-						triangulate += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-					}
-
-
-					// Triangulate the points using the vectors obtained in the previous step
-					
-					// TODO: Add a reprojection error check
-					// Compare reprojected 3d points to the source 2d points via euclidean distance
-					// You can average this or compare individually, idk. Experiment.
-					// Remember that the 2d coords are x (u, v, w) = P * X (x, y, z, 1)
-					// u/w = x and v/w = y
-					
-					// TODO: ALSO either here or somewhere else, add an "erroneous change in position" filer.
-					// Not sure what this is actually called, but last time this was implemented via
-					// taking the delta of each axis over time and filtering for outliers.
-
-					cv::Mat points3d;
-
-					start = std::chrono::high_resolution_clock::now();
-
-					cv::sfm::triangulatePoints(track_points, proj_matrices, points3d);
-
-					end = std::chrono::high_resolution_clock::now();
-
-					triangulate += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-					if (animation_data.find(track_name) == animation_data.end())
-						animation_data[track_name] = std::unordered_map<int, cv::Point3d>();
-
-					animation_data[track_name][f] = cv::Point3d(
-						points3d.at<double>(0),
-						-points3d.at<double>(1),
-						-points3d.at<double>(2)
-					);
-
-				}
-
-			}
-
-			// PART 2:
-			// Write animation data to Blender
-
-			// Set that keeps track of track names that have had some form of initialization performed on them
-			std::unordered_set<std::string> track_initialization_list;
-
-			start = std::chrono::high_resolution_clock::now();
-
-			for (auto& track_anim_data : animation_data) {
-				auto& track_name = track_anim_data.first;
-				auto& track_points = track_anim_data.second;
-
-				// Ensure track object exists in blender & is present in a collection named MotionEngine
-
-				py::object point_collection = bpy_data.attr("collections").attr("get")("MotionEngine");
-
-				if (point_collection.is_none())
-					point_collection = bpy_data.attr("collections").attr("new")("MotionEngine");
-
-				if (!bpy_scene.attr("collection").attr("children").contains(point_collection.attr("name")))
-					bpy_scene.attr("collection").attr("children").attr("link")(point_collection);
-
-				py::object track_empty = bpy_scene.attr("objects").attr("get")(track_name);
-
-				if (track_empty.is_none()) {
-					track_empty = bpy_data.attr("objects").attr("new")(track_name, py::none());
-					track_empty.attr("empty_display_type") = "SPHERE";
-					bpy_scene.attr("collection").attr("objects").attr("link")(track_empty);
-				}
-
-				if (!point_collection.attr("objects").contains(track_empty.attr("name")))
-					point_collection.attr("objects").attr("link")(track_empty);
-
-				if (track_initialization_list.find(track_name) == track_initialization_list.end()) {
-					track_empty.attr("animation_data_clear")();
-					track_initialization_list.insert(track_name);
-				}
-
-				// Prepare fcurves
-
-				py::object track_fcurves = track_empty.attr("animation_data");
-
-				if (track_fcurves.is_none())
-					track_fcurves = track_empty.attr("animation_data_create")();
-
-				track_fcurves = track_fcurves.attr("action");
-
-				if (track_fcurves.is_none()) {
-					py::object new_action = bpy_data.attr("actions").attr("new")(track_name + "Action");
-					track_empty.attr("animation_data").attr("action") = new_action;
-					track_fcurves = new_action;
-				}
-
-				track_fcurves = track_fcurves.attr("fcurves");
-
-				py::object fcurve_x = track_fcurves.attr("find")("location", py::arg("index") = 0);
-				py::object fcurve_y = track_fcurves.attr("find")("location", py::arg("index") = 1);
-				py::object fcurve_z = track_fcurves.attr("find")("location", py::arg("index") = 2);
-
-				if (fcurve_x.is_none()) {
-					fcurve_x = track_fcurves.attr("new")("location", py::arg("index") = 0);
-				}
-				if (fcurve_y.is_none()) {
-					fcurve_y = track_fcurves.attr("new")("location", py::arg("index") = 1);
-				}
-				if (fcurve_z.is_none()) {
-					fcurve_z = track_fcurves.attr("new")("location", py::arg("index") = 2);
-				}
-
-				py::object keyframes_x = fcurve_x.attr("keyframe_points");
-				py::object keyframes_y = fcurve_y.attr("keyframe_points");
-				py::object keyframes_z = fcurve_z.attr("keyframe_points");
-
-				// Write points to fcurves
-				keyframes_x.attr("clear")();
-				keyframes_y.attr("clear")();
-				keyframes_z.attr("clear")();
-				keyframes_x.attr("add")(track_points.size());
-				keyframes_y.attr("add")(track_points.size());
-				keyframes_z.attr("add")(track_points.size());
-
-				auto current_frame = track_points.begin();
-
-				for (int i = 0; i < track_points.size(); ++i) {
-					py::object key_x = keyframes_x.attr("__getitem__")(i);
-					py::object key_y = keyframes_y.attr("__getitem__")(i);
-					py::object key_z = keyframes_z.attr("__getitem__")(i);
-					key_x.attr("co") = py::make_tuple(current_frame->first, current_frame->second.x);
-					key_y.attr("co") = py::make_tuple(current_frame->first, current_frame->second.y);
-					key_z.attr("co") = py::make_tuple(current_frame->first, current_frame->second.z);
-					++current_frame;
-				}
-
-				keyframes_x.attr("deduplicate")();
-				keyframes_y.attr("deduplicate")();
-				keyframes_z.attr("deduplicate")();
-				fcurve_x.attr("update")();
-				fcurve_y.attr("update")();
-				fcurve_z.attr("update")();
-
-			}
-
-			end = std::chrono::high_resolution_clock::now();
-
-			blend_write += std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-
-			auto total = blend_read + blend_write + init + triangulate;
-
-			std::cout << "[MotionEngine] triangulate_points -- Total: " << total.count() << "us, init: " << init.count() << "us, blend_read: " << blend_read.count() << "us, blend_write: " << blend_write.count() << "us, triangulate: " << triangulate.count() << "us" << std::endl;
-
-	},
-		py::arg("clips"),
-		py::arg("pose_tracks_list"),
-		py::arg("cam_matrices"),
-		py::arg("dist_vectors"),
-		py::arg("bpy_scene"),
-		py::arg("bpy_data"),
-		py::arg("use_all_tracks") = false,
-		py::arg("non_destructive") = false
-	);
 
 
 	// Core
@@ -1052,5 +652,7 @@ PYBIND11_MODULE(MEPython, m)
 		const me::tracking::Kk&, const me::tracking::Kk&>(&me::tracking::solveStaticPair), py::call_guard<py::gil_scoped_release>());
 
 	m_tracking.def("solve_static_set", &me::tracking::solveStaticSet, py::call_guard<py::gil_scoped_release>());
+
+	m_tracking.def("triangulate_static", &me::tracking::triangulateStatic, py::call_guard<py::gil_scoped_release>());
 
 }

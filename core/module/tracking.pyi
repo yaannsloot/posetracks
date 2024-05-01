@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-from . import dnn, Pointf
+from . import dnn, Pointf, Point3D
 from typing import Dict, List, Tuple, overload
 
 class Mat3x1:
@@ -90,6 +90,49 @@ class Kk:
         Create a new object for storing camera intrinsic information
         """
 
+class Tag3D:
+    conf: float
+    id: int
+    @overload
+    def __init__(self) -> None:
+        """
+        Create a new empty tag
+        """
+    @overload
+    def __init__(self, arg0: int) -> None:
+        """
+        Create a new tag with a given tag id
+        :param arg0: Tag ID
+        """
+    @overload
+    def __init__(self, arg0: Union[Point, Tuple[float, float]], arg1: Union[Point, Tuple[float, float]],
+                 arg2: Union[Point, Tuple[float, float]], arg3: Union[Point, Tuple[float, float]]) -> None:
+        """
+        Create a new tag with a given set of corner points.
+
+        Corner points are ordered clockwise starting from the top left corner.
+        :param arg0: First corner point
+        :param arg1: Second corner point
+        :param arg2: Third corner point
+        :param arg3: Fourth corner point
+        """
+    @overload
+    def __init__(self, arg0: int, arg1: Union[Point, Tuple[float, float]], arg2: Union[Point, Tuple[float, float]],
+                 arg3: Union[Point, Tuple[float, float]], arg4: Union[Point, Tuple[float, float]]) -> None:
+        """
+        Create a new tag with a given tag id and set of corner points.
+
+        Corner points are ordered clockwise starting from the top left corner.
+        :param arg0: Tag ID
+        :param arg1: First corner point
+        :param arg2: Second corner point
+        :param arg3: Third corner point
+        :param arg4: Fourth corner point
+        """
+    def __getitem__(self, arg0: int) -> Point: ...
+    def __iter__(self) -> typing.Iterator[Point]: ...
+    def __setitem__(self, arg0: int, arg1: Union[Point, Tuple[float, float]]) -> None: ...
+
 class TrackingData:
     detections: Dict[int, Dict[str, dnn.Detection]]
     poses: Dict[int, Dict[str, dnn.Pose]]
@@ -104,6 +147,15 @@ class TrackingData:
         :param reduce_boxes: If true, use center point for detections
         :param reduce_tags: Tf true, use center point for tags
         :return:
+        """
+		
+class TrackingData3D:
+    detections: Dict[int, Dict[str, Tuple[int, Point3D]]]
+    poses: Dict[int, Dict[str, Dict[int, Point3D]]]
+    tags: Dict[int, Dict[int, Tag3D]]
+    def __init__(self) -> None:
+        """
+        Create a new 3D tracking data block
         """
 
 def find_common_data(arg0: TrackingData, arg1: TrackingData) -> Tuple[TrackingData, TrackingData]:
@@ -142,3 +194,12 @@ def solve_static_set(t_data: List[TrackingData], cam_Kk: List[Kk]) -> List[Rt]:
     :param cam_Kk: List of camera intrinsic information. Must be the same size as t_data
     :return: A list of transformations for each camera relative to the first.
     """
+	
+def triangulate_static(t_data: List[TrackingData], cam_Kk: List[Kk], cam_Rt: List[Rt]) -> TrackingData3D:
+	"""
+	Triangulate points for a set of cameras. 
+	The transformations of these cameras must be calculated ahead of time for the solver to work properly.
+	:param t_data: List of tracking data. The first element in the list is treated as tracking data from the anchor
+    :param cam_Kk: List of camera intrinsic information. Must be the same size as t_data
+    :return: Triangulated tracking data
+	"""

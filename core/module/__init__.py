@@ -110,6 +110,62 @@ _pyc.Pointf.__getitem__ = _point_getitem_func
 _pyc.Pointf.__setitem__ = _point_setitem_func
 _pyc.Pointf.__len__ = _point_len_func
 
+class Point3dIterator:
+    def __init__(self, point):
+        self.point = point
+        self.index = 0
+
+    def __next__(self):
+        if self.index == 0:
+            val = self.point.x
+        elif self.index == 1:
+            val = self.point.y
+        elif self.index == 2:
+            val = self.point.z
+        else:
+            raise StopIteration()
+        self.index += 1
+        return val
+
+
+def _point3d_iter_func(self):
+    return Point3dIterator(self)
+
+
+def _point3d_getitem_func(self, item):
+    if item == 0:
+        return self.x
+    elif item == 1:
+        return self.y
+    elif item == 2:
+        return self.z
+    raise IndexError()
+
+
+def _point3d_setitem_func(self, item, val):
+    if item == 0:
+        self.x = val
+    elif item == 1:
+        self.y = val
+    elif item == 2:
+        self.z = val
+    raise IndexError()
+
+
+def _point3d_len_func(self):
+    return 3
+
+
+_pyc.Point3D.__iter__ = _point3d_iter_func
+_pyc.Point3D.__getitem__ = _point3d_getitem_func
+_pyc.Point3D.__setitem__ = _point3d_setitem_func
+_pyc.Point3D.__len__ = _point3d_len_func
+
+_pyc.Pointf3D.__iter__ = _point3d_iter_func
+_pyc.Pointf3D.__getitem__ = _point3d_getitem_func
+_pyc.Pointf3D.__setitem__ = _point3d_setitem_func
+_pyc.Pointf3D.__len__ = _point3d_len_func
+
 
 # Bundled model library functions
 def _find_driver(drv_attr_path):

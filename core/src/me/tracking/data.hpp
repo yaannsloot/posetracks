@@ -90,8 +90,13 @@ namespace me::tracking {
     /// 3D version of Tag detection
     /// </summary>
     struct Tag3D {
-        int id = 0;
+        Tag3D() {}
+        Tag3D(int id) : id(id) {}
+        Tag3D(cv::Point3d& ca, cv::Point3d& cb, cv::Point3d& cc, cv::Point3d& cd) : corners{ ca, cb, cc, cd } {}
+        Tag3D(int id, cv::Point3d& ca, cv::Point3d& cb, cv::Point3d& cc, cv::Point3d& cd) : id(id), corners{ ca, cb, cc, cd } {}
         cv::Point3d corners[4];
+        cv::Point3d& operator[](const size_t& index) { return corners[index]; }
+        int id = 0;
     };
 
     /// <summary>

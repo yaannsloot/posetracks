@@ -87,6 +87,12 @@ class Point:
         :param arg0: X coordinate
         :param arg1: Y coordinate
         """
+	@overload
+    def __init__(self, arg0: Tuple[float, float]) -> None:
+        """
+        Create a new point
+        :param arg0: Tuple with X, Y coordinates
+        """
     def __iter__(self) -> Iterator[float]: ...
     def __getitem__(self, item) -> float: ...
     def __setitem__(self, key, value) -> None: ...
@@ -109,6 +115,62 @@ class Pointf:
         Create a new point. The coordinates are stored internally as single precision FP32 values
         :param arg0: X coordinate
         :param arg1: Y coordinate
+        """
+	@overload
+    def __init__(self, arg0: Tuple[float, float]) -> None:
+        """
+        Create a new point. The coordinates are stored internally as single precision FP32 values
+        :param arg0: Tuple with X, Y coordinates
+        """
+    def __iter__(self) -> Iterator[float]: ...
+    def __getitem__(self, item) -> float: ...
+    def __setitem__(self, key, value) -> None: ...
+    def __len__(self) -> int: ...
+	
+class Point3D:
+    """
+    Reference class for cv::Point3d objects
+    """
+    x: float
+    y: float
+	z: float
+    @overload
+    def __init__(self) -> None:
+        """
+        Create a new point
+        """
+    @overload
+    def __init__(self, arg0: float, arg1: float, arg2: float) -> None:
+        """
+        Create a new point
+        :param arg0: X coordinate
+        :param arg1: Y coordinate
+		:param arg2: Z coordinate
+        """
+    def __iter__(self) -> Iterator[float]: ...
+    def __getitem__(self, item) -> float: ...
+    def __setitem__(self, key, value) -> None: ...
+    def __len__(self) -> int: ...
+
+class Pointf3D:
+    """
+    Reference class for cv::Point3f objects
+    """
+    x: float
+    y: float
+	z: float
+    @overload
+    def __init__(self) -> None:
+        """
+        Create a new point. The coordinates are stored internally as single precision FP32 values
+        """
+    @overload
+    def __init__(self, arg0: float, arg1: float, arg2: float) -> None:
+        """
+        Create a new point. The coordinates are stored internally as single precision FP32 values
+        :param arg0: X coordinate
+        :param arg1: Y coordinate
+		:param arg2: Z coordinate
         """
     def __iter__(self) -> Iterator[float]: ...
     def __getitem__(self, item) -> float: ...
