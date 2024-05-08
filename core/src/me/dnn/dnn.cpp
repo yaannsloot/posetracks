@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "dnn.hpp"
 
-#ifdef ME_CUDA_ENABLED
+#ifdef ME_CUDA_IMGPROC_ENABLED
 #include <opencv2/cudaimgproc.hpp>
 #include <opencv2/cudawarping.hpp>
 #include <opencv2/cudaarithm.hpp>
@@ -713,7 +713,7 @@ namespace me::dnn {
 		int left = (static_cast<int>(out_w) - mid_w) / 2;
 		int right = (static_cast<int>(out_w) - mid_w + 1) / 2;
 
-#ifdef ME_CUDA_ENABLED
+#ifdef ME_CUDA_IMGPROC_ENABLED
 		if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
 			cv::cuda::GpuMat gpuIn;
 			cv::cuda::GpuMat gpuOut;
@@ -756,7 +756,7 @@ namespace me::dnn {
 		int top = (mid_h - static_cast<int>(out_h)) / 2;
 		int left = (mid_w - static_cast<int>(out_w)) / 2;
 
-#ifdef ME_CUDA_ENABLED
+#ifdef ME_CUDA_IMGPROC_ENABLED
 		if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
 			cv::cuda::GpuMat gpuIn;
 			cv::cuda::GpuMat gpuOut;
@@ -787,7 +787,7 @@ namespace me::dnn {
 	}
 
 	void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {
-#ifdef ME_CUDA_ENABLED
+#ifdef ME_CUDA_IMGPROC_ENABLED
 		if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
 			cv::cuda::GpuMat gpuIn;
 			cv::cuda::GpuMat gpuOut;

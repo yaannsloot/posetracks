@@ -216,6 +216,8 @@ def _normalize(x):
     i_max = max(x)
     i_min = min(x)
     margin = i_max - i_min
+    if margin == 0:
+        return [1 for a in x]
     return [(a - i_min) / margin for a in x]
 
 

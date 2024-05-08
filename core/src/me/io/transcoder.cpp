@@ -35,10 +35,22 @@ namespace me::io {
 		if (cap.isOpened())
 			cap.release();
 		bool success = false;
-		if (use_hw_accel)
+		if (use_hw_accel) {
+			// Prioritize FFMPEG
 			success = cap.open(path, cv::CAP_FFMPEG, { cv::CAP_PROP_HW_ACCELERATION, cv::VIDEO_ACCELERATION_ANY });
-		else
+		
+			// Fallback
+			if(!success)
+				success = cap.open(path, cv::CAP_ANY, { cv::CAP_PROP_HW_ACCELERATION, cv::VIDEO_ACCELERATION_ANY });
+		}
+		else {
+			// Prioritize FFMPEG
 			success = cap.open(path, cv::CAP_FFMPEG);
+
+			// Fallback
+			if (!success)
+				success = cap.open(path, cv::CAP_ANY);
+		}
 		if (success)
 			last_path = path;
 		return success;

@@ -46,6 +46,9 @@ namespace me::tracking {
 
 		cv::Mat E = cv::findEssentialMat(undis_points_a, undis_points_b, cv::Mat::eye(3, 3, CV_64FC1), cv::RANSAC, 0.999, 0.0001, mask);
 
+		if (E.rows != 3 || E.cols != 3)
+			return Rt();
+
 		cv::Mat R_relative;
 		cv::Mat t_relative;
 
@@ -105,7 +108,7 @@ namespace me::tracking {
 			return result;
 
 		// Prepare an evaluation table. This can be used to avoid repeat merge operations
-		std::vector<std::vector<size_t>> eval_table;
+		std::vector<std::vector<size_t>> eval_table(num_solutions);
 		for (size_t i = 0; i < num_solutions; ++i) {
 			std::vector<size_t> row(num_solutions, 0);
 			row[i] = 1;

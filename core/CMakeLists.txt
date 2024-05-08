@@ -35,6 +35,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Required packages
 find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(protobuf REQUIRED)
+find_package(glog REQUIRED)
 
 # Optional cuda files
 message("Looking for CUDA and CUDNN...")
@@ -92,6 +95,12 @@ if(USING_CUDA)
         ${ONNXRUNTIME_LIBRARY_TENSORRT}
     )
 endif()
+
+option(USE_CUDA_IMGPROC OFF)
+
+if(USE_CUDA_IMGPROC)
+    add_definitions(-DME_CUDA_IMGPROC_ENABLED)
+endif(USE_CUDA_IMGPROC)
 
 if(USING_CUDA)
     add_definitions(-DME_CUDA_ENABLED)
