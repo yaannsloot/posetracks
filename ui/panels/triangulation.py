@@ -19,9 +19,9 @@ import bpy
 from ... import global_vars
 
 
-class TriangulationUIPanel(bpy.types.Panel):
-    bl_label = "Triangulation"
-    bl_idname = "MOTIONENGINE_TRIANGULATION_PT_panel"
+class TrackingView3DUIPanel(bpy.types.Panel):
+    bl_label = "Tracking"
+    bl_idname = "MOTIONENGINE_TRACKING_VIEW3D_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "MotionEngine"
@@ -30,9 +30,26 @@ class TriangulationUIPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
+        properties = scene.motion_engine_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock
+
+        box = layout.box()
+        box = box.column(align=True)
+        row = box.row()
+        row.label(text='Anchor view:')
+        row = box.row()
+        row.prop(properties, 'me_ui_prop_anchor_cam_selection', text='')
+
+        column = layout.column(align=True)
+        row = column.row(align=True)
+
+        row.operator("motionengine.solve_cameras_operator")
+
+        row = column.row(align=True)
+
+        row.prop(properties, 'me_ui_prop_solution_scale')
 
         row = layout.row()
 
@@ -40,5 +57,5 @@ class TriangulationUIPanel(bpy.types.Panel):
 
 
 CLASSES = [
-    TriangulationUIPanel
+    TrackingView3DUIPanel
 ]

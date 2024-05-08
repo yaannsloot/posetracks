@@ -73,6 +73,16 @@ class TagFinishedEvent(Event):
         self.tags = tags
 
 
+class PoseFinishedEvent(Event):
+    """
+    Indicates that a task involving pose operations with the MEPython dnn module have finished.
+    """
+
+    def __init__(self, poses: dict[int, dict[str, me.dnn.Pose]], msg=''):
+        super().__init__(msg)
+        self.poses = poses
+
+
 def default_response(event: Event, *args):
     """
     Default event response. Will print the contents of event.msg.
@@ -133,6 +143,13 @@ class TagFinishedEventListener(EventListener):
     Tag task finished event listener. Responds only to events of the same type.
     """
     expected_type = TagFinishedEvent
+
+
+class PoseFinishedEventListener(EventListener):
+    """
+    Pose task finished event listener. Responds only to events of the same type.
+    """
+    expected_type = PoseFinishedEvent
 
 
 class EventDispatcher:

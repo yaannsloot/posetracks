@@ -31,6 +31,10 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
 
     display_priority = 1
 
+    @classmethod
+    def poll(cls, context):
+        return context.edit_movieclip is not None
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -40,22 +44,25 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
         layout.enabled = not ui_lock
 
         row = layout.row()
-        row.prop(properties, 'me_ui_prop_det_class_enum')
-        row.alignment = 'RIGHT'
 
-        row = layout.row()
-
-        row.scale_y = 1.5
+        row.scale_y = 1.6
 
         row.operator("motionengine.detect_objects_operator")
 
         row.enabled = context.edit_movieclip is not None
 
+        grid = layout.grid_flow(columns=2)
+        row = grid.row()
+        row.label(text='Target')
+        row.alignment = 'RIGHT'
+        row = grid.row()
+        row.prop(properties, 'me_ui_prop_det_class_enum', text='')
+
 
 class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     bl_parent_id = 'MOTIONENGINE_OBJECT_DETECTION_PT_panel'
     bl_idname = "MOTIONENGINE_DETECTOR_SETTINGS_PT_panel"
-    bl_label = 'Detector settings'
+    bl_label = 'Detector Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
     display_priority = 2
@@ -72,7 +79,7 @@ class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
-        grid_ele.label(text="Model selection")
+        grid_ele.label(text="Model Selection")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
         grid_ele.prop(properties, "me_ui_prop_det_simple_sel_enum", text='')
@@ -108,7 +115,7 @@ class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
 class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     bl_parent_id = 'MOTIONENGINE_OBJECT_DETECTION_PT_panel'
     bl_idname = "MOTIONENGINE_TRACKER_SETTINGS_PT_panel"
-    bl_label = 'Tracker settings'
+    bl_label = 'Tracker Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
     display_priority = 3
@@ -140,7 +147,7 @@ class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
-            grid_ele.label(text="Distance type")
+            grid_ele.label(text="Distance Type")
             grid_ele.alignment = 'RIGHT'
             grid_ele.prop(properties, "me_ui_prop_track_dist_type", text="")
             row = column.row()
@@ -152,7 +159,7 @@ class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
-            grid_ele.label(text="ReID score")
+            grid_ele.label(text="ReID Score")
             grid_ele.alignment = 'RIGHT'
             grid_ele.prop(properties, "me_ui_prop_track_reid_score", text="")
 

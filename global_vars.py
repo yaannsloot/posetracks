@@ -16,35 +16,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import bpy
 
-me_detectpose_model = None
-"""Abstract pose detection model for use with other functions"""
-
-clip_tracker = None
-"""Used to keep track of the last active clip during certain operator calls"""
-
-properties_tracker = None
-"""Used with write data callback to keep track of the run data property in the current scene"""
-
-stats_tracker = None
-"""Used with write data callback to keep track of the run statistics property in the current scene"""
-
-context_tracker = None
-"""Used with certain callback functions to maintain correct context"""
-
-warmup_state = False
-"""Flag that indicates whether models are currently in a warm-up state"""
-
 ui_lock_state = False
 """Disables all ui elements when false"""
 
-analysis_data = None
-"""Used on async analysis functions to store resulting data"""
-
-pose_types = {'wb17', 'wb26', 'wb133', 'f106', 'h21', 'a17'}
-"""
-All valid pose types. Used for track identification. 
-More can be added during initialization for additional pose models.
-"""
 
 """finish this"""
 joint_groups = {
@@ -87,15 +61,6 @@ joint_groups = {
         }
     }
 }
-
-
-class InfoMessage:
-    """Modifiable container for python bindings"""
-    msg: ""
-
-
-info_message = InfoMessage()
-"""String used in the report status operator"""
 
 
 def resolve_collection_path(path, context, make_collections=True):

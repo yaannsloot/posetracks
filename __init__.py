@@ -21,13 +21,11 @@ import concurrent.futures
 
 if 'MotionEngine' in locals():
     import importlib
-
     importlib.reload(MotionEngine)
     importlib.reload(global_vars)
     importlib.reload(ui)
     importlib.reload(operators)
     importlib.reload(property_groups)
-    importlib.reload(me_data)
     importlib.reload(me_ui)
 else:
     from . import MotionEngine
@@ -35,17 +33,16 @@ else:
     from . import ui
     from . import operators
     from . import property_groups
-    from .property_groups import me_data
     from .property_groups import me_ui
 
 bl_info = {
     "name": "MotionEngine",
     "author": "Ian Sloat",
-    "version": (0, 1, 0),
+    "version": (1, 0, 0),
     "blender": (2, 93, 0),
-    "location": "Clip Editor > UI",
-    "description": "AI based motion tracking system for blender",
-    "warning": "Pre-release software! Some features might not work as expected",
+    "location": "Movie Clip Editor > Sidebar > MotionEngine",
+    "description": "Provides various computer vision and AI tracking tools in the clip editor",
+    "warning": "Experimental software! Some features might not work as expected",
     "wiki_url": "",
     "tracker_url": "",
     "category": "Motion Tracking"}
@@ -63,15 +60,8 @@ def register():
     for CLASS in ui.ALL_CLASSES:
         bpy.utils.register_class(CLASS)
 
-    bpy.types.Scene.motion_engine_data = bpy.props.PointerProperty(type=me_data.MEClipDataCollection)
     bpy.types.Scene.motion_engine_ui_properties = bpy.props.PointerProperty(type=me_ui.MotionEngineUIProperties)
 
-    global_vars.me_detectpose_model = MotionEngine.dnn.TopDownPoseDetector()
-    global_vars.properties_tracker = None
-    global_vars.clip_tracker = None
-    global_vars.stats_tracker = None
-    global_vars.context_tracker = None
-    global_vars.warmup_state = False
     global_vars.ui_lock_state = False
     global_vars.shutdown_state = False
 
@@ -92,16 +82,9 @@ def unregister():
     for CLASS in property_groups.ALL_CLASSES:
         bpy.utils.unregister_class(CLASS)
 
-    global_vars.me_detectpose_model.unload_all()
-    global_vars.properties_tracker = None
-    global_vars.clip_tracker = None
-    global_vars.stats_tracker = None
-    global_vars.context_tracker = None
-    global_vars.warmup_state = False
     global_vars.ui_lock_state = False
 
     del bpy.types.Scene.motion_engine_ui_properties
-    del bpy.types.Scene.motion_engine_data
 
     global_vars.shutdown_state = True
 

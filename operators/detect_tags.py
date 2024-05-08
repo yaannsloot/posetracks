@@ -16,18 +16,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
+
 from .. import MotionEngine as me
 from .. import global_vars
-from .. import callbacks
 from .. import events
+from .. import utils
 import queue
-import os
 import traceback
 
 """
 NOTE TO SELF
 THIS DOESN'T SUPPORT ML TAG DETECTORS (YET)
 PLEASE FIX WHEN MODELS ARE AVAILABLE
+UPDATE: It does now. Kinda :)
+Does not actually use the model selection system. 
+Fix when more are available and performance data is collected. 
 """
 
 task = None
@@ -38,14 +41,17 @@ tag_model = me.dnn.FeatureModel()
 
 
 class TaskSettings:
-    def __init__(self, det_model_path, det_driver, tag_model_path='', tag_driver=me.dnn.CVTagDetector,
+    def __init__(self, clip_info: utils.ClipInfo, det_model_path, det_driver, tag_model_path='',
+                 tag_driver=me.dnn.CVTagDetector,
                  det_exec=me.dnn.CUDA,
                  tag_exec=me.dnn.CUDA,
                  det_conf=0.5,
                  det_iou=0.5,
                  target_cid=0,
                  cv_dict=me.DICT_4X4_50,
-                 cv_resample=True):
+                 cv_resample=True,
+                 batch_size=32):
+        self.clip_info = clip_info
         self.det_model_path = det_model_path
         self.tag_model_path = tag_model_path
         if isinstance(det_driver, tuple):
@@ -63,6 +69,7 @@ class TaskSettings:
         self.cv_dict = cv_dict
         self.cv_resample = cv_resample
         self.target_cid = target_cid
+        self.batch_size = batch_size
 
 
 def get_frames(frame_provider: me.io.FrameProvider, num_frames):
@@ -76,10 +83,13 @@ def get_frames(frame_provider: me.io.FrameProvider, num_frames):
     return result
 
 
-def tag_task(clip_path, clip_type, task_settings: TaskSettings, batch_size=32):
+def tag_task(task_settings: TaskSettings):
     global cancel_task
     global det_model
     global tag_model
+    clip_path = task_settings.clip_info.abs_path
+    clip_type = task_settings.clip_info.source_type
+    batch_size = task_settings.batch_size
     try:
         tag_model.unload()
         det_model.unload()
@@ -120,7 +130,7 @@ def tag_task(clip_path, clip_type, task_settings: TaskSettings, batch_size=32):
         while True:
 
             if cancel_task or global_vars.shutdown_state:
-                event_queue.put(events.CancelledEvent('Cancelled tag detection task'))
+                event_queue.put(events.CancelledEvent('Tag detection cancelled'))
                 return
             frames = get_frames(clip, batch_size)
             if not frames:
@@ -168,8 +178,7 @@ def tag_task(clip_path, clip_type, task_settings: TaskSettings, batch_size=32):
                     target_frame = frames_chunk[j]
                     chunk_samples.append(me.dnn.get_roi_no_padding(frames[target_frame], roi_det.bbox))
 
-                # MUST do this to avoid crashes.
-                # strict_batch_infer acts funny with the CV detector if the resample size is not set
+                # MUST do this to avoid crashes
                 if isinstance(tag_model, me.dnn.CVTagDetector):
                     tags.extend(tag_model.infer(chunk_samples))
                 else:
@@ -192,7 +201,8 @@ def tag_task(clip_path, clip_type, task_settings: TaskSettings, batch_size=32):
                 final_tags[det_frames[i] + f_num][tag.id] = out_tag
 
             f_num += len(frames)
-            event_queue.put(events.InfoEvent(f'{f_num}/{clip.frame_count()}'))
+            percent_current = int(max(0.0, min(100 * (f_num / clip.frame_count()), 100.0)))
+            event_queue.put(events.InfoEvent(f'Detecting tags: {percent_current}% (ESC to cancel)'))
         event_queue.put((events.TagFinishedEvent(final_tags, 'Tag detection task complete')))
 
     except Exception:
@@ -203,7 +213,7 @@ def tag_task(clip_path, clip_type, task_settings: TaskSettings, batch_size=32):
 class DetectTagsOperator(bpy.types.Operator):
     """Scan an entire clip for target tags"""
     bl_idname = "motionengine.detect_tags_operator"
-    bl_label = "Detect tags"
+    bl_label = "Detect Tags"
     _timer = None
     dispatch = events.EventDispatcher()
     info_listener = events.InfoEventListener()
@@ -297,7 +307,10 @@ class DetectTagsOperator(bpy.types.Operator):
             tag_model_driver = me.dnn.CVTagDetector
             self.last_tag_type = target_dict.name
 
+        current_clip = context.edit_movieclip
+
         task_settings = TaskSettings(
+            utils.ClipInfo(current_clip),
             det_model_path,
             det_model_driver,
             tag_model_path,
@@ -319,12 +332,7 @@ class DetectTagsOperator(bpy.types.Operator):
         self._timer = wm.event_timer_add(0.3, window=context.window)
         wm.modal_handler_add(self)
 
-        current_clip = context.edit_movieclip
-
-        clip_path = os.path.normpath(bpy.path.abspath(current_clip.filepath))
-
-        task = global_vars.executor.submit(tag_task, clip_path, current_clip.source,
-                                           task_settings)
+        task = global_vars.executor.submit(tag_task, task_settings)
 
         self.queued_clip = current_clip
 
@@ -353,7 +361,7 @@ class DetectTagsOperator(bpy.types.Operator):
         wm = context.window_manager
         wm.event_timer_remove(self._timer)
         global_vars.ui_lock_state = False
-        callbacks.ui_draw_callback()
+        utils.force_ui_draw()
         det_model.unload()
         tag_model.unload()
         det_model = me.dnn.DetectionModel()
@@ -375,48 +383,55 @@ class DetectTagsOperator(bpy.types.Operator):
             print(event.msg)
 
     def task_finished_response(self, event, context):
-        if self.queued_clip is None:
-            return
-        scene = context.scene
-        properties = scene.motion_engine_ui_properties
-        clip: bpy.types.MovieClip = self.queued_clip
-        tag_type = self.last_tag_type
-        clip_size = clip.size
-        tracks = clip.tracking.tracks
-        track_list = []
-        for frame in event.tags:
-            actual_frame = frame + 1
-            frame_tags = event.tags[frame]
-            for tag_id in frame_tags:
-                tag = frame_tags[tag_id]
-                tag_track_name = f'Tag.{self.last_tag_type}.{tag.id}'
-                track = tracks.get(tag_track_name)
-                if tag_track_name not in track_list:
-                    if track is None:
-                        track = tracks.new(name=tag_track_name, frame=actual_frame)
-                    else:
-                        track_frames = [a for (a, _) in track.markers.items()]
-                        for tf in track_frames:
-                            track.markers.delete_frame(tf)
-                        track = tracks.get(tag_track_name)
+        try:
+            if self.queued_clip is None:
+                return
+            self.report({'INFO'}, 'Done.')
+            clip: bpy.types.MovieClip = self.queued_clip
+            clip_info = utils.ClipInfo(clip)
+            clip_size = clip.size
+            tracks = clip.tracking.tracks
+            track_list = []
+            for frame in event.tags:
+                actual_frame = clip_info.true_to_clip(frame)
+                frame_tags = event.tags[frame]
+                for tag_id in frame_tags:
+                    tag = frame_tags[tag_id]
+                    tag_track_name = f'Tag.{self.last_tag_type}.{tag.id}'
+                    track = tracks.get(tag_track_name)
+                    if tag_track_name not in track_list:
                         if track is None:
                             track = tracks.new(name=tag_track_name, frame=actual_frame)
-                    track_list.append(tag_track_name)
-                center_x = 0
-                center_y = 0
-                corners = []
-                for c in range(4):
-                    center_x += tag[c].x
-                    center_y += tag[c].y
-                    corners.append((tag[c].x / clip_size[0], (clip_size[1] - tag[c].y) / clip_size[1]))
-                center_x /= 4
-                center_y /= 4
-                norm_center_x = center_x / clip_size[0]
-                norm_center_y = (clip_size[1] - center_y) / clip_size[1]
-                corners = [(x - norm_center_x, y - norm_center_y) for (x, y) in corners]
-                markers = track.markers
-                marker = markers.insert_frame(actual_frame, co=(norm_center_x, norm_center_y))
-                marker.pattern_corners = tuple(corners)
+                        else:
+                            track_frames = [a for (a, _) in track.markers.items()]
+                            for tf in track_frames:
+                                track.markers.delete_frame(tf)
+                            track = tracks.get(tag_track_name)
+                            if track is None:
+                                track = tracks.new(name=tag_track_name, frame=actual_frame)
+                        track_list.append(tag_track_name)
+                    center_x = 0
+                    center_y = 0
+                    corners = []
+                    for c in range(4):
+                        center_x += tag[c].x
+                        center_y += tag[c].y
+                        corners.append((tag[c].x / clip_size[0], (clip_size[1] - tag[c].y) / clip_size[1]))
+                    center_x /= 4
+                    center_y /= 4
+                    norm_center_x = center_x / clip_size[0]
+                    norm_center_y = (clip_size[1] - center_y) / clip_size[1]
+                    corners = [(x - norm_center_x, y - norm_center_y) for (x, y) in corners]
+                    corners.reverse()
+                    markers = track.markers
+                    marker = markers.insert_frame(actual_frame, co=(norm_center_x, norm_center_y))
+                    marker.pattern_corners = tuple(corners)
+                    marker.search_max *= 1.2
+                    marker.search_min *= 1.2
+                    marker.is_keyed = False
+        except Exception:
+            error = f'Error during evaluation: {traceback.format_exc()}'
+            self.report({'ERROR'}, error)
 
     def cancelled_response(self, event, context):
         if event.cancel_msg != '':

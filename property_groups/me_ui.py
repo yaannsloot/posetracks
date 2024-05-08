@@ -16,10 +16,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
-from .me_data import MEPoseTracksClip, GOGICollection
-from .me_stats import MotionEngineRunStatistics
-from ..utils import set_select_tracks
 from .. import MotionEngine as me
+from .. import utils
 
 object_detection_classes = set()
 
@@ -36,7 +34,7 @@ object_detection_classes.sort()
 obj_det_class_enum_items = []
 for i in range(len(object_detection_classes)):
     c = object_detection_classes[i]
-    obj_det_class_enum_items.append((c, c, f'Set detection target to {c.lower()}', i + 1))
+    obj_det_class_enum_items.append((c, c.capitalize(), f'Set detection target to {c.lower()}', i + 1))
 
 object_detection_classes = [c.lower() for c in object_detection_classes]
 
@@ -50,6 +48,59 @@ tag_dictionary_members = [e for e in me.TagDictionary.__members__]
 tag_detector_cv_dict_list_items = []
 for m in tag_dictionary_members:
     tag_detector_cv_dict_list_items.append((m, m, f'Set dictionary to {m}'))
+
+pose_estimation_targets = set()
+
+for model in me.get_models('pose_estimation'):
+    if 'target_class' not in model[1]:
+        continue
+    pose_estimation_targets.add(model[1]['target_class'])
+
+pose_estimation_targets = list(pose_estimation_targets)
+
+pose_estimation_targets.sort()
+
+pose_estimation_targets_enum_items = []
+for i in range(len(pose_estimation_targets)):
+    t = pose_estimation_targets[i]
+    pose_estimation_targets_enum_items.append((t, t.capitalize(), f'Set pose target type to {t}', i + 1))
+
+pose_estimation_targets = [t.lower() for t in pose_estimation_targets]
+
+try:
+    pose_estimation_targets_default = pose_estimation_targets.index('person') + 1
+except ValueError:
+    pose_estimation_targets_default = 1
+
+pose_estimation_target = 'person'
+pose_estimation_kp_items = []
+
+
+def update_pose_keypoints_items():
+    global pose_estimation_kp_items
+    models = me.get_models('pose_estimation', 'keypoints',
+                           {'target_class': pose_estimation_target})
+    choices = {m_def['keypoints'] for (m_name, m_def) in models}
+    choices = list(choices)
+    choices.sort()
+    pose_estimation_kp_items = [(str(choices[i]), str(choices[i]), f'Set keypoints to {choices[i]}', i + 1) for i in
+                                range(len(choices))]
+
+
+update_pose_keypoints_items()
+
+
+def get_keypoint_items(self, context):
+    return pose_estimation_kp_items
+
+
+def update_pose_keypoints(self, context):
+    global pose_estimation_target
+    scene = context.scene
+    properties = scene.motion_engine_ui_properties
+    pose_estimation_target = properties.me_ui_prop_pose_target_enum
+    update_pose_keypoints_items()
+    properties.me_ui_prop_pose_keypoints_enum = pose_estimation_kp_items[0][0]
 
 
 def force_redraw(self, context):
@@ -66,6 +117,14 @@ def det_thresh_mode_update(self, context):
     if properties.me_ui_prop_det_thresholding_enum == "AUTO":
         properties.me_ui_prop_det_conf = 0.5
         properties.me_ui_prop_det_iou = 0.5
+    return None
+
+
+def pose_thresh_mode_update(self, context):
+    scene = context.scene
+    properties = scene.motion_engine_ui_properties
+    if properties.me_ui_prop_pose_thresholding_enum == "AUTO":
+        properties.me_ui_prop_joint_conf = 0.5
     return None
 
 
@@ -88,50 +147,51 @@ def track_thresh_mode_update(self, context):
     return None
 
 
-def cache_method_update(self, context):
-    scene = context.scene
-    properties = scene.motion_engine_ui_properties
-    if properties.me_ui_prop_cache_method_enum == "AUTO":
-        properties.me_ui_prop_cache_size = 256
-    return None
+def get_track_name(self):
+    current_clip = bpy.context.edit_movieclip
+    active_track = current_clip.tracking.tracks.active
+    if active_track is None:
+        return ''
+    if utils.is_valid_joint_name(active_track.name):
+        split_name = active_track.name.split('.')
+        pose_name = ''
+        for i in range(len(split_name) - 2):
+            if pose_name != '':
+                pose_name += '.' + split_name[i]
+            else:
+                pose_name = split_name[i]
+        return pose_name
+    return active_track.name
 
 
-def active_pose_update(self, context):
-    scene = context.scene
-    properties = scene.motion_engine_ui_properties
-    current_clip = context.edit_movieclip
-    clip_tracks = current_clip.tracking.tracks
+def set_track_name(self, value):
+    current_clip = bpy.context.edit_movieclip
+    active_track = current_clip.tracking.tracks.active
+    if active_track is None or utils.is_valid_tag_name(active_track.name):
+        return
+    if utils.is_valid_joint_name(active_track.name):
+        split_name = active_track.name.split('.')
+        source_id = split_name[-2]
+        pose_name = ''
+        for i in range(len(split_name) - 2):
+            if pose_name != '':
+                pose_name += '.' + split_name[i]
+            else:
+                pose_name = split_name[i]
+        all_poses, _ = utils.get_joint_tracks(current_clip)
+        if value in all_poses and source_id in all_poses[value]:
+            return
+        pose = all_poses[pose_name]
+        for source in pose:
+            if source != source_id:
+                continue
+            for joint_id in pose[source]:
+                track = pose[source][joint_id]
+                new_name = f'{value}.{source}.{joint_id}'
+                track.name = new_name
+        return
 
-    target_list = None
-
-    for item in properties.me_ui_prop_pose_clip_collection:
-        if item.clip == current_clip:
-            target_list = item.pose_tracks_list
-            break
-
-    if target_list is not None:
-        target = target_list[properties.me_ui_prop_active_pose_index]
-
-        if target is not None:
-
-            all_pose_tracks = []
-            target_pose_tracks = []
-
-            for other in target_list:
-                for i in range(other.tracks):
-                    track = clip_tracks.get(other.track_prefix + '.' + str(i))
-                    if track is not None:
-                        all_pose_tracks.append(track)
-
-            for i in range(target.tracks):
-                track = clip_tracks.get(target.track_prefix + '.' + str(i))
-                if track is not None:
-                    target_pose_tracks.append(track)
-
-            set_select_tracks(all_pose_tracks, False)
-            set_select_tracks(target_pose_tracks, True)
-
-    return None
+    active_track.name = value
 
 
 class MotionEngineUIProperties(bpy.types.PropertyGroup):
@@ -147,49 +207,40 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
     desc_cpu = "CPU"
     desc_cuda = "CUDA"
     desc_tensorrt = "TensorRT"
+    exec_list_no_trt = [
+        (id_cpu, desc_cpu, cpu_tooltip, 1),
+        (id_cuda, desc_cuda, cuda_tooltip, 2),
+    ]
+    exec_list_trt = [
+        (id_cpu, desc_cpu, cpu_tooltip, 1),
+        (id_cuda, desc_cuda, cuda_tooltip, 2),
+        (id_tensorrt, desc_tensorrt, tensorrt_tooltip, 3)
+    ]
 
-    # Pose model depth text
-    depth_list_name = "Pose model depth"
-    depth_list_desc = "Sets the depth of the pose model"
-    tiny_tooltip = "Minimum depth. Has the least prediction accuracy"
-    small_tooltip = "Small depth. Decent accuracy and execution speed (Recommended)"
-    medium_tooltip = "Medium depth. Slower, but predictions are more stable"
-    medium_tooltip_133 = "Medium depth. Decent accuracy and execution speed (Recommended)"
-    large_tooltip = "Large depth. Slowest, but has the highest accuracy"
-    id_tiny = "t"
-    id_small = "s"
-    id_medium = "m"
-    id_large = "l"
-    desc_tiny = "Tiny"
-    desc_small = "Small"
-    desc_medium = "Medium"
-    desc_large = "Large"
-
-    # Pose model precision text
-    precision_list_name = "Pose model precision"
-    precision_list_desc = "Sets the coordinate precision of the pose model"
-    single_tooltip = "Standard precision (Recommended)"
-    double_tooltip = "Double precision. Slower, but has higher accuracy"
-    id_single = "SINGLE"
-    id_double = "DOUBLE"
-    desc_single = "Single"
-    desc_double = "Double"
-
-    # Detection model selection text
-    simple_selection_list_name = "Detection model preference"
+    # Model selection text
+    simple_selection_det_list_name = "Detection model preference"
+    simple_selection_pose_list_name = "Pose model preference"
+    tag_detector_ml_model_sel_list_name = "Tag model preference"
+    pose_model_sel_list_name = "Pose model preference"
     simple_selection_list_desc = "Automatically choose the best model based on certain criteria"
-    simp_det_sel_fast_tooltip = "Choose the fastest model available"
-    simp_det_sel_bal_tooltip = "Choose a model that is both fast and somewhat accurate (Recommended)"
-    simp_det_sel_bal_mem_tooltip = "Choose a model that is fast, accurate, and has a small memory footprint"
-    simp_det_sel_accurate_tooltip = "Choose the model with the highest accuracy"
-    id_simp_det_sel_fast = "FAST"
-    id_simp_det_sel_bal = "BALANCED"
-    id_simp_det_sel_bal_mem = "BAL_MEM"
-    id_simp_det_sel_accurate = "ACCURATE"
-    desc_simp_det_sel_fast = "Fast"
-    desc_simp_det_sel_bal = "Balanced"
-    desc_simp_det_sel_bal_mem = "Balanced memory"
-    desc_simp_det_sel_accurate = "Accurate"
+    simp_sel_fast_tooltip = "Choose the fastest model available"
+    simp_sel_bal_tooltip = "Choose a model that is both fast and somewhat accurate (Recommended)"
+    simp_sel_bal_mem_tooltip = "Choose a model that is fast, accurate, and has a small memory footprint"
+    simp_sel_accurate_tooltip = "Choose the model with the highest accuracy"
+    id_simp_sel_fast = "FAST"
+    id_simp_sel_bal = "BALANCED"
+    id_simp_sel_bal_mem = "BAL_MEM"
+    id_simp_sel_accurate = "ACCURATE"
+    desc_simp_sel_fast = "Fast"
+    desc_simp_sel_bal = "Balanced"
+    desc_simp_sel_bal_mem = "Balanced Memory"
+    desc_simp_sel_accurate = "Accurate"
+    simp_model_sel_items = [
+        (id_simp_sel_fast, desc_simp_sel_fast, simp_sel_fast_tooltip, 1),
+        (id_simp_sel_bal, desc_simp_sel_bal, simp_sel_bal_tooltip, 2),
+        (id_simp_sel_bal_mem, desc_simp_sel_bal_mem, simp_sel_bal_mem_tooltip, 3),
+        (id_simp_sel_accurate, desc_simp_sel_accurate, simp_sel_accurate_tooltip, 4),
+    ]
 
     # Tag model selection text
     tag_detector_type_list_name = "Tag detector type"
@@ -205,36 +256,49 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
     tag_detector_cv_resample_toggle_name = "Resample input"
     tag_detector_cv_resample_toggle_desc = ("Resample detection to improve subpixel accuracy. "
                                             "Disable if having issues with tracking")
-    tag_detector_ml_model_sel_list_name = "Tag model preference"
-    tag_detector_ml_model_sel_list_desc = "Automatically choose the best model based on certain criteria"
-    tag_det_ml_sel_fast_tooltip = "Choose the fastest model available"
-    tag_det_ml_sel_bal_tooltip = "Choose a model that is both fast and somewhat accurate (Recommended)"
-    tag_det_ml_sel_bal_mem_tooltip = "Choose a model that is fast, accurate, and has a small memory footprint"
-    tag_det_ml_sel_accurate_tooltip = "Choose the model with the highest accuracy"
-    id_tag_det_ml_sel_fast = "FAST"
-    id_tag_det_ml_sel_bal = "BALANCED"
-    id_tag_det_ml_sel_bal_mem = "BAL_MEM"
-    id_tag_det_ml_sel_accurate = "ACCURATE"
-    desc_tag_det_ml_sel_fast = "Fast"
-    desc_tag_det_ml_sel_bal = "Balanced"
-    desc_tag_det_ml_sel_bal_mem = "Balanced memory"
-    desc_tag_det_ml_sel_accurate = "Accurate"
+    tag_detector_type_items = [
+        (id_tag_detector_type_cv, desc_tag_detector_type_cv, tag_detector_type_cv_tooltip, 1),
+        (id_tag_detector_type_ml, desc_tag_detector_type_ml, tag_detector_type_ml_tooltip, 2),
+    ]
 
+    pose_estimation_target_list_name = "Target type"
+    pose_estimation_target_list_desc = "Set the pose target type"
+
+    me_ui_active_track_name: bpy.props.StringProperty(
+        name='Track name',
+        description='Name of the active track',
+        default='',
+        get=get_track_name,
+        set=set_track_name
+    )
     me_ui_redraw_prop: bpy.props.BoolProperty(
         name="Update property",
         description="Hidden prop",
         default=False,
         update=force_redraw
     )
-    me_ui_prop_remove_poses: bpy.props.BoolProperty(
-        name="Remove existing poses",
-        description="Delete existing poses on new analysis",
-        default=False
+    me_ui_prop_overwrite_poses: bpy.props.BoolProperty(
+        name="Overwrite existing poses",
+        description="If unchecked, will prioritize whichever estimate has the higher confidence score",
+        default=True
     )
     me_ui_tag_detector_cv_resample_toggle_prop: bpy.props.BoolProperty(
         name=tag_detector_cv_resample_toggle_name,
         description=tag_detector_cv_resample_toggle_desc,
         default=False
+    )
+    me_ui_prop_pose_target_enum: bpy.props.EnumProperty(
+        name=pose_estimation_target_list_name,
+        description=pose_estimation_target_list_desc,
+        items=pose_estimation_targets_enum_items,
+        default=pose_estimation_targets_default,
+        update=update_pose_keypoints,
+    )
+    me_ui_prop_pose_keypoints_enum: bpy.props.EnumProperty(
+        name="Pose keypoints",
+        description="Sets the number of keypoints to detect per pose",
+        items=get_keypoint_items,
+        default=1
     )
     me_ui_tag_detector_cv_dict_list_enum: bpy.props.EnumProperty(
         name=tag_detector_cv_dict_list_name,
@@ -244,66 +308,48 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
     me_ui_prop_tag_detector_type_enum: bpy.props.EnumProperty(
         name=tag_detector_type_list_name,
         description=tag_detector_type_list_desc,
-        items=[
-            (id_tag_detector_type_cv, desc_tag_detector_type_cv, tag_detector_type_cv_tooltip, 1),
-            (id_tag_detector_type_ml, desc_tag_detector_type_ml, tag_detector_type_ml_tooltip, 2),
-        ]
+        items=tag_detector_type_items,
     )
     me_ui_prop_tag_detector_ml_model_sel_enum: bpy.props.EnumProperty(
         name=tag_detector_ml_model_sel_list_name,
-        description=tag_detector_ml_model_sel_list_desc,
-        items=[
-            (id_tag_det_ml_sel_fast, desc_tag_det_ml_sel_fast, tag_det_ml_sel_fast_tooltip, 1),
-            (id_tag_det_ml_sel_bal, desc_tag_det_ml_sel_bal, tag_det_ml_sel_bal_tooltip, 2),
-            (id_tag_det_ml_sel_bal_mem, desc_tag_det_ml_sel_bal_mem, tag_det_ml_sel_bal_mem_tooltip, 3),
-            (id_tag_det_ml_sel_accurate, desc_tag_det_ml_sel_accurate, tag_det_ml_sel_accurate_tooltip, 4),
-        ],
+        description=simple_selection_list_desc,
+        items=simp_model_sel_items,
+        default=2
+    )
+    me_ui_prop_pose_model_sel_enum: bpy.props.EnumProperty(
+        name=pose_model_sel_list_name,
+        description=simple_selection_list_desc,
+        items=simp_model_sel_items,
         default=2
     )
     me_ui_prop_exe_tag_detector_ml_enum: bpy.props.EnumProperty(
         name=executor_list_name,
         description=executor_list_desc,
-        items=[
-            (id_cpu, desc_cpu, cpu_tooltip, 1),
-            (id_cuda, desc_cuda, cuda_tooltip, 2),
-        ],
+        items=exec_list_no_trt,
         default=2
     )
     me_ui_prop_exe_det_enum: bpy.props.EnumProperty(
         name=executor_list_name,
         description=executor_list_desc,
-        items=[
-            (id_cpu, desc_cpu, cpu_tooltip, 1),
-            (id_cuda, desc_cuda, cuda_tooltip, 2),
-        ],
+        items=exec_list_no_trt,
         default=2
     )
     me_ui_prop_exe_pose_enum: bpy.props.EnumProperty(
         name=executor_list_name,
         description=executor_list_desc,
-        items=[
-            (id_cpu, desc_cpu, cpu_tooltip, 1),
-            (id_cuda, desc_cuda, cuda_tooltip, 2),
-            (id_tensorrt, desc_tensorrt, tensorrt_tooltip, 3),
-        ],
+        items=exec_list_no_trt,
         default=2
     )
     me_ui_prop_exe_track_enum: bpy.props.EnumProperty(
         name=executor_list_name,
         description=executor_list_desc,
-        items=[
-            (id_cpu, desc_cpu, cpu_tooltip, 1),
-            (id_cuda, desc_cuda, cuda_tooltip, 2),
-        ],
+        items=exec_list_no_trt,
         default=2
     )
     me_ui_prop_exe_det_tag_enum: bpy.props.EnumProperty(
         name=executor_list_name,
         description=executor_list_desc,
-        items=[
-            (id_cpu, desc_cpu, cpu_tooltip, 1),
-            (id_cuda, desc_cuda, cuda_tooltip, 2),
-        ],
+        items=exec_list_no_trt,
         default=2
     )
     me_ui_prop_det_batch_size: bpy.props.IntProperty(
@@ -320,9 +366,22 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         min=1,
         max=256
     )
+    me_ui_prop_solution_scale: bpy.props.FloatProperty(
+        name="Solution scale",
+        description="Sets solution scale for cameras",
+        default=1,
+        min=0,
+    )
     me_ui_prop_det_conf: bpy.props.FloatProperty(
         name="Confidence threshold",
         description="Sets the minimum acceptable confidence score for detections",
+        default=0.5,
+        min=0,
+        max=1
+    )
+    me_ui_prop_joint_conf: bpy.props.FloatProperty(
+        name="Confidence threshold",
+        description="Sets the minimum acceptable confidence score for pose joints",
         default=0.5,
         min=0,
         max=1
@@ -371,130 +430,23 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         ],
         default=2
     )
-    me_ui_prop_det_size_enum: bpy.props.EnumProperty(
-        name="Input size",
-        description="Sets the desired input size. A higher input size can help if there aren't any detections on "
-                    "certain frames",
-        items=[
-            ("320", "320", "Set input size to 320x320 (Recommended)"),
-            ("640", "640", "Set input size to 640x640"),
-        ],
-        default="320",
-        update=det_thresh_mode_update
-    )
-    me_ui_prop_pose_keypoints_enum: bpy.props.EnumProperty(
-        name="Pose keypoints",
-        description="Sets the number of keypoints to detect per pose",
-        items=[
-            ("17", "17", "Standard set"),
-            ("26", "26", "Extended set. Includes points for feet, neck, pelvis, and head axis (Recommended)"),
-            ("133", "133", "Detailed set. Same as standard but includes additional points for face, hands, and feet"),
-        ],
-        default="26"
-    )
-    me_ui_prop_pose_depth17_enum: bpy.props.EnumProperty(
-        name=depth_list_name,
-        description=depth_list_desc,
-        items=[
-            (id_tiny, desc_tiny, tiny_tooltip, 1),
-            (id_small, desc_small, small_tooltip, 2),
-            (id_medium, desc_medium, medium_tooltip, 3),
-            (id_large, desc_large, large_tooltip, 4),
-        ],
-        default=2
-    )
-    me_ui_prop_pose_depth26_enum: bpy.props.EnumProperty(
-        name=depth_list_name,
-        description=depth_list_desc,
-        items=[
-            (id_tiny, desc_tiny, tiny_tooltip, 1),
-            (id_small, desc_small, small_tooltip, 2),
-            (id_medium, desc_medium, medium_tooltip, 3),
-            (id_large, desc_large, large_tooltip, 4),
-        ],
-        default=2
-    )
-    me_ui_prop_pose_depth133_enum: bpy.props.EnumProperty(
-        name=depth_list_name,
-        description=depth_list_desc,
-        items=[
-            (id_medium, desc_medium, medium_tooltip_133, 3),
-            (id_large, desc_large, large_tooltip, 4),
-        ],
-        default=3
-    )
-    me_ui_prop_pose_precision17m_enum: bpy.props.EnumProperty(
-        name=precision_list_name,
-        description=precision_list_desc,
-        items=[
-            (id_single, desc_single, single_tooltip, 1),
-            (id_double, desc_double, double_tooltip, 2),
-        ],
-        default=1
-    )
-    me_ui_prop_pose_precision17l_enum: bpy.props.EnumProperty(
-        name=precision_list_name,
-        description=precision_list_desc,
-        items=[
-            (id_single, desc_single, single_tooltip, 1),
-            (id_double, desc_double, double_tooltip, 2),
-        ],
-        default=1
-    )
-    me_ui_prop_pose_precision26m_enum: bpy.props.EnumProperty(
-        name=precision_list_name,
-        description=precision_list_desc,
-        items=[
-            (id_single, desc_single, single_tooltip, 1),
-            (id_double, desc_double, double_tooltip, 2),
-        ],
-        default=1
-    )
-    me_ui_prop_pose_precision26l_enum: bpy.props.EnumProperty(
-        name=precision_list_name,
-        description=precision_list_desc,
-        items=[
-            (id_single, desc_single, single_tooltip, 1),
-            (id_double, desc_double, double_tooltip, 2),
-        ],
-        default=1
-    )
-    me_ui_prop_pose_precision133l_enum: bpy.props.EnumProperty(
-        name=precision_list_name,
-        description=precision_list_desc,
-        items=[
-            (id_single, desc_single, single_tooltip, 1),
-            (id_double, desc_double, double_tooltip, 2),
-        ],
-        default=1
-    )
     me_ui_prop_det_simple_sel_enum: bpy.props.EnumProperty(
-        name=simple_selection_list_name,
+        name=simple_selection_det_list_name,
         description=simple_selection_list_desc,
-        items=[
-            (id_simp_det_sel_fast, desc_simp_det_sel_fast, simp_det_sel_fast_tooltip, 1),
-            (id_simp_det_sel_bal, desc_simp_det_sel_bal, simp_det_sel_bal_tooltip, 2),
-            (id_simp_det_sel_bal_mem, desc_simp_det_sel_bal_mem, simp_det_sel_bal_mem_tooltip, 3),
-            (id_simp_det_sel_accurate, desc_simp_det_sel_accurate, simp_det_sel_accurate_tooltip, 4),
-        ],
-        default=2
+        items=simp_model_sel_items,
+        default=2,
     )
     me_ui_prop_det_tag_simple_sel_enum: bpy.props.EnumProperty(
-        name=simple_selection_list_name,
+        name=simple_selection_det_list_name,
         description=simple_selection_list_desc,
-        items=[
-            (id_simp_det_sel_fast, desc_simp_det_sel_fast, simp_det_sel_fast_tooltip, 1),
-            (id_simp_det_sel_bal, desc_simp_det_sel_bal, simp_det_sel_bal_tooltip, 2),
-            (id_simp_det_sel_bal_mem, desc_simp_det_sel_bal_mem, simp_det_sel_bal_mem_tooltip, 3),
-            (id_simp_det_sel_accurate, desc_simp_det_sel_accurate, simp_det_sel_accurate_tooltip, 4),
-        ],
-        default=2
+        items=simp_model_sel_items,
+        default=2,
     )
     me_ui_prop_det_class_enum: bpy.props.EnumProperty(
         name="Target",
         description="Set the target object",
         items=obj_det_class_enum_items,
-        default=obj_det_class_default
+        default=obj_det_class_default,
     )
     me_ui_prop_det_thresholding_enum: bpy.props.EnumProperty(
         name="Thresholding mode",
@@ -526,47 +478,25 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         default="AUTO",
         update=det_tag_thresh_mode_update
     )
-    me_ui_prop_cache_method_enum: bpy.props.EnumProperty(
-        name="Cache configuration mode",
-        description="Lets you decide whether to set image cache size automatically or manually",
+    me_ui_prop_pose_thresholding_enum: bpy.props.EnumProperty(
+        name="Thresholding mode",
+        description="Set threshold values automatically or manually",
         items=[
-            ("AUTO", "Auto", "Set image cache automatically (Recommended)"),
-            ("MANUAL", "Manual", "Set image cache size manually"),
+            ("AUTO", "Auto", "Set threshold values automatically (Recommended)"),
+            ("MANUAL", "Manual", "Set threshold values manually"),
         ],
         default="AUTO",
-        update=cache_method_update
+        update=pose_thresh_mode_update
     )
-    me_ui_prop_cache_size: bpy.props.IntProperty(
-        name="Pre-inference cache size",
-        description="Number of frames to load into memory prior to inference",
-        default=256,
-        min=1,
-        max=1024
-    )
-    me_ui_prop_stats_collection: bpy.props.CollectionProperty(type=MotionEngineRunStatistics)
-    me_ui_prop_pose_clip_collection: bpy.props.CollectionProperty(type=MEPoseTracksClip)
-    me_ui_prop_active_pose_index: bpy.props.IntProperty(
-        name="Active Pose Index",
-        description="Active pose in the pose tracks list",
-        update=active_pose_update
-    )
-
     me_ui_prop_rigging_avg_locked_axis: bpy.props.IntProperty(
         min=0,
         max=2,
         default=0
     )
-
-    # Placeholder property. Must always remain empty.
-    me_ui_prop_pose_empty_clip: bpy.props.PointerProperty(type=MEPoseTracksClip)
-
-    gen_objs: bpy.props.PointerProperty(type=GOGICollection)
-
-    def get_clip_pose_tracks(self, clip):
-        for element in self.me_ui_prop_pose_clip_collection:
-            if element.clip == clip:
-                return element
-        return None
+    me_ui_prop_anchor_cam_selection: bpy.props.PointerProperty(
+        type=bpy.types.MovieClip,
+        name="Clip to use as anchor view",
+    )
 
 
 CLASSES = [

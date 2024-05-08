@@ -31,6 +31,10 @@ class TagDetectionUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
 
     display_priority = 0
 
+    @classmethod
+    def poll(cls, context):
+        return context.edit_movieclip is not None
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -41,7 +45,7 @@ class TagDetectionUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
 
         row = layout.row()
 
-        row.scale_y = 1.5
+        row.scale_y = 1.6
 
         row.operator("motionengine.detect_tags_operator")
 
@@ -51,7 +55,7 @@ class TagDetectionUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
 class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
     bl_parent_id = "MOTIONENGINE_TAG_DETECTION_PT_panel"
     bl_idname = "MOTIONENGINE_DETECTOR_TAG_SETTINGS_PT_panel"
-    bl_label = 'Detector settings'
+    bl_label = 'Detector Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
     display_priority = 1
@@ -68,7 +72,7 @@ class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
-        grid_ele.label(text="Model selection")
+        grid_ele.label(text="Model Selection")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
         grid_ele.prop(properties, "me_ui_prop_det_tag_simple_sel_enum", text='')
@@ -104,7 +108,7 @@ class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
 class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
     bl_parent_id = "MOTIONENGINE_TAG_DETECTION_PT_panel"
     bl_idname = "MOTIONENGINE_TAG_SETTINGS_PT_panel"
-    bl_label = 'Tag settings'
+    bl_label = 'Tag Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
     display_priority = 2
@@ -121,7 +125,7 @@ class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
-        grid_ele.label(text="Detector type")
+        grid_ele.label(text="Detector Type")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
         grid_ele.prop(properties, "me_ui_prop_tag_detector_type_enum", text='')
@@ -144,7 +148,7 @@ class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
             row = column.row()
             grid = row.grid_flow(even_columns=True, columns=2)
             grid_ele = grid.row()
-            grid_ele.label(text="Model selection")
+            grid_ele.label(text="Model Selection")
             grid_ele.alignment = 'RIGHT'
             grid_ele = grid.row()
             grid_ele.prop(properties, "me_ui_prop_tag_detector_ml_model_sel_enum", text='')

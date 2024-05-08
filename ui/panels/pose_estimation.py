@@ -17,101 +17,110 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 from ... import global_vars
-from ...property_groups import me_stats
-from ...property_groups import me_data
+from ... import utils
 
 
-class PoseEstimationUIPanel(bpy.types.Panel):
-    bl_label = "Pose Estimation"
-    bl_idname = "MOTIONENGINE_POSE_ESTIMATION_PT_panel"
+class PoseEstimationPanelSpace:
     bl_space_type = "CLIP_EDITOR"
     bl_region_type = "UI"
     bl_category = "MotionEngine"
+
+
+class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
+    bl_label = "Pose Estimation"
+    bl_idname = "MOTIONENGINE_POSE_ESTIMATION_PT_panel"
+
+    display_priority = 2
+
+    @classmethod
+    def poll(cls, context):
+        return context.edit_movieclip is not None
 
     def draw(self, context):
         layout = self.layout
         scene = context.scene
         properties = scene.motion_engine_ui_properties
-        current_clip = context.edit_movieclip
-        me_scene_data = scene.motion_engine_data
-        stats_data = scene.motion_engine_ui_properties.me_ui_prop_stats_collection
-        warmup = global_vars.warmup_state
         ui_lock = global_vars.ui_lock_state
-        model_ready = global_vars.me_detectpose_model.is_ready()
 
-        column = layout.column()
+        layout.enabled = not ui_lock
 
-        box = column.box()
-        column = box.column()
-        column.label(text="Image cache size", icon="RENDERLAYERS")
-        column.enabled = not ui_lock
-        row = column.row()
-        row = row.grid_flow(columns=2, align=True)
-        r = row.row(align=True)
-        r.prop(properties, "me_ui_prop_cache_method_enum", text='')
-        r.enabled = not ui_lock
-        r = row.row(align=True)
-        r.enabled = properties.me_ui_prop_cache_method_enum == "MANUAL" and not ui_lock
-        r.prop(properties, "me_ui_prop_cache_size", text='')
+        row = layout.row()
 
-        row = layout.column(align=True)
-        row.enabled = current_clip is not None and not ui_lock
-        row.operator("motionengine.pose_estimation_task_operator")
-        split = row.split(align=True)
-        row = split.row(align=True)
-        clip_data = me_data.check_data_for_clip(me_scene_data, current_clip)
-        row.enabled = not ui_lock and clip_data is not None and len(clip_data.frames) > 0
-        row.operator("motionengine.clear_current_operator")
-        row = split.row(align=True)
-        data_exists = False
-        for entry in me_scene_data.items:
-            if len(entry.frames) > 0:
-                data_exists = True
-                break
-        row.enabled = not ui_lock and data_exists
-        row.operator("motionengine.clear_all_operator")
+        row.scale_y = 1.6
 
-        run_stats = me_stats.get_run_statistics(me_scene_data, stats_data, current_clip)
+        row.operator("motionengine.detect_poses_operator")
 
-        stats_ui_string_frames = "Valid frames: "
-        if run_stats is not None and run_stats.valid_frames > 0:
-            stats_ui_string_frames += str(run_stats.valid_frames) + " / " + str(context.edit_movieclip.frame_duration)
-        else:
-            stats_ui_string_frames += "n/a"
+        row.enabled = context.edit_movieclip is not None and utils.get_active_track_count(context.edit_movieclip) > 0
 
-        stats_ui_string_poses = "Total poses: "
-        if run_stats is not None and run_stats.valid_frames > 0:
-            stats_ui_string_poses += str(run_stats.total_poses)
-        else:
-            stats_ui_string_poses += "n/a"
+        grid = layout.grid_flow(columns=2)
+        row = grid.row()
+        row.label(text='Target Type')
+        row.alignment = 'RIGHT'
+        row = grid.row()
+        row.prop(properties, 'me_ui_prop_pose_target_enum', text='')
 
-        stats_ui_string_conf = "Mean confidence: "
-        if run_stats is not None and run_stats.valid_frames > 0:
-            stats_ui_string_conf += f"{run_stats.mean_confidence:.0%}"
-        else:
-            stats_ui_string_conf += "n/a"
+        grid = layout.grid_flow(columns=2)
+        row = grid.row()
+        row.label(text='Keypoints')
+        row.alignment = 'RIGHT'
+        row = grid.row()
+        row.prop(properties, 'me_ui_prop_pose_keypoints_enum', text='')
 
-        stats_ui_string_conf50 = "Mean conf. > 50: "
-        if run_stats is not None and run_stats.valid_frames > 0 and run_stats.mean50_conf >= 0.5:
-            stats_ui_string_conf50 += f"{run_stats.mean50_conf:.0%}"
-        else:
-            stats_ui_string_conf50 += "n/a"
+        grid = layout.grid_flow(columns=1)
+        row = grid.row()
+        row.label(text='Overwrite')
+        row.prop(properties, 'me_ui_prop_overwrite_poses', text='')
+        row.alignment = 'CENTER'
+
+
+
+class ModelSettingsPanel(bpy.types.Panel, PoseEstimationPanelSpace):
+    bl_parent_id = "MOTIONENGINE_POSE_ESTIMATION_PT_panel"
+    bl_idname = "MOTIONENGINE_POSE_MODEL_SETTINGS_PT_panel"
+    bl_label = 'Model Settings'
+    bl_options = {'DEFAULT_CLOSED'}
+
+    display_priority = 3
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        properties = scene.motion_engine_ui_properties
+        ui_lock = global_vars.ui_lock_state
+
+        layout.enabled = not ui_lock
 
         column = layout.column()
         row = column.row()
-        row.enabled = not ui_lock
-        row.label(text=stats_ui_string_frames)
+        grid = row.grid_flow(even_columns=True, columns=2)
+        grid_ele = grid.row()
+        grid_ele.label(text="Model Selection")
+        grid_ele.alignment = 'RIGHT'
+        grid_ele = grid.row()
+        grid_ele.prop(properties, "me_ui_prop_pose_model_sel_enum", text='')
         row = column.row()
-        row.enabled = not ui_lock
-        row.label(text=stats_ui_string_poses)
+        grid = row.grid_flow(even_columns=True, columns=2)
+        grid_ele = grid.row()
+        grid_ele.label(text="Device")
+        grid_ele.alignment = 'RIGHT'
+        grid_ele = grid.row()
+        grid_ele.prop(properties, "me_ui_prop_exe_pose_enum", text='')
         row = column.row()
-        row.enabled = not ui_lock
-        row.label(text=stats_ui_string_conf)
-        row = column.row()
-        row.enabled = not ui_lock
-        row.label(text=stats_ui_string_conf50)
-
+        grid = row.grid_flow(even_columns=True, columns=2)
+        grid_ele = grid.row()
+        grid_ele.label(text="Thresholding")
+        grid_ele.alignment = 'RIGHT'
+        grid_ele = grid.row()
+        grid_ele.prop(properties, "me_ui_prop_pose_thresholding_enum", text='')
+        if properties.me_ui_prop_pose_thresholding_enum == "MANUAL":
+            row = column.row()
+            grid = row.grid_flow(columns=2)
+            grid_ele = grid.row()
+            grid_ele.label(text="Confidence")
+            grid_ele.alignment = 'RIGHT'
+            grid_ele.prop(properties, "me_ui_prop_joint_conf", text="")
 
 CLASSES = [
-    PoseEstimationUIPanel
+    PoseEstimationUIPanel,
+    ModelSettingsPanel
 ]

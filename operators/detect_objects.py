@@ -16,12 +16,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
+
 from .. import MotionEngine as me
 from .. import global_vars
-from .. import callbacks
 from .. import events
+from .. import utils
 import queue
-import os
 import traceback
 
 task = None
@@ -32,7 +32,7 @@ feat_model = me.dnn.FeatureModel()
 
 
 class TaskSettings:
-    def __init__(self, det_model_path, feat_model_path, det_driver, feat_driver,
+    def __init__(self, clip_info: utils.ClipInfo, det_model_path, feat_model_path, det_driver, feat_driver,
                  det_exec=me.dnn.CUDA,
                  feat_exec=me.dnn.CUDA,
                  det_conf=0.5,
@@ -40,7 +40,9 @@ class TaskSettings:
                  target_cid=0,
                  feat_dist=1.4,
                  feat_reid=1.0,
-                 dist_type=me.dnn.NORM_EUCLIDEAN):
+                 dist_type=me.dnn.NORM_EUCLIDEAN,
+                 batch_size=32):
+        self.clip_info = clip_info
         self.det_model_path = det_model_path
         self.feat_model_path = feat_model_path
         if isinstance(det_driver, tuple):
@@ -59,6 +61,7 @@ class TaskSettings:
         self.feat_reid = feat_reid
         self.dist_type = dist_type
         self.target_cid = target_cid
+        self.batch_size = batch_size
 
 
 def get_frames(frame_provider: me.io.FrameProvider, num_frames):
@@ -72,11 +75,13 @@ def get_frames(frame_provider: me.io.FrameProvider, num_frames):
     return result
 
 
-def detection_task(clip_path, clip_type, task_settings: TaskSettings, batch_size=32):
+def detection_task(task_settings: TaskSettings):
     global cancel_task
     global det_model
     global feat_model
-
+    clip_path = task_settings.clip_info.abs_path
+    clip_type = task_settings.clip_info.source_type
+    batch_size = task_settings.batch_size
     try:
         feat_model.unload()
         det_model.unload()
@@ -115,7 +120,7 @@ def detection_task(clip_path, clip_type, task_settings: TaskSettings, batch_size
         while True:
 
             if cancel_task or global_vars.shutdown_state:
-                event_queue.put(events.CancelledEvent('Cancelled detection task'))
+                event_queue.put(events.CancelledEvent('Object detection cancelled'))
                 return
             frames = get_frames(clip, batch_size)
             if not frames:
@@ -159,7 +164,8 @@ def detection_task(clip_path, clip_type, task_settings: TaskSettings, batch_size
                     final_detections[actual_frame][det_ids[j]] = frame_dets[j]
 
             f_num += len(frames)
-            event_queue.put(events.InfoEvent(f'{f_num}/{clip.frame_count()}'))
+            percent_current = int(max(0.0, min(100 * (f_num / clip.frame_count()), 100.0)))
+            event_queue.put(events.InfoEvent(f'Detecting objects: {percent_current}% (ESC to cancel)'))
         event_queue.put(events.DetectionFinishedEvent(final_detections, 'Detection task completed.'))
 
     except Exception:
@@ -183,7 +189,7 @@ def get_track_name_for_detection(clip: bpy.types.MovieClip, class_id):
 class DetectObjectsOperator(bpy.types.Operator):
     """Scan entire clip for target objects"""
     bl_idname = "motionengine.detect_objects_operator"
-    bl_label = "Detect objects"
+    bl_label = "Detect Objects"
     _timer = None
     dispatch = events.EventDispatcher()
     info_listener = events.InfoEventListener()
@@ -262,7 +268,10 @@ class DetectObjectsOperator(bpy.types.Operator):
         except ValueError:
             target_cid = 0
 
+        current_clip = context.edit_movieclip
+
         task_settings = TaskSettings(
+            utils.ClipInfo(current_clip),
             det_model_path,
             me.model_path('Features/basic_conv_person_64.onnx'),
             det_model_driver,
@@ -285,12 +294,7 @@ class DetectObjectsOperator(bpy.types.Operator):
         self._timer = wm.event_timer_add(0.3, window=context.window)
         wm.modal_handler_add(self)
 
-        current_clip = context.edit_movieclip
-
-        clip_path = os.path.normpath(bpy.path.abspath(current_clip.filepath))
-
-        task = global_vars.executor.submit(detection_task, clip_path, current_clip.source,
-                                           task_settings)
+        task = global_vars.executor.submit(detection_task, task_settings)
 
         self.queued_clip = current_clip
 
@@ -319,7 +323,7 @@ class DetectObjectsOperator(bpy.types.Operator):
         wm = context.window_manager
         wm.event_timer_remove(self._timer)
         global_vars.ui_lock_state = False
-        callbacks.ui_draw_callback()
+        utils.force_ui_draw()
         det_model.unload()
         feat_model.unload()
         det_model = me.dnn.DetectionModel()
@@ -341,49 +345,52 @@ class DetectObjectsOperator(bpy.types.Operator):
             print(event.msg)
 
     def task_finished_response(self, event, context):
-        if self.queued_clip is None:
-            return
-        scene = context.scene
-        properties = scene.motion_engine_ui_properties
-        class_id = str(properties.me_ui_prop_det_class_enum)
-        clip: bpy.types.MovieClip = self.queued_clip
-        clip_size = clip.size
-        tracks = clip.tracking.tracks
-        if event.msg != '':
-            print(event.msg)
-        all_tracks = {}
-        for frame in event.detections:
-            for did in event.detections[frame]:
-                if did not in all_tracks:
-                    all_tracks[did] = 0
-                all_tracks[did] += 1
-        self.report({'INFO'}, str(all_tracks))
-        init_dict = {}
-        for frame in event.detections:
-            actual_frame = frame + 1
-            frame_detections = event.detections[frame]
-            for det_id in frame_detections:
-                detection = frame_detections[det_id]
-                bbox = detection.bbox
-                if det_id not in init_dict:
-                    init_dict[det_id] = get_track_name_for_detection(clip, class_id)
-                det_name = init_dict[det_id]
-                track = tracks.get(det_name)
-                if track is None:
-                    track = tracks.new(name=det_name, frame=actual_frame)
-                markers = track.markers
-                x = (bbox.x + bbox.width / 2) / clip_size[0]
-                y = (clip_size[1] - (bbox.y + bbox.height / 2)) / clip_size[1]
-                marker = markers.insert_frame(actual_frame, co=(x, y))
-                x1 = -1 * (bbox.width / 2) / clip_size[0]
-                x2 = (bbox.width / 2) / clip_size[0]
-                y1 = -1 * (bbox.height / 2) / clip_size[1]
-                y2 = (bbox.height / 2) / clip_size[1]
+        try:
+            if self.queued_clip is None:
+                return
+            self.report({'INFO'}, 'Done.')
+            scene = context.scene
+            properties = scene.motion_engine_ui_properties
+            class_id = str(properties.me_ui_prop_det_class_enum)
+            clip: bpy.types.MovieClip = self.queued_clip
+            clip_info = utils.ClipInfo(clip)
+            clip_size = clip.size
+            tracks = clip.tracking.tracks
+            if event.msg != '':
+                print(event.msg)
+            init_dict = {}
+            for frame in event.detections:
+                actual_frame = clip_info.true_to_clip(frame)
+                frame_detections = event.detections[frame]
+                for det_id in frame_detections:
+                    detection = frame_detections[det_id]
+                    bbox = detection.bbox
+                    if det_id not in init_dict:
+                        init_dict[det_id] = get_track_name_for_detection(clip, class_id)
+                    det_name = init_dict[det_id]
+                    track = tracks.get(det_name)
+                    if track is None:
+                        track = tracks.new(name=det_name, frame=actual_frame)
+                    markers = track.markers
+                    x = (bbox.x + bbox.width / 2) / clip_size[0]
+                    y = (clip_size[1] - (bbox.y + bbox.height / 2)) / clip_size[1]
+                    marker = markers.insert_frame(actual_frame, co=(x, y))
+                    x1 = -1 * (bbox.width / 2) / clip_size[0]
+                    x2 = (bbox.width / 2) / clip_size[0]
+                    y1 = -1 * (bbox.height / 2) / clip_size[1]
+                    y2 = (bbox.height / 2) / clip_size[1]
 
-                marker.pattern_corners = ((x1, y1),
-                                          (x2, y1),
-                                          (x2, y2),
-                                          (x1, y2))
+                    marker.pattern_corners = ((x1, y1),
+                                              (x2, y1),
+                                              (x2, y2),
+                                              (x1, y2))
+                    marker.search_max *= 1.2
+                    marker.search_min *= 1.2
+                    marker.is_keyed = False
+                    marker.mute = True
+        except Exception:
+            error = f'Error during evaluation: {traceback.format_exc()}'
+            self.report({'ERROR'}, error)
 
     def cancelled_response(self, event, context):
         if event.cancel_msg != '':
