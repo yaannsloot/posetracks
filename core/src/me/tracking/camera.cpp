@@ -185,4 +185,50 @@ namespace me::tracking {
 		return result;
 	}
 
+	Rt solveCameraWithTag(const me::dnn::Tag& observed_tag, const Kk& cam_Kk, const double square_length)
+	{
+		const double offset = square_length / 2;
+		std::vector<cv::Point3d> model = {
+			cv::Point3d(-offset, offset, 0),
+			cv::Point3d(offset, offset, 0),
+			cv::Point3d(offset, -offset, 0),
+			cv::Point3d(-offset, -offset, 0)
+		};
+		std::vector<cv::Point2d> points;
+		points.insert(points.end(), observed_tag.corners, observed_tag.corners + 4);
+		cv::Mat rvec, tvec;
+		if (!cv::solvePnP(model, points, cam_Kk.K, cam_Kk.dist_vector(), rvec, tvec, false, cv::SOLVEPNP_IPPE_SQUARE))
+			return Rt();
+		Rt result;
+		cv::Rodrigues(rvec, result.R);
+		result.t = tvec;
+		result.invert();
+		return result;
+	}
+
+	std::vector<Rt> fixOriginWithTag(const std::vector<Rt>& orig_cam_Rt, const std::vector<TrackingData>& t_data, const int origin_id, const int origin_frame, const double tag_scale)
+	{
+		/*
+		* TODO
+		* 
+		* This function is intended to adjust the camera transforms provided in orig_cam_Rt to 
+		* a new set of transforms that fit triangulated coordinates of a target tag as closely
+		* as possible to it's true coordinates. All transforms will be rotated, translated, and 
+		* possibly scaled using an adjustment transform obtained using Procrustes analysis.
+		*/
+		return std::vector<Rt>();
+	}
+
+	Mat4x4 calculateProcrustesTransform(const std::vector<Rt>& orig_cam_Rt, const std::vector<dnn::Tag>& observed_tags)
+	{
+		/*
+		* TODO
+		* 
+		* This function implements the actual procrustes analysis method used to calculate the 
+		* adjustment transform for all camera Rt transforms. The observerd tags will be triangulated
+		* to get a rough estimate of the 3d corners
+		*/
+		return Mat4x4();
+	}
+
 }

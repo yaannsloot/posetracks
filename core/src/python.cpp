@@ -653,6 +653,10 @@ PYBIND11_MODULE(MEPython, m)
 
 	m_tracking.def("solve_static_set", &me::tracking::solveStaticSet, py::call_guard<py::gil_scoped_release>());
 
+	m_tracking.def("solve_camera_with_tag", &me::tracking::solveCameraWithTag,
+		py::arg("observed_tag"), py::arg("cam_Kk"), py::arg("square_length") = 1.0,
+		py::call_guard<py::gil_scoped_release>());
+
 	m_tracking.def("triangulate_static", &me::tracking::triangulateStatic, py::call_guard<py::gil_scoped_release>());
 
 }

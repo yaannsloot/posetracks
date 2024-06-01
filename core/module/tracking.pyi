@@ -195,6 +195,15 @@ def solve_static_set(t_data: List[TrackingData], cam_Kk: List[Kk]) -> List[Rt]:
     :return: A list of transformations for each camera relative to the first.
     """
 	
+def solve_camera_with_tag(observed_tag: dnn.Tag, cam_Kk: Kk, square_length: double=1.0) -> Rt:
+	"""
+	Solve a camera's position using an observed tag as the origin
+	:param observed_tag: The observed reference tag
+	:param cam_Kk: Camera matrix and distortion data from the target camera
+	:param square_length: Side length of the observed tag
+	:return: The estimated 3D position of the camera relative to the observed tag
+	"""
+	
 def triangulate_static(t_data: List[TrackingData], cam_Kk: List[Kk], cam_Rt: List[Rt]) -> TrackingData3D:
 	"""
 	Triangulate points for a set of cameras. 
