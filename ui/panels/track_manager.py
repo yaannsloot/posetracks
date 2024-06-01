@@ -19,15 +19,6 @@ import bpy
 from ... import global_vars, utils
 
 
-def get_pose_tracks_clip(clip, properties):
-    pose_tracks_clip = None
-    clip_collection = properties.me_ui_prop_pose_clip_collection
-    for entry in clip_collection:
-        if entry.clip == clip:
-            pose_tracks_clip = entry
-    return pose_tracks_clip
-
-
 class TrackManagerUIPanel(bpy.types.Panel):
     bl_label = "Track Manager"
     bl_idname = "MOTIONENGINE_TRACK_MANAGER_PT_panel"
@@ -98,6 +89,11 @@ class TrackManagerUIPanel(bpy.types.Panel):
             box_row.label(text=f'Active ID: {joint_id}')
             box_row = box_elements.row()
             box_row.label(text=f'Confidence: {joint_area:0.1f}')
+
+        if utils.is_valid_tag_name(active_track.name):
+            row = layout.row()
+            row.operator("motionengine.solve_camera_from_tag_operator")
+            row.enabled = not ui_lock
 
 
 CLASSES = [

@@ -25,7 +25,6 @@ def prepare_camera_for_clip(movie_clip: bpy.types.MovieClip, context: bpy.types.
     :param movie_clip: Reference clip
     :param context: Context from operator
     :return: A camera object with matching settings for sensor size and focal length.
-    The source clip has been set as a background image.
     """
     scene = context.scene
     scene_root = scene.collection
@@ -263,6 +262,21 @@ def is_valid_tag_name(name: str):
     except ValueError:
         valid_id = False
     return valid_id and split_name[0] == 'Tag' and split_name[1] in valid_sources
+
+
+def marker_to_tag(marker: bpy.types.MovieTrackingMarker, clip_size=(1, 1), fix_corner_order=True):
+    width = clip_size[0] if clip_size[0] >= 1 else 1
+    height = clip_size[1] if clip_size[1] >= 1 else 1
+    norm_center_x, norm_center_y = marker.co
+    corners = list(marker.pattern_corners)
+    if fix_corner_order:
+        corners.reverse()
+    corners = [(x + norm_center_x, y + norm_center_y) for (x, y) in corners]
+    corners = [(x * clip_size[0], clip_size[1] - (y * clip_size[1])) for (x, y) in corners]
+    new_tag = me.dnn.Tag()
+    for c in range(4):
+        new_tag[c] = corners[c]
+    return new_tag
 
 
 def get_clip_tags(movie_clip: bpy.types.MovieClip, filter_locked=False):
