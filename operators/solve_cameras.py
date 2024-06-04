@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 import mathutils
+from math import radians
 
 from .. import MotionEngine as me
 from .. import global_vars
@@ -27,19 +28,21 @@ class SolveCamerasOperator(bpy.types.Operator):
     """Solve cameras"""
     bl_idname = "motionengine.solve_cameras_operator"
     bl_label = "Solve cameras"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        properties = scene.motion_engine_ui_properties
+        active_clip = properties.me_ui_prop_anchor_cam_selection
+        return not global_vars.ui_lock_state and active_clip is not None
 
     def execute(self, context):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
         solution_id = me.crypto.random_sha1()
 
-        if global_vars.ui_lock_state:
-            return {'FINISHED'}
-
         active_clip = properties.me_ui_prop_anchor_cam_selection
-
-        if active_clip is None:
-            return {'FINISHED'}
 
         anchor_cam = utils.prepare_camera_for_clip(active_clip, context)
 
@@ -77,6 +80,8 @@ class SolveCamerasOperator(bpy.types.Operator):
         anchor_cam.parent = None
         anchor_cam.matrix_world = anchor_tf
 
+        clip_cams = []
+
         for i in range(len(cam_transforms)):
             tf = cam_transforms[i]
             clip = clips[i + 1]
@@ -95,8 +100,22 @@ class SolveCamerasOperator(bpy.types.Operator):
                     blend_mtx[r][c] = tf[r, c] * flip_mtx[r][c]
             blend_mtx.translation *= properties.me_ui_prop_solution_scale
             clip_cam.matrix_world = anchor_cam.matrix_world @ blend_mtx
+            clip_cams.append(clip_cam)
 
         anchor_cam.data['solution_id'] = solution_id
+
+        if anchor_cam.matrix_world == mathutils.Matrix.Identity(4):
+            anchor_cam.matrix_world = mathutils.Matrix.Rotation(radians(90), 4, 'X') @ anchor_cam.matrix_world
+            context.view_layer.update()
+            pos_min = anchor_cam.matrix_world.translation
+            pos_max = pos_min.copy()
+            for c in clip_cams:
+                c_pos = c.matrix_world.translation
+                for i in range(3):
+                    pos_min[i] = c_pos[i] if c_pos[i] < pos_min[i] else pos_min[i]
+                    pos_max[i] = c_pos[i] if c_pos[i] > pos_max[i] else pos_max[i]
+            offset = (pos_min + pos_max) / 2
+            anchor_cam.location = -1 * offset
 
         if any(tf.is_identity() for tf in cam_transforms):
             self.report({'WARNING'}, 'Some views failed to solve. Check the console for more information.')
@@ -126,12 +145,17 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
     """Solve view for current clip using selected tag as the origin"""
     bl_idname = "motionengine.solve_camera_from_tag_operator"
     bl_label = "Solve camera"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return not global_vars.ui_lock_state
 
     def execute(self, context):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
         current_clip = context.edit_movieclip
-        
+
         if current_clip is not None:
             active_track = current_clip.tracking.tracks.active
         else:
