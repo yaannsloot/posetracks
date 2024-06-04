@@ -31,6 +31,8 @@ class RiggingUIPanel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_category = "MotionEngine"
 
+    display_priority = 0
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
