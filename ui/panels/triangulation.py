@@ -27,6 +27,8 @@ class TrackingView3DUIPanel(bpy.types.Panel):
     bl_category = "MotionEngine"
     bl_context = "objectmode"
 
+    display_priority = 1
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -56,6 +58,88 @@ class TrackingView3DUIPanel(bpy.types.Panel):
         row.operator("motionengine.triangulate_points_operator")
 
 
+class PoseSelectedView3DUIPanel(bpy.types.Panel):
+    bl_label = "Selected Pose"
+    bl_idname = "MOTIONENGINE_POSE_SELECTED_VIEW3D_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "MotionEngine"
+    bl_context = "objectmode"
+
+    display_priority = 2
+
+    @classmethod
+    def poll(cls, context):
+        active_obj = context.active_object
+        if active_obj is None:
+            return False
+        req_attr = ['pose_source', 'pose_name', 'joint_id', 'cam_solution_id']
+        return all(attr in active_obj.keys() for attr in req_attr)
+
+    def draw(self, context):
+        layout = self.layout
+
+        active_obj = context.active_object
+
+        pose_source = active_obj['pose_source']
+        pose_name = active_obj['pose_name']
+        joint_id = active_obj['joint_id']
+        cam_solution_id = active_obj['cam_solution_id']
+
+        box = layout.box()
+        box = box.column()
+        row = box.row()
+        row.label(text=pose_name, icon='ARMATURE_DATA')
+        row = box.row()
+        row.label(text=f'Source: {pose_source.capitalize()}')
+        row = box.row()
+        row.label(text=f'Active ID: {joint_id}')
+
+        row = layout.row()
+        row.operator("motionengine.generate_armature_operator")
+
+
+class ArmatureSelectedView3DUIPanel(bpy.types.Panel):
+    bl_label = "Selected Armature"
+    bl_idname = "MOTIONENGINE_ARMATURE_SELECTED_VIEW3D_PT_panel"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "MotionEngine"
+    bl_context = "objectmode"
+
+    display_priority = 3
+
+    @classmethod
+    def poll(cls, context):
+        active_obj = context.active_object
+        if active_obj is None:
+            return False
+        req_attr = ['pose_source', 'pose_name', 'cam_solution_id']
+        return (all(attr in active_obj.keys() for attr in req_attr) and
+                active_obj.type == 'ARMATURE')
+
+    def draw(self, context):
+        layout = self.layout
+
+        active_obj = context.active_object
+
+        pose_source = active_obj['pose_source']
+        pose_name = active_obj['pose_name']
+        cam_solution_id = active_obj['cam_solution_id']
+
+        box = layout.box()
+        box = box.column()
+        row = box.row()
+        row.label(text=pose_name, icon='ARMATURE_DATA')
+        row = box.row()
+        row.label(text=f'Source: {pose_source.capitalize()}')
+
+        row = layout.row()
+        row.operator("motionengine.bake_animation_operator")
+
+
 CLASSES = [
-    TrackingView3DUIPanel
+    TrackingView3DUIPanel,
+    PoseSelectedView3DUIPanel,
+    ArmatureSelectedView3DUIPanel
 ]
