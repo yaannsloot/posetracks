@@ -21,7 +21,7 @@ from .. import global_vars
 from .. import utils
 
 
-def prepare_empty(context, empty_name, collection_path, ):
+def prepare_empty(context, empty_name, collection_path):
     empty = None
     for obj in bpy.data.objects:
         if obj.name == empty_name:
@@ -64,19 +64,21 @@ class TriangulatePointsOperator(bpy.types.Operator):
     """Triangulate tracked points and place them in the current scene"""
     bl_idname = "motionengine.triangulate_points_operator"
     bl_label = "Triangulate points"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        properties = scene.motion_engine_ui_properties
+        active_clip = properties.me_ui_prop_anchor_cam_selection
+        return not global_vars.ui_lock_state and active_clip is not None
 
     def execute(self, context):
 
         scene = context.scene
         properties = scene.motion_engine_ui_properties
 
-        if global_vars.ui_lock_state:
-            return {'FINISHED'}
-
         active_clip = properties.me_ui_prop_anchor_cam_selection
-
-        if active_clip is None:
-            return {'FINISHED'}
 
         anchor_cam = None
 
@@ -86,11 +88,13 @@ class TriangulatePointsOperator(bpy.types.Operator):
                 break
 
         if anchor_cam is None:
+            self.report({'ERROR'}, f"No matching cameras were found for anchor '{active_clip.name}'")
             return {'FINISHED'}
 
         solution_id = anchor_cam.data.get('solution_id', None)
 
         if solution_id is None:
+            self.report({'ERROR'}, "Anchor camera has no solution id!")
             return {'FINISHED'}
 
         other_cams = [cam for cam in scene.objects if cam != anchor_cam and cam.type == 'CAMERA' and
@@ -148,6 +152,11 @@ class TriangulatePointsOperator(bpy.types.Operator):
                         empty = prepare_empty(context, empty_name,
                                               ['MotionEngine', 'Tracking', 'Poses', pose_id])
                         written_objs[empty_name] = empty
+                        pose_id_split = pose_id.split('.')
+                        empty['pose_source'] = pose_id_split[-1]
+                        empty['pose_name'] = '.'.join(pose_id_split[:-1])
+                        empty['joint_id'] = joint_id
+                        empty['cam_solution_id'] = solution_id
                     write_anim_location(empty, frame, joint)
 
         for frame, det_dict in detections.items():
@@ -157,6 +166,7 @@ class TriangulatePointsOperator(bpy.types.Operator):
                     empty = prepare_empty(context, det_name,
                                           ['MotionEngine', 'Tracking', 'Detections'])
                     written_objs[det_name] = empty
+                    empty['cam_solution_id'] = solution_id
                 write_anim_location(empty, frame, point)
 
         for o_name, obj in written_objs.items():
@@ -175,6 +185,13 @@ class TriangulatePointsOperator(bpy.types.Operator):
                 points.sort()
                 points.deduplicate()
                 fcurve.update()
+
+        for obj in context.selected_objects:
+            obj.select_set(False)
+        for obj in written_objs.values():
+            obj.select_set(True)
+        context.view_layer.objects.active = anchor_cam
+        bpy.ops.object.parent_set(type='OBJECT', keep_transform=True)
 
         return {"FINISHED"}
 
