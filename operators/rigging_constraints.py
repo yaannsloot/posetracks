@@ -30,6 +30,10 @@ contexts = {
 gen_ops = []
 
 
+def poll_method(cls, context):
+    return not global_vars.ui_lock_state
+
+
 def avg_loc_s_to_a(self, context):
     if not global_vars.ui_lock_state:
         active_object = context.active_object
@@ -59,6 +63,8 @@ for c in contexts.values():
             '__doc__': f"Generate constraints for the active {'bone' if c == 'posemode' else 'object'}",
             'bl_idname': f"motionengine.avgloc_c_s_to_a_{c.lower()}_operator",
             'bl_label': 'Selected to active',
+            'bl_options': {'REGISTER', 'UNDO'},
+            'poll': classmethod(poll_method),
             'execute': lambda self, context: avg_loc_s_to_a(self, context)
         }
     )
@@ -114,7 +120,9 @@ for item in gen_new_types.items():
             '__doc__': "Generate constraints for a new empty object",
             'bl_idname': f"motionengine.avgloc_c_s_to_{item[1]['idname']}_operator",
             'bl_label': f"Create new {item[1]['desc']} empty",
+            'bl_options': {'REGISTER', 'UNDO'},
             'display_type': item[0],
+            'poll': classmethod(poll_method),
             'execute': lambda self, context: avgloc_gen_new(self, context)
         }
     )
@@ -207,7 +215,9 @@ for i_ in range(6):
                 '__doc__': label + f"\nGenerate constraints for the active {'bone' if c == 'posemode' else 'object'}",
                 'bl_idname': idname,
                 'bl_label': label,
+                'bl_options': {'REGISTER', 'UNDO'},
                 'track_axis': track_axis_list[axis].format(track_axis_direction[direction]),
+                'poll': classmethod(poll_method),
                 'execute': lambda self, context: avgdamped_gen_new(self, context)
             }
         )
@@ -222,7 +232,9 @@ for i_ in range(6):
                 '__doc__': label + f"\nGenerate constraints for the active {'bone' if c == 'posemode' else 'object'}",
                 'bl_idname': idname,
                 'bl_label': label,
+                'bl_options': {'REGISTER', 'UNDO'},
                 'track_axis': track_axis_list[axis].format(track_axis_direction[direction]),
+                'poll': classmethod(poll_method),
                 'execute': lambda self, context: avglocked_gen_new(self, context)
             }
         )
@@ -238,7 +250,9 @@ for i_ in range(6):
                 '__doc__': label,
                 'bl_idname': idname,
                 'bl_label': label,
+                'bl_options': {'REGISTER', 'UNDO'},
                 'lock_axis': i_,
+                'poll': classmethod(poll_method),
                 'execute': lambda self, context: set_lock_axis(self, context)
             }
         )
@@ -271,6 +285,7 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
     """Generate n-gon using the active object as a starting vert"""
     bl_idname = "motionengine.gen_ngon_s_to_a_operator"
     bl_label = "Selected to active"
+    bl_options = {'REGISTER', 'UNDO'}
 
     # CURRENT IDEA:
     # Shortest distance and widest angle. This will be achieved by repeatedly
@@ -278,6 +293,10 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
     # between the last edge and the next edge that would be created. Edge candidates will be placed in a
     # list and sorted in ascending order, with the first being chosen. When a point is chosen, it is removed
     # from the list of candidates.
+
+    @classmethod
+    def poll(cls, context):
+        return not global_vars.ui_lock_state
 
     def execute(self, context):
         if not global_vars.ui_lock_state:

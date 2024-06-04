@@ -190,6 +190,7 @@ class DetectObjectsOperator(bpy.types.Operator):
     """Scan entire clip for target objects"""
     bl_idname = "motionengine.detect_objects_operator"
     bl_label = "Detect Objects"
+    bl_options = {'REGISTER', 'UNDO'}
     _timer = None
     dispatch = events.EventDispatcher()
     info_listener = events.InfoEventListener()
@@ -209,11 +210,12 @@ class DetectObjectsOperator(bpy.types.Operator):
         self.cancelled_listener.notify_response = self.cancelled_response
         self.error_listener.notify_response = self.error_response
 
+    @classmethod
+    def poll(cls, context):
+        return not global_vars.ui_lock_state
+
     def execute(self, context):
         global cancel_task, task
-
-        if global_vars.ui_lock_state:
-            return {'FINISHED'}
 
         if task is not None and task.running():
             cancel_task = True

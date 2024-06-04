@@ -214,6 +214,7 @@ class DetectTagsOperator(bpy.types.Operator):
     """Scan an entire clip for target tags"""
     bl_idname = "motionengine.detect_tags_operator"
     bl_label = "Detect Tags"
+    bl_options = {'REGISTER', 'UNDO'}
     _timer = None
     dispatch = events.EventDispatcher()
     info_listener = events.InfoEventListener()

@@ -24,11 +24,13 @@ class TrackingSelectPoseOperator(bpy.types.Operator):
     """Select all tracks associated with this pose"""
     bl_idname = "motionengine.select_pose_operator"
     bl_label = "Select All"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return not global_vars.ui_lock_state
 
     def execute(self, context):
-        if global_vars.ui_lock_state:
-            return {'FINISHED'}
-
         active_clip = context.edit_movieclip
         active_track = active_clip.tracking.tracks.active
 
@@ -90,6 +92,7 @@ class TrackingLockAllOperator(bpy.types.Operator):
     """Locked tracks are used for camera calibration and triangulation"""
     bl_idname = "motionengine.lock_tracks_operator"
     bl_label = "Lock this track and all associated tracks."
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         if global_vars.ui_lock_state:
@@ -110,6 +113,7 @@ class TrackingUnlockAllOperator(bpy.types.Operator):
     """Locked tracks are used for camera calibration and triangulation"""
     bl_idname = "motionengine.unlock_tracks_operator"
     bl_label = "Unlock this track and all associated tracks."
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         if global_vars.ui_lock_state:
