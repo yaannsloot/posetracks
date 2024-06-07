@@ -64,10 +64,13 @@ class TaskSettings:
         self.batch_size = batch_size
 
 
-def get_frames(frame_provider: me.io.FrameProvider, num_frames):
+def get_frames(frame_provider: me.io.FrameProvider, num_frames, last_frame):
     result = []
     for i in range(0, num_frames):
         f = me.Mat()
+        f_num = frame_provider.current_frame()
+        if f_num > last_frame:
+            break
         s = frame_provider.next_frame(f)
         if not s:
             break
@@ -82,6 +85,9 @@ def detection_task(task_settings: TaskSettings):
     clip_path = task_settings.clip_info.abs_path
     clip_type = task_settings.clip_info.source_type
     batch_size = task_settings.batch_size
+    first_frame = task_settings.clip_info.scene_to_true(task_settings.clip_info.scene_first_frame)
+    last_frame = task_settings.clip_info.scene_to_true(task_settings.clip_info.scene_last_frame)
+    first_frame = max(first_frame, 0)
     try:
         feat_model.unload()
         det_model.unload()
@@ -111,18 +117,20 @@ def detection_task(task_settings: TaskSettings):
             event_queue.put(events.ErrorEvent('Failed to load movie clip',
                                               f'Could not load media from movie clip source {clip_path}'))
             return
+        last_frame = min(last_frame, clip.frame_count())
+        clip.set_frame(first_frame)
         event_queue.put(events.InfoEvent('Initializing tracker...',
                                          'Obtaining feature length from model...'))
         f_type = feat_model.infer(me.rand_img_rgb(feat_model.net_size()))
         f_tracker = me.dnn.FeatureTracker(len(f_type))
-        f_num = 0
+        f_num = first_frame
         final_detections = {}
         while True:
 
             if cancel_task or global_vars.shutdown_state:
                 event_queue.put(events.CancelledEvent('Object detection cancelled'))
                 return
-            frames = get_frames(clip, batch_size)
+            frames = get_frames(clip, batch_size, last_frame)
             if not frames:
                 break
             while True:
@@ -164,7 +172,7 @@ def detection_task(task_settings: TaskSettings):
                     final_detections[actual_frame][det_ids[j]] = frame_dets[j]
 
             f_num += len(frames)
-            percent_current = int(max(0.0, min(100 * (f_num / clip.frame_count()), 100.0)))
+            percent_current = int(max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
             event_queue.put(events.InfoEvent(f'Detecting objects: {percent_current}% (ESC to cancel)'))
         event_queue.put(events.DetectionFinishedEvent(final_detections, 'Detection task completed.'))
 
@@ -187,7 +195,7 @@ def get_track_name_for_detection(clip: bpy.types.MovieClip, class_id):
 
 
 class DetectObjectsOperator(bpy.types.Operator):
-    """Scan entire clip for target objects"""
+    """Scan playback range for target objects"""
     bl_idname = "motionengine.detect_objects_operator"
     bl_label = "Detect Objects"
     bl_options = {'REGISTER', 'UNDO'}

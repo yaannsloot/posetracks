@@ -72,10 +72,13 @@ class TaskSettings:
         self.batch_size = batch_size
 
 
-def get_frames(frame_provider: me.io.FrameProvider, num_frames):
+def get_frames(frame_provider: me.io.FrameProvider, num_frames, last_frame):
     result = []
     for i in range(0, num_frames):
         f = me.Mat()
+        f_num = frame_provider.current_frame()
+        if f_num > last_frame:
+            break
         s = frame_provider.next_frame(f)
         if not s:
             break
@@ -90,6 +93,9 @@ def tag_task(task_settings: TaskSettings):
     clip_path = task_settings.clip_info.abs_path
     clip_type = task_settings.clip_info.source_type
     batch_size = task_settings.batch_size
+    first_frame = task_settings.clip_info.scene_to_true(task_settings.clip_info.scene_first_frame)
+    last_frame = task_settings.clip_info.scene_to_true(task_settings.clip_info.scene_last_frame)
+    first_frame = max(first_frame, 0)
     try:
         tag_model.unload()
         det_model.unload()
@@ -124,15 +130,16 @@ def tag_task(task_settings: TaskSettings):
             event_queue.put(events.ErrorEvent('Failed to load movie clip',
                                               f'Could not load media from movie clip source {clip_path}'))
             return
-
-        f_num = 0
+        last_frame = min(last_frame, clip.frame_count())
+        clip.set_frame(first_frame)
+        f_num = first_frame
         final_tags = {}
         while True:
 
             if cancel_task or global_vars.shutdown_state:
                 event_queue.put(events.CancelledEvent('Tag detection cancelled'))
                 return
-            frames = get_frames(clip, batch_size)
+            frames = get_frames(clip, batch_size, last_frame)
             if not frames:
                 break
 
@@ -201,7 +208,7 @@ def tag_task(task_settings: TaskSettings):
                 final_tags[det_frames[i] + f_num][tag.id] = out_tag
 
             f_num += len(frames)
-            percent_current = int(max(0.0, min(100 * (f_num / clip.frame_count()), 100.0)))
+            percent_current = int(max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
             event_queue.put(events.InfoEvent(f'Detecting tags: {percent_current}% (ESC to cancel)'))
         event_queue.put((events.TagFinishedEvent(final_tags, 'Tag detection task complete')))
 
@@ -211,7 +218,7 @@ def tag_task(task_settings: TaskSettings):
 
 
 class DetectTagsOperator(bpy.types.Operator):
-    """Scan an entire clip for target tags"""
+    """Scan playback range for tags"""
     bl_idname = "motionengine.detect_tags_operator"
     bl_label = "Detect Tags"
     bl_options = {'REGISTER', 'UNDO'}

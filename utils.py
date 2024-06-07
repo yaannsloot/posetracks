@@ -345,11 +345,14 @@ def get_clip_Kk(movie_clip: bpy.types.MovieClip):
 
 class ClipInfo:
     def __init__(self, clip: bpy.types.MovieClip):
+        scene = bpy.context.scene
         self.abs_path = os.path.normpath(bpy.path.abspath(clip.filepath))
         self.frame_start = clip.frame_start
         self.frame_offset = clip.frame_offset
         self.source_type = clip.source
         self.clip_size = clip.size
+        self.scene_first_frame = scene.frame_start
+        self.scene_last_frame = scene.frame_end
 
     def get_scene_start(self):
         """
