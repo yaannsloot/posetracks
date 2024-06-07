@@ -58,6 +58,12 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
         row = grid.row()
         row.prop(properties, 'me_ui_prop_det_class_enum', text='')
 
+        grid = layout.grid_flow(columns=1)
+        row = grid.row()
+        row.label(text='Mute Results')
+        row.prop(properties, 'me_ui_prop_mute_results', text='')
+        row.alignment = 'CENTER'
+
 
 class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     bl_parent_id = 'MOTIONENGINE_OBJECT_DETECTION_PT_panel'

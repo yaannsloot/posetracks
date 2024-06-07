@@ -361,6 +361,7 @@ class DetectObjectsOperator(bpy.types.Operator):
             self.report({'INFO'}, 'Done.')
             scene = context.scene
             properties = scene.motion_engine_ui_properties
+            mute_results = properties.me_ui_prop_mute_results
             class_id = str(properties.me_ui_prop_det_class_enum)
             clip: bpy.types.MovieClip = self.queued_clip
             clip_info = utils.ClipInfo(clip)
@@ -397,7 +398,7 @@ class DetectObjectsOperator(bpy.types.Operator):
                     marker.search_max *= 1.2
                     marker.search_min *= 1.2
                     marker.is_keyed = False
-                    marker.mute = True
+                    marker.mute = mute_results
         except Exception:
             error = f'Error during evaluation: {traceback.format_exc()}'
             self.report({'ERROR'}, error)

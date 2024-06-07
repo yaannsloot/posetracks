@@ -282,6 +282,11 @@ class MotionEngineUIProperties(bpy.types.PropertyGroup):
         description="If unchecked, will prioritize whichever estimate has the higher confidence score",
         default=True
     )
+    me_ui_prop_mute_results: bpy.props.BoolProperty(
+        name="Mute tracking results",
+        description="If enabled, markers will be muted once the detector has finished",
+        default=True
+    )
     me_ui_tag_detector_cv_resample_toggle_prop: bpy.props.BoolProperty(
         name=tag_detector_cv_resample_toggle_name,
         description=tag_detector_cv_resample_toggle_desc,
