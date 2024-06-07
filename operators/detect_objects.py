@@ -232,38 +232,38 @@ class DetectObjectsOperator(bpy.types.Operator):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
 
-        if properties.me_ui_prop_det_simple_sel_enum == 'FAST':
+        if properties.det_simple_sel_enum == 'FAST':
             det_models = me.get_models('object_detection',
-                                       values={'classes': [str(properties.me_ui_prop_det_class_enum)]},
+                                       values={'classes': [str(properties.det_class_enum)]},
                                        sorting_criteria=['gflops'])
-        elif properties.me_ui_prop_det_simple_sel_enum == 'BALANCED':
+        elif properties.det_simple_sel_enum == 'BALANCED':
             det_models = me.get_models('object_detection',
-                                       values={'classes': [str(properties.me_ui_prop_det_class_enum)]},
+                                       values={'classes': [str(properties.det_class_enum)]},
                                        sorting_criteria=['precision_ap', 'gflops'])
-        elif properties.me_ui_prop_det_simple_sel_enum == 'BAL_MEM':
+        elif properties.det_simple_sel_enum == 'BAL_MEM':
             det_models = me.get_models('object_detection',
-                                       values={'classes': [str(properties.me_ui_prop_det_class_enum)]},
+                                       values={'classes': [str(properties.det_class_enum)]},
                                        sorting_criteria=['precision_ap', 'gflops', 'mparams'])
         else:
             det_models = me.get_models('object_detection',
-                                       values={'classes': [str(properties.me_ui_prop_det_class_enum)]},
+                                       values={'classes': [str(properties.det_class_enum)]},
                                        sorting_criteria=['precision_ap'])
 
         if len(det_models) == 0:
             self.report({'ERROR'}, 'Could not find suitable model based on provided settings')
             return {'FINISHED'}
 
-        if properties.me_ui_prop_exe_det_enum == 'CPU':
+        if properties.exe_det_enum == 'CPU':
             det_exec = me.dnn.CPU
         else:
             det_exec = me.dnn.CUDA
 
-        if properties.me_ui_prop_exe_track_enum == 'CPU':
+        if properties.exe_track_enum == 'CPU':
             feat_exec = me.dnn.CPU
         else:
             feat_exec = me.dnn.CUDA
 
-        if properties.me_ui_prop_track_dist_type == 'EUCLIDEAN':
+        if properties.track_dist_type == 'EUCLIDEAN':
             dist_type = me.dnn.EUCLIDEAN
         else:
             dist_type = me.dnn.NORM_EUCLIDEAN
@@ -274,7 +274,7 @@ class DetectObjectsOperator(bpy.types.Operator):
         det_model_classes = det_model_sel['classes']
 
         try:
-            target_cid = det_model_classes.index(str(properties.me_ui_prop_det_class_enum))
+            target_cid = det_model_classes.index(str(properties.det_class_enum))
         except ValueError:
             target_cid = 0
 
@@ -288,11 +288,11 @@ class DetectObjectsOperator(bpy.types.Operator):
             me.dnn.GenericFeatureModel,
             det_exec,
             feat_exec,
-            properties.me_ui_prop_det_conf,
-            properties.me_ui_prop_det_iou,
+            properties.det_conf,
+            properties.det_iou,
             target_cid,
-            properties.me_ui_prop_track_score,
-            properties.me_ui_prop_track_reid_score,
+            properties.track_score,
+            properties.track_reid_score,
             dist_type
         )
 
@@ -361,8 +361,8 @@ class DetectObjectsOperator(bpy.types.Operator):
             self.report({'INFO'}, 'Done.')
             scene = context.scene
             properties = scene.motion_engine_ui_properties
-            mute_results = properties.me_ui_prop_mute_results
-            class_id = str(properties.me_ui_prop_det_class_enum)
+            mute_results = properties.mute_results
+            class_id = str(properties.det_class_enum)
             clip: bpy.types.MovieClip = self.queued_clip
             clip_info = utils.ClipInfo(clip)
             clip_size = clip.size

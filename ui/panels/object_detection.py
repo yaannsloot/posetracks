@@ -56,12 +56,12 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
         row.label(text='Target')
         row.alignment = 'RIGHT'
         row = grid.row()
-        row.prop(properties, 'me_ui_prop_det_class_enum', text='')
+        row.prop(properties, 'det_class_enum', text='')
 
         grid = layout.grid_flow(columns=1)
         row = grid.row()
         row.label(text='Mute Results')
-        row.prop(properties, 'me_ui_prop_mute_results', text='')
+        row.prop(properties, 'mute_results', text='')
         row.alignment = 'CENTER'
 
 
@@ -88,34 +88,34 @@ class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
         grid_ele.label(text="Model Selection")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_det_simple_sel_enum", text='')
+        grid_ele.prop(properties, "det_simple_sel_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Device")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_exe_det_enum", text='')
+        grid_ele.prop(properties, "exe_det_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Thresholding")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_det_thresholding_enum", text='')
-        if properties.me_ui_prop_det_thresholding_enum == "MANUAL":
+        grid_ele.prop(properties, "det_thresholding_enum", text='')
+        if properties.det_thresholding_enum == "MANUAL":
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Confidence")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_det_conf", text="")
+            grid_ele.prop(properties, "det_conf", text="")
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="IoU")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_det_iou", text="")
+            grid_ele.prop(properties, "det_iou", text="")
 
 
 class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
@@ -141,33 +141,33 @@ class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
         grid_ele.label(text="Device")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_exe_track_enum", text='')
+        grid_ele.prop(properties, "exe_track_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Thresholding")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_track_thresholding_enum", text='')
-        if properties.me_ui_prop_track_thresholding_enum == "MANUAL":
+        grid_ele.prop(properties, "track_thresholding_enum", text='')
+        if properties.track_thresholding_enum == "MANUAL":
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Distance Type")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_track_dist_type", text="")
+            grid_ele.prop(properties, "track_dist_type", text="")
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Score")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_track_score", text="")
+            grid_ele.prop(properties, "track_score", text="")
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="ReID Score")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_track_reid_score", text="")
+            grid_ele.prop(properties, "track_reid_score", text="")
 
 
 CLASSES = [

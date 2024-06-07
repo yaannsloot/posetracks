@@ -37,7 +37,7 @@ class RiggingUIPanel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         properties = scene.motion_engine_ui_properties
-        selected_axis = properties.me_ui_prop_rigging_avg_locked_axis
+        selected_axis = properties.rigging_avg_locked_axis
         ui_lock = global_vars.ui_lock_state
         selected_objects = context.selected_objects
 

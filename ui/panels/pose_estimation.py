@@ -57,19 +57,19 @@ class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
         row.label(text='Target Type')
         row.alignment = 'RIGHT'
         row = grid.row()
-        row.prop(properties, 'me_ui_prop_pose_target_enum', text='')
+        row.prop(properties, 'pose_target_enum', text='')
 
         grid = layout.grid_flow(columns=2)
         row = grid.row()
         row.label(text='Keypoints')
         row.alignment = 'RIGHT'
         row = grid.row()
-        row.prop(properties, 'me_ui_prop_pose_keypoints_enum', text='')
+        row.prop(properties, 'pose_keypoints_enum', text='')
 
         grid = layout.grid_flow(columns=1)
         row = grid.row()
         row.label(text='Overwrite')
-        row.prop(properties, 'me_ui_prop_overwrite_poses', text='')
+        row.prop(properties, 'overwrite_poses', text='')
         row.alignment = 'CENTER'
 
 
@@ -97,28 +97,28 @@ class ModelSettingsPanel(bpy.types.Panel, PoseEstimationPanelSpace):
         grid_ele.label(text="Model Selection")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_pose_model_sel_enum", text='')
+        grid_ele.prop(properties, "pose_model_sel_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Device")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_exe_pose_enum", text='')
+        grid_ele.prop(properties, "exe_pose_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Thresholding")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_pose_thresholding_enum", text='')
-        if properties.me_ui_prop_pose_thresholding_enum == "MANUAL":
+        grid_ele.prop(properties, "pose_thresholding_enum", text='')
+        if properties.pose_thresholding_enum == "MANUAL":
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Confidence")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_joint_conf", text="")
+            grid_ele.prop(properties, "joint_conf", text="")
 
 CLASSES = [
     PoseEstimationUIPanel,

@@ -34,7 +34,7 @@ class SolveCamerasOperator(bpy.types.Operator):
     def poll(cls, context):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
-        active_clip = properties.me_ui_prop_anchor_cam_selection
+        active_clip = properties.anchor_cam_selection
         return not global_vars.ui_lock_state and active_clip is not None
 
     def execute(self, context):
@@ -42,7 +42,7 @@ class SolveCamerasOperator(bpy.types.Operator):
         properties = scene.motion_engine_ui_properties
         solution_id = me.crypto.random_sha1()
 
-        active_clip = properties.me_ui_prop_anchor_cam_selection
+        active_clip = properties.anchor_cam_selection
 
         anchor_cam = utils.prepare_camera_for_clip(active_clip, context)
 
@@ -98,7 +98,7 @@ class SolveCamerasOperator(bpy.types.Operator):
             for r in range(4):
                 for c in range(4):
                     blend_mtx[r][c] = tf[r, c] * flip_mtx[r][c]
-            blend_mtx.translation *= properties.me_ui_prop_solution_scale
+            blend_mtx.translation *= properties.solution_scale
             clip_cam.matrix_world = anchor_cam.matrix_world @ blend_mtx
             clip_cams.append(clip_cam)
 
@@ -211,7 +211,7 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
             active_track.select = True
             bpy.ops.clip.set_origin(use_median=False)
 
-        properties.me_ui_prop_anchor_cam_selection = current_clip
+        properties.anchor_cam_selection = current_clip
         scene_cam.data['solution_id'] = active_track.name
 
         return {'FINISHED'}

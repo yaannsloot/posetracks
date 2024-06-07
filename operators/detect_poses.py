@@ -241,22 +241,22 @@ class DetectPosesOperator(bpy.types.Operator):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
 
-        target_class = properties.me_ui_prop_pose_target_enum
-        keypoints = int(properties.me_ui_prop_pose_keypoints_enum)
-        self.last_pose_keypoints = properties.me_ui_prop_pose_keypoints_enum
+        target_class = properties.pose_target_enum
+        keypoints = int(properties.pose_keypoints_enum)
+        self.last_pose_keypoints = properties.pose_keypoints_enum
         self.last_pose_source = target_class
 
-        if properties.me_ui_prop_pose_model_sel_enum == 'FAST':
+        if properties.pose_model_sel_enum == 'FAST':
             pose_models = me.get_models('pose_estimation',
                                         values={'target_class': target_class,
                                                 'keypoints': keypoints},
                                         sorting_criteria=['gflops'])
-        elif properties.me_ui_prop_pose_model_sel_enum == 'BALANCED':
+        elif properties.pose_model_sel_enum == 'BALANCED':
             pose_models = me.get_models('pose_estimation',
                                         values={'target_class': target_class,
                                                 'keypoints': keypoints},
                                         sorting_criteria=['precision_ap', 'gflops'])
-        elif properties.me_ui_prop_pose_model_sel_enum == 'BAL_MEM':
+        elif properties.pose_model_sel_enum == 'BAL_MEM':
             pose_models = me.get_models('pose_estimation',
                                         values={'target_class': target_class,
                                                 'keypoints': keypoints},
@@ -271,7 +271,7 @@ class DetectPosesOperator(bpy.types.Operator):
             self.report({'ERROR'}, 'Could not find suitable model based on provided settings')
             return {'FINISHED'}
 
-        if properties.me_ui_prop_exe_pose_enum == 'CPU':
+        if properties.exe_pose_enum == 'CPU':
             pose_exec = me.dnn.CPU
         else:
             pose_exec = me.dnn.CUDA
@@ -353,8 +353,8 @@ class DetectPosesOperator(bpy.types.Operator):
             self.report({'INFO'}, 'Done.')
             scene = context.scene
             properties = scene.motion_engine_ui_properties
-            overwrite = properties.me_ui_prop_overwrite_poses
-            conf_thresh = properties.me_ui_prop_joint_conf
+            overwrite = properties.overwrite_poses
+            conf_thresh = properties.joint_conf
             clip: bpy.types.MovieClip = self.queued_clip
             clip_size = clip.size
             tracks = clip.tracking.tracks

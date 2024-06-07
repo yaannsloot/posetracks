@@ -26,14 +26,14 @@ if 'MotionEngine' in locals():
     importlib.reload(ui)
     importlib.reload(operators)
     importlib.reload(property_groups)
-    importlib.reload(me_ui)
+    importlib.reload(ui_props)
 else:
     from . import MotionEngine
     from . import global_vars
     from . import ui
     from . import operators
     from . import property_groups
-    from .property_groups import me_ui
+    from .property_groups import ui_props
 
 bl_info = {
     "name": "MotionEngine",
@@ -60,7 +60,7 @@ def register():
     for CLASS in ui.ALL_CLASSES:
         bpy.utils.register_class(CLASS)
 
-    bpy.types.Scene.motion_engine_ui_properties = bpy.props.PointerProperty(type=me_ui.MotionEngineUIProperties)
+    bpy.types.Scene.motion_engine_ui_properties = bpy.props.PointerProperty(type=ui_props.UIProperties)
 
     global_vars.ui_lock_state = False
     global_vars.shutdown_state = False

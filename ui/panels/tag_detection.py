@@ -75,34 +75,34 @@ class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
         grid_ele.label(text="Model Selection")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_det_tag_simple_sel_enum", text='')
+        grid_ele.prop(properties, "det_tag_simple_sel_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Device")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_exe_det_tag_enum", text='')
+        grid_ele.prop(properties, "exe_det_tag_enum", text='')
         row = column.row()
         grid = row.grid_flow(even_columns=True, columns=2)
         grid_ele = grid.row()
         grid_ele.label(text="Thresholding")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_det_tag_thresholding_enum", text='')
-        if properties.me_ui_prop_det_tag_thresholding_enum == "MANUAL":
+        grid_ele.prop(properties, "det_tag_thresholding_enum", text='')
+        if properties.det_tag_thresholding_enum == "MANUAL":
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Confidence")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_det_tag_conf", text="")
+            grid_ele.prop(properties, "det_tag_conf", text="")
             row = column.row()
             grid = row.grid_flow(columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="IoU")
             grid_ele.alignment = 'RIGHT'
-            grid_ele.prop(properties, "me_ui_prop_det_tag_iou", text="")
+            grid_ele.prop(properties, "det_tag_iou", text="")
 
 
 class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
@@ -128,22 +128,22 @@ class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
         grid_ele.label(text="Detector Type")
         grid_ele.alignment = 'RIGHT'
         grid_ele = grid.row()
-        grid_ele.prop(properties, "me_ui_prop_tag_detector_type_enum", text='')
-        if properties.me_ui_prop_tag_detector_type_enum == 'CV':
+        grid_ele.prop(properties, "tag_detector_type_enum", text='')
+        if properties.tag_detector_type_enum == 'CV':
             row = column.row()
             grid = row.grid_flow(even_columns=True, columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Dictionary")
             grid_ele.alignment = 'RIGHT'
             grid_ele = grid.row()
-            grid_ele.prop(properties, "me_ui_tag_detector_cv_dict_list_enum", text='')
+            grid_ele.prop(properties, "tag_detector_cv_dict_list_enum", text='')
             row = column.row()
             grid = row.grid_flow(even_columns=True, columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Resample")
             grid_ele.alignment = 'RIGHT'
             grid_ele = grid.row()
-            grid_ele.prop(properties, "me_ui_tag_detector_cv_resample_toggle_prop", text='')
+            grid_ele.prop(properties, "tag_detector_cv_resample_toggle", text='')
         else:
             row = column.row()
             grid = row.grid_flow(even_columns=True, columns=2)
@@ -151,14 +151,14 @@ class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
             grid_ele.label(text="Model Selection")
             grid_ele.alignment = 'RIGHT'
             grid_ele = grid.row()
-            grid_ele.prop(properties, "me_ui_prop_tag_detector_ml_model_sel_enum", text='')
+            grid_ele.prop(properties, "tag_detector_ml_model_sel_enum", text='')
             row = column.row()
             grid = row.grid_flow(even_columns=True, columns=2)
             grid_ele = grid.row()
             grid_ele.label(text="Device")
             grid_ele.alignment = 'RIGHT'
             grid_ele = grid.row()
-            grid_ele.prop(properties, "me_ui_prop_exe_tag_detector_ml_enum", text='')
+            grid_ele.prop(properties, "exe_tag_detector_ml_enum", text='')
 
 
 CLASSES = [

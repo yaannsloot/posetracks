@@ -42,7 +42,7 @@ class TrackingView3DUIPanel(bpy.types.Panel):
         row = box.row()
         row.label(text='Anchor view:')
         row = box.row()
-        row.prop(properties, 'me_ui_prop_anchor_cam_selection', text='')
+        row.prop(properties, 'anchor_cam_selection', text='')
 
         column = layout.column(align=True)
         row = column.row(align=True)
@@ -51,7 +51,7 @@ class TrackingView3DUIPanel(bpy.types.Panel):
 
         row = column.row(align=True)
 
-        row.prop(properties, 'me_ui_prop_solution_scale')
+        row.prop(properties, 'solution_scale')
 
         row = layout.row()
 

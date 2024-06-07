@@ -56,7 +56,7 @@ class TrackManagerUIPanel(bpy.types.Panel):
 
         row_ele = row.row()
 
-        row_ele.prop(properties, 'me_ui_active_track_name', text='')
+        row_ele.prop(properties, 'active_track_name', text='')
 
         row_ele.enabled = not utils.is_valid_tag_name(active_track.name)
 
@@ -74,7 +74,7 @@ class TrackManagerUIPanel(bpy.types.Panel):
             joint_id = int(split_name[-1])
             joint_source = split_name[-2]
             joint_tracks = utils.get_joint_tracks(current_clip)
-            num_joints_in_clip = len(joint_tracks[0][properties.me_ui_active_track_name][joint_source].keys())
+            num_joints_in_clip = len(joint_tracks[0][properties.active_track_name][joint_source].keys())
             joint_area = utils.get_marker_area(
                 active_track.markers.find_frame(clip_info.scene_to_clip(scene.frame_current), exact=False),
                 tuple(clip_info.clip_size), True)

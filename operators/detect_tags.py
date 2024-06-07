@@ -255,15 +255,15 @@ class DetectTagsOperator(bpy.types.Operator):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
 
-        if properties.me_ui_prop_det_tag_simple_sel_enum == 'FAST':
+        if properties.det_tag_simple_sel_enum == 'FAST':
             det_models = me.get_models('object_detection',
                                        values={'classes': ['Tag']},
                                        sorting_criteria=['gflops'])
-        elif properties.me_ui_prop_det_tag_simple_sel_enum == 'BALANCED':
+        elif properties.det_tag_simple_sel_enum == 'BALANCED':
             det_models = me.get_models('object_detection',
                                        values={'classes': ['Tag']},
                                        sorting_criteria=['precision_ap', 'gflops'])
-        elif properties.me_ui_prop_det_tag_simple_sel_enum == 'BAL_MEM':
+        elif properties.det_tag_simple_sel_enum == 'BAL_MEM':
             det_models = me.get_models('object_detection',
                                        values={'classes': ['Tag']},
                                        sorting_criteria=['precision_ap', 'gflops', 'mparams'])
@@ -276,12 +276,12 @@ class DetectTagsOperator(bpy.types.Operator):
             self.report({'ERROR'}, 'Could not find suitable model based on provided settings')
             return {'FINISHED'}
 
-        if properties.me_ui_prop_exe_det_tag_enum == 'CPU':
+        if properties.exe_det_tag_enum == 'CPU':
             det_exec = me.dnn.CPU
         else:
             det_exec = me.dnn.CUDA
 
-        if properties.me_ui_prop_exe_tag_detector_ml_enum == 'CPU':
+        if properties.exe_tag_detector_ml_enum == 'CPU':
             tag_exec = me.dnn.CPU
         else:
             tag_exec = me.dnn.CUDA
@@ -292,11 +292,11 @@ class DetectTagsOperator(bpy.types.Operator):
         det_model_classes = det_model_sel['classes']
 
         try:
-            target_cid = det_model_classes.index(str(properties.me_ui_prop_det_class_enum))
+            target_cid = det_model_classes.index(str(properties.det_class_enum))
         except ValueError:
             target_cid = 0
 
-        selected_dict = properties.me_ui_tag_detector_cv_dict_list_enum
+        selected_dict = properties.tag_detector_cv_dict_list_enum
 
         tag_dictionary_members = [e for e in me.TagDictionary.__members__]
 
@@ -306,7 +306,7 @@ class DetectTagsOperator(bpy.types.Operator):
         except ValueError:
             target_dict = me.DICT_4X4_50
 
-        if properties.me_ui_prop_tag_detector_type_enum == 'ML':
+        if properties.tag_detector_type_enum == 'ML':
             tag_model_path = me.model_path('TagNet/basic_reg_v1.onnx')
             tag_model_driver = me.dnn.TagNetModel
             self.last_tag_type = 'ML'
@@ -325,11 +325,11 @@ class DetectTagsOperator(bpy.types.Operator):
             tag_model_driver,
             det_exec,
             tag_exec,
-            properties.me_ui_prop_det_tag_conf,
-            properties.me_ui_prop_det_tag_iou,
+            properties.det_tag_conf,
+            properties.det_tag_iou,
             target_cid,
             target_dict,
-            properties.me_ui_tag_detector_cv_resample_toggle_prop
+            properties.tag_detector_cv_resample_toggle
         )
 
         cancel_task = False

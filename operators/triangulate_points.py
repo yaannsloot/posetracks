@@ -70,7 +70,7 @@ class TriangulatePointsOperator(bpy.types.Operator):
     def poll(cls, context):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
-        active_clip = properties.me_ui_prop_anchor_cam_selection
+        active_clip = properties.anchor_cam_selection
         return not global_vars.ui_lock_state and active_clip is not None
 
     def execute(self, context):
@@ -78,7 +78,7 @@ class TriangulatePointsOperator(bpy.types.Operator):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
 
-        active_clip = properties.me_ui_prop_anchor_cam_selection
+        active_clip = properties.anchor_cam_selection
 
         anchor_cam = None
 

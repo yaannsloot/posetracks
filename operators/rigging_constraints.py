@@ -162,7 +162,7 @@ def avglocked_gen_new(self, context):
     if not global_vars.ui_lock_state:
         scene = context.scene
         properties = scene.motion_engine_ui_properties
-        ui_locked_axis = properties.me_ui_prop_rigging_avg_locked_axis
+        ui_locked_axis = properties.rigging_avg_locked_axis
         lock_axis = track_axis_button_lbl[ui_locked_axis].format('LOCK_')
 
         active_object = context.active_object
@@ -191,7 +191,7 @@ def set_lock_axis(self, context):
     if not global_vars.ui_lock_state:
         scene = context.scene
         properties = scene.motion_engine_ui_properties
-        properties.me_ui_prop_rigging_avg_locked_axis = self.lock_axis
+        properties.rigging_avg_locked_axis = self.lock_axis
     return {'FINISHED'}
 
 

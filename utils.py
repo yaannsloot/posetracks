@@ -451,7 +451,7 @@ class ClipTrackingData(ClipInfo):
 
 def force_ui_draw():
     properties = bpy.context.scene.motion_engine_ui_properties
-    if properties.me_ui_redraw_prop:
-        properties.me_ui_redraw_prop = False
+    if properties.redraw_prop:
+        properties.redraw_prop = False
     else:
-        properties.me_ui_redraw_prop = True
+        properties.redraw_prop = True
