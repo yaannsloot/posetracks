@@ -49,15 +49,15 @@ class CVTagDetector(TagModel):
         """
         Create a new CVTagDetector instance
         """
-    def set_dict_type(self, arg0: TagDictionary) -> None:
+    def set_dict_type(self, dict: TagDictionary) -> None:
         """
         Set the dictionary type used by the detector
-        :param arg0: Predefined tag dictionary
+        :param dict: Predefined tag dictionary
         """
-    def set_preprocess_size(self, arg0: Tuple[int, int]) -> None:
+    def set_preprocess_size(self, size: Tuple[int, int]) -> None:
         """
         If set, resizes the sampled region before detection
-        :param arg0: Preprocess size of forwarded samples
+        :param size: Preprocess size of forwarded samples
         """
 
 class Detection:
@@ -77,10 +77,10 @@ class Detection:
         :param bbox: Bounding box of the detection
         :param score: Detection confidence score
         """
-    def scale_detection(self, arg0: float) -> None:
+    def scale_detection(self, scale: float) -> None:
         """
         Scale bounds of detection
-        :param arg0: Scale factor
+        :param scale: Scale factor
         """
 
 class DetectionModel(ImageModel):
@@ -126,7 +126,7 @@ class Feature:
     @overload
     def __init__(self) -> None: ...
     @overload
-    def __init__(self, arg0: List[float]) -> None: ...
+    def __init__(self, data: List[float]) -> None: ...
     def dist(self, other: Feature, d_type: FeatureDistanceType = NORM_EUCLIDEAN) -> float:
         """
         Get the distance between two feature vectors.
@@ -143,13 +143,13 @@ class Feature:
         """
         Get the L2 norm of this feature vector
         """
-    def __assign__(self, arg0: Feature) -> Feature: ...
-    def __getitem__(self, arg0: int) -> float: ...
+    def __assign__(self, other: Feature) -> Feature: ...
+    def __getitem__(self, index: int) -> float: ...
     def __iter__(self) -> typing.Iterator[float]: ...
     def __len__(self) -> int: ...
-    def __setitem__(self, arg0: int, arg1: float) -> None: ...
-    def __sub__(self, arg0: Feature) -> Feature: ...
-    def __truediv__(self, arg0: float) -> Feature: ...
+    def __setitem__(self, index: int, value: float) -> None: ...
+    def __sub__(self, other: Feature) -> Feature: ...
+    def __truediv__(self, other: float) -> Feature: ...
 
 class FeatureDistanceType:
     __members__: ClassVar[dict]
@@ -172,16 +172,16 @@ class FeatureModel(ImageModel):
         Create a new feature model instance. This is a base class and has no inference capabilities.
         """
     @overload
-    def infer(self, arg0: Mat) -> Feature:
+    def infer(self, image: Mat) -> Feature:
         """
         Run a forward pass on a single image
-        :param arg0: Image to send through the model
+        :param image: Image to send through the model
         """
     @overload
-    def infer(self, arg0: List[Mat]) -> List[Feature]:
+    def infer(self, images: List[Mat]) -> List[Feature]:
         """
         Run a forward pass on a batch of images
-        :param arg0: Images to send through the model
+        :param images: Images to send through the model
         """
 
 class GenericFeatureModel(FeatureModel):
@@ -345,19 +345,19 @@ class Joint:
         Create a new empty joint
         """
     @overload
-    def __init__(self, arg0: float, arg1: float, arg2: float) -> None:
+    def __init__(self, x: float, y: float, conf: float) -> None:
         """
         Create a new joint
-        :param arg0: X coordinate of joint
-        :param arg1: Y coordinate of joint
-        :param arg2: Confidence score of joint
+        :param x: X coordinate of joint
+        :param y: Y coordinate of joint
+        :param conf: Confidence score of joint
         """
     @overload
-    def __init__(self, arg0: Point, arg1: float) -> None:
+    def __init__(self, pt: Point, conf: float) -> None:
         """
         Create a new joint
-        :param arg0: Joint position
-        :param arg1: Confidence score of joint
+        :param pt: Joint position
+        :param conf: Confidence score of joint
         """
 
 class Model:
@@ -393,49 +393,49 @@ class Pose:
         """
         Create a new empty pose
         """
-    def get_joint(self, arg0: int) -> Joint:
+    def get_joint(self, joint_id: int) -> Joint:
         """
         Retrieve a joint by id. If one does not exist, a new joint will be added
-        :param arg0: Joint ID
+        :param joint_id: Joint ID
         """
     def get_joint_ids(self) -> Set[int]:
         """
         Get a list of all current joint ids within this pose
         """
-    def has_joint(self, arg0: int) -> bool:
+    def has_joint(self, joint_id: int) -> bool:
         """
         Check if this pose contains a joint with the provided id
-        :param arg0:
+        :param joint_id: Joint ID
         """
     def num_joints(self) -> int:
         """
         Get the total number of joints contained inside this pose
         """
     @overload
-    def set_joint(self, arg0: int, arg1: Joint) -> None:
+    def set_joint(self, joint_id: int, joint: Joint) -> None:
         """
         Set joint data for a given joint id
-        :param arg0: Joint ID
-        :param arg1: Joint to assign to ID
+        :param joint_id: Joint ID
+        :param joint: Joint to assign to ID
         """
     @overload
-    def set_joint(self, arg0: int, arg1: Point, arg2: float) -> None:
+    def set_joint(self, joint_id: int, pt: Point, conf: float) -> None:
         """
         Set joint data for a given joint id
-        :param arg0: Joint ID
-        :param arg1: Joint position
-        :param arg2: Joint confidence score
+        :param joint_id: Joint ID
+        :param pt: Joint position
+        :param conf: Joint confidence score
         """
     @overload
-    def set_joint(self, arg0: int, arg1: float, arg2: float, arg3: float) -> None:
+    def set_joint(self, joint_id: int, x: float, y: float, conf: float) -> None:
         """
         Set joint data for a given joint id
-        :param arg0: Joint ID
-        :param arg1: Joint X coordinate
-        :param arg2: Joint Y coordinate
-        :param arg3: Joint confidence score
+        :param joint_id: Joint ID
+        :param x: Joint X coordinate
+        :param y: Joint Y coordinate
+        :param conf: Joint confidence score
         """
-    def __getitem__(self, arg0: int) -> Joint: ...
+    def __getitem__(self, joint_id: int) -> Joint: ...
     def __iter__(self) -> typing.Iterator[Joint]: ...
 
 class PoseModel(ImageModel):
@@ -444,16 +444,16 @@ class PoseModel(ImageModel):
         Create a new pose model instance. This is a base class and has no inference capabilities.
         """
     @overload
-    def infer(self, arg0: Mat) -> Pose:
+    def infer(self, image: Mat) -> Pose:
         """
         Run a forward pass on a single image
-        :param arg0: Image to send through the model
+        :param image: Image to send through the model
         """
     @overload
-    def infer(self, arg0: List[Mat]) -> List[Pose]:
+    def infer(self, images: List[Mat]) -> List[Pose]:
         """
         Run a forward pass on a batch of images
-        :param arg0: Images to send through the model
+        :param images: Images to send through the model
         """
 
 class Precision:
@@ -515,74 +515,74 @@ class Tag:
         Create a new empty tag
         """
     @overload
-    def __init__(self, arg0: int) -> None:
+    def __init__(self, id: int) -> None:
         """
         Create a new tag with a given tag id
-        :param arg0: Tag ID
+        :param id: Tag ID
         """
     @overload
-    def __init__(self, arg0: int, arg1: float) -> None:
+    def __init__(self, id: int, conf: float) -> None:
         """
         Create a new tag with a given tag id and confidence score
-        :param arg0: Tag ID
-        :param arg1: Tag confidence score
+        :param id: Tag ID
+        :param conf: Tag confidence score
         """
     @overload
-    def __init__(self, arg0: Union[Point, Tuple[float, float]], arg1: Union[Point, Tuple[float, float]],
-                 arg2: Union[Point, Tuple[float, float]], arg3: Union[Point, Tuple[float, float]]) -> None:
+    def __init__(self, ca: Union[Point, Tuple[float, float]], cb: Union[Point, Tuple[float, float]],
+                 cc: Union[Point, Tuple[float, float]], cd: Union[Point, Tuple[float, float]]) -> None:
         """
         Create a new tag with a given set of corner points.
 
         Corner points are ordered clockwise starting from the top left corner.
-        :param arg0: First corner point
-        :param arg1: Second corner point
-        :param arg2: Third corner point
-        :param arg3: Fourth corner point
+        :param ca: First corner point
+        :param cb: Second corner point
+        :param cc: Third corner point
+        :param cd: Fourth corner point
         """
     @overload
-    def __init__(self, arg0: int, arg1: Union[Point, Tuple[float, float]], arg2: Union[Point, Tuple[float, float]],
-                 arg3: Union[Point, Tuple[float, float]], arg4: Union[Point, Tuple[float, float]]) -> None:
+    def __init__(self, id: int, ca: Union[Point, Tuple[float, float]], cb: Union[Point, Tuple[float, float]],
+                 cc: Union[Point, Tuple[float, float]], cd: Union[Point, Tuple[float, float]]) -> None:
         """
         Create a new tag with a given tag id and set of corner points.
 
         Corner points are ordered clockwise starting from the top left corner.
-        :param arg0: Tag ID
-        :param arg1: First corner point
-        :param arg2: Second corner point
-        :param arg3: Third corner point
-        :param arg4: Fourth corner point
+        :param id: Tag ID
+        :param ca: First corner point
+        :param cb: Second corner point
+        :param cc: Third corner point
+        :param cd: Fourth corner point
         """
     @overload
-    def __init__(self, arg0: float, arg1: Union[Point, Tuple[float, float]], arg2: Union[Point, Tuple[float, float]],
-                 arg3: Union[Point, Tuple[float, float]], arg4: Union[Point, Tuple[float, float]]) -> None:
+    def __init__(self, conf: float, ca: Union[Point, Tuple[float, float]], cb: Union[Point, Tuple[float, float]],
+                 cc: Union[Point, Tuple[float, float]], cd: Union[Point, Tuple[float, float]]) -> None:
         """
         Create a new tag with a given confidence score and set of corner points.
 
         Corner points are ordered clockwise starting from the top left corner.
-        :param arg0: Tag confidence score
-        :param arg1: First corner point
-        :param arg2: Second corner point
-        :param arg3: Third corner point
-        :param arg4: Fourth corner point
+        :param conf: Tag confidence score
+        :param ca: First corner point
+        :param cb: Second corner point
+        :param cc: Third corner point
+        :param cd: Fourth corner point
         """
     @overload
-    def __init__(self, arg0: int, arg1: float, arg2: Union[Point, Tuple[float, float]],
-                 arg3: Union[Point, Tuple[float, float]], arg4: Union[Point, Tuple[float, float]],
-                 arg5: Union[Point, Tuple[float, float]]) -> None:
+    def __init__(self, id: int, conf: float, ca: Union[Point, Tuple[float, float]],
+                 cb: Union[Point, Tuple[float, float]], cc: Union[Point, Tuple[float, float]],
+                 cd: Union[Point, Tuple[float, float]]) -> None:
         """
         Create a new tag with a given tag id, confidence score, and set of corner points.
         
         Corner points are ordered clockwise starting from the top left corner.
-        :param arg0: Tag ID
-        :param arg1: Tag confidence score
-        :param arg2: First corner point
-        :param arg3: Second corner point
-        :param arg4: Third corner point
-        :param arg5: Fourth corner point
+        :param id: Tag ID
+        :param conf: Tag confidence score
+        :param ca: First corner point
+        :param cb: Second corner point
+        :param cc: Third corner point
+        :param cd: Fourth corner point
         """
-    def __getitem__(self, arg0: int) -> Point: ...
+    def __getitem__(self, corner_index: int) -> Point: ...
     def __iter__(self) -> typing.Iterator[Point]: ...
-    def __setitem__(self, arg0: int, arg1: Union[Point, Tuple[float, float]]) -> None: ...
+    def __setitem__(self, corner_index: int, pt: Union[Point, Tuple[float, float]]) -> None: ...
 
 class TagModel(ImageModel):
     def __init__(self) -> None:
@@ -590,16 +590,16 @@ class TagModel(ImageModel):
         Create a new tag model instance. This is a base class and has no inference capabilities.
         """
     @overload
-    def infer(self, arg0: Mat) -> List[Tag]:
+    def infer(self, image: Mat) -> List[Tag]:
         """
         Run a forward pass on a single image
-        :param arg0: Image to send through the model
+        :param image: Image to send through the model
         """
     @overload
-    def infer(self, arg0: List[Mat]) -> List[List[Tag]]:
+    def infer(self, images: List[Mat]) -> List[List[Tag]]:
         """
         Run a forward pass on a batch of images
-        :param arg0: Images to send through the model
+        :param images: Images to send through the model
         """
 
 class TagNetModel(TagModel):
@@ -661,11 +661,11 @@ def letterbox_image(src: Mat, dst: Mat, out_size: tuple) -> List[float]:
     :param dst: Image to write results to
     :param out_size: New image dimensions
     """
-def draw_tags(arg0: Mat, arg1: List[Tag]) -> Mat:
+def draw_tags(image: Mat, tags: List[Tag]) -> Mat:
     """
     Draw tags on a provided image
-    :param arg0: Image to draw tags onto
-    :param arg1: Tags to draw
+    :param image: Image to draw tags onto
+    :param tags: Tags to draw
     """
 @overload
 def fix_detection_coordinates(detections: List[Detection], src_net_size: Tuple[int, int],
@@ -719,67 +719,68 @@ def fix_detection_coordinates(detections: List[List[Detection]], src_net_size: T
     :param target_frame_size: Target image frame size
     :param scaling_mode: Scaling mode to use
     """
-def get_roi_no_padding(arg0: Mat, arg1: Rect) -> Mat:
+def get_roi_no_padding(image: Mat, roi: Rect) -> Mat:
     """
     Get ROI image sample without padding for overhang
-    :param arg0: Source image
-    :param arg1: ROI region
+    :param image: Source image
+    :param roi: ROI region
     """
-def get_roi_with_padding(arg0: Mat, arg1: Rect) -> Mat:
+def get_roi_with_padding(image: Mat, roi: Rect) -> Mat:
     """
     Get ROI image sample, padding for overhang if the region extends out of bounds
-    :param arg0: Source image
-    :param arg1: ROI region
+    :param image: Source image
+    :param roi: ROI region
     """
-def is_roi_outside_image(arg0: Tuple[int, int], arg1: Rect) -> bool:
+def is_roi_outside_image(img_size: Tuple[int, int], roi: Rect) -> bool:
     """
     Check if an ROI is entirely outside the bounds of an image
-    :param arg0: Image size
-    :param arg1: ROI region
+    :param img_size: Image size
+    :param roi: ROI region
     """
 @overload
-def strict_batch_infer(arg0: int, arg1: DetectionModel, arg2: List[Mat], arg3: float, arg4: float) -> List[List[Detection]]:
+def strict_batch_infer(batch_size: int, model: DetectionModel, images: List[Mat], conf_thresh: float,
+                       iou_thresh: float) -> List[List[Detection]]:
     """
     Perform strict batch inference on a provided model.
     The input will be broken up into chunks that match
     the desired batch size, padding with extra images
     if necessary.
-    :param arg0: Desired batch size
-    :param arg1: Detection model
-    :param arg2: Input images
-    :param arg3: Detection confidence threshold
-    :param arg4: Detection IoU threshold
+    :param batch_size: Desired batch size
+    :param model: Detection model
+    :param images: Input images
+    :param conf_thresh: Detection confidence threshold
+    :param iou_thresh: Detection IoU threshold
     """
 @overload
-def strict_batch_infer(arg0: int, arg1: PoseModel, arg2: List[Mat]) -> List[Pose]:
+def strict_batch_infer(batch_size: int, model: PoseModel, images: List[Mat]) -> List[Pose]:
     """
     Perform strict batch inference on a provided model.
     The input will be broken up into chunks that match
     the desired batch size, padding with extra images
     if necessary.
-    :param arg0: Desired batch size
-    :param arg1: Pose model
-    :param arg2: Input images
+    :param batch_size: Desired batch size
+    :param model: Pose model
+    :param images: Input images
     """
 @overload
-def strict_batch_infer(arg0: int, arg1: FeatureModel, arg2: List[Mat]) -> List[Feature]:
+def strict_batch_infer(batch_size: int, model: FeatureModel, images: List[Mat]) -> List[Feature]:
     """
     Perform strict batch inference on a provided model.
     The input will be broken up into chunks that match
     the desired batch size, padding with extra images
     if necessary.
-    :param arg0: Desired batch size
-    :param arg1: Feature model
-    :param arg2: Input images
+    :param batch_size: Desired batch size
+    :param model: Feature model
+    :param images: Input images
     """
 @overload
-def strict_batch_infer(arg0: int, arg1: TagModel, arg2: List[Mat]) -> List[List[Tag]]:
+def strict_batch_infer(batch_size: int, model: TagModel, images: List[Mat]) -> List[List[Tag]]:
     """
     Perform strict batch inference on a provided model.
     The input will be broken up into chunks that match
     the desired batch size, padding with extra images
     if necessary.
-    :param arg0: Desired batch size
-    :param arg1: Tag model
-    :param arg2: Input images
+    :param batch_size: Desired batch size
+    :param model: Tag model
+    :param images: Input images
     """

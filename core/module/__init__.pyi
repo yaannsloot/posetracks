@@ -81,17 +81,17 @@ class Point:
         Create a new point
         """
     @overload
-    def __init__(self, arg0: float, arg1: float) -> None:
+    def __init__(self, x: float, y: float) -> None:
         """
         Create a new point
-        :param arg0: X coordinate
-        :param arg1: Y coordinate
+        :param x: X coordinate
+        :param y: Y coordinate
         """
 	@overload
-    def __init__(self, arg0: Tuple[float, float]) -> None:
+    def __init__(self, coords: Tuple[float, float]) -> None:
         """
         Create a new point
-        :param arg0: Tuple with X, Y coordinates
+        :param coords: Tuple with X, Y coordinates
         """
     def __iter__(self) -> Iterator[float]: ...
     def __getitem__(self, item) -> float: ...
@@ -110,17 +110,17 @@ class Pointf:
         Create a new point. The coordinates are stored internally as single precision FP32 values
         """
     @overload
-    def __init__(self, arg0: float, arg1: float) -> None:
+    def __init__(self, x: float, y: float) -> None:
         """
         Create a new point. The coordinates are stored internally as single precision FP32 values
-        :param arg0: X coordinate
-        :param arg1: Y coordinate
+        :param x: X coordinate
+        :param x: Y coordinate
         """
 	@overload
-    def __init__(self, arg0: Tuple[float, float]) -> None:
+    def __init__(self, coords: Tuple[float, float]) -> None:
         """
         Create a new point. The coordinates are stored internally as single precision FP32 values
-        :param arg0: Tuple with X, Y coordinates
+        :param coords: Tuple with X, Y coordinates
         """
     def __iter__(self) -> Iterator[float]: ...
     def __getitem__(self, item) -> float: ...
@@ -140,12 +140,12 @@ class Point3D:
         Create a new point
         """
     @overload
-    def __init__(self, arg0: float, arg1: float, arg2: float) -> None:
+    def __init__(self, x: float, y: float, z: float) -> None:
         """
         Create a new point
-        :param arg0: X coordinate
-        :param arg1: Y coordinate
-		:param arg2: Z coordinate
+        :param x: X coordinate
+        :param y: Y coordinate
+		:param z: Z coordinate
         """
     def __iter__(self) -> Iterator[float]: ...
     def __getitem__(self, item) -> float: ...
@@ -165,12 +165,12 @@ class Pointf3D:
         Create a new point. The coordinates are stored internally as single precision FP32 values
         """
     @overload
-    def __init__(self, arg0: float, arg1: float, arg2: float) -> None:
+    def __init__(self, x: float, y: float, z: float) -> None:
         """
         Create a new point. The coordinates are stored internally as single precision FP32 values
-        :param arg0: X coordinate
-        :param arg1: Y coordinate
-		:param arg2: Z coordinate
+        :param x: X coordinate
+        :param y: Y coordinate
+		:param z: Z coordinate
         """
     def __iter__(self) -> Iterator[float]: ...
     def __getitem__(self, item) -> float: ...
@@ -191,19 +191,19 @@ class Rect:
         Create a new empty bounding box
         """
     @overload
-    def __init__(self, arg0: float, arg1: float, arg2: float, arg3: float) -> None:
+    def __init__(self, x: float, y: float, width: float, height: float) -> None:
         """
         Create a new bounding box
-        :param arg0: X coordinate of top left corner
-        :param arg1: Y coordinate of top left corner
-        :param arg2: Width of bounding box
-        :param arg3: Height of bounding box
+        :param x: X coordinate of top left corner
+        :param y: Y coordinate of top left corner
+        :param width: Width of bounding box
+        :param height: Height of bounding box
         """
     @overload
-    def __init__(self, arg0: Rect) -> None:
+    def __init__(self, src: Rect) -> None:
         """
         Create a new bounding box by copying an existing one
-        :param arg0: Source bounding box
+        :param src: Source bounding box
         """
     def area(self) -> float:
         """
@@ -211,10 +211,10 @@ class Rect:
         """
     def br(self) -> Point:
         """Get the bottom right corner of this bounding box"""
-    def contains(self, arg0: Point) -> bool:
+    def contains(self, pt: Point) -> bool:
         """
         Check whether a point is inside this bounding box
-        :param arg0: Point to check
+        :param pt: Point to check
         """
     def empty(self) -> bool:
         """True if empty i.e. the box has an area of 0"""
@@ -222,9 +222,9 @@ class Rect:
         """Size of bounding box in (width, height)"""
     def tl(self) -> Point:
         """Get the top left corner of this bounding box"""
-    def __eq__(self, arg0: Rect) -> bool:
+    def __eq__(self, other: Rect) -> bool:
         """Check if the provided bounding box has the same dimensions as this one"""
-    def __ne__(self, arg0: Rect) -> bool:
+    def __ne__(self, other: Rect) -> bool:
         """Check if the provided bounding box does not have the same dimensions as this one"""
 
 class TagDictionary:
@@ -288,33 +288,33 @@ def get_models(model_category: str, attributes: Union[str, List[str], None] = No
     :return: A list of tuples containing a model name and its attributes, or None if no models matched the specified filters
     """
 
-def imread(arg0: str) -> Mat:
+def imread(path: str) -> Mat:
     """
     Read image from file
-    :param arg0: Path to image
+    :param path: Path to image
     """
-def imshow(arg0: str, arg1: Mat) -> None:
+def imshow(win_name: str, img: Mat) -> None:
     """
     Display image in named window
-    :param arg0: Window name
-    :param arg1: Image to display
+    :param win_name: Window name
+    :param img: Image to display
     """
-def imwrite(arg0: str, arg1: Mat) -> None:
+def imwrite(path: str, img: Mat) -> None:
     """
     Write image to file
-    :param arg0: Output path
-    :param arg1: Image to export
+    :param path: Output path
+    :param img: Image to export
     """
-def resize_img(arg0: Mat, arg1: Tuple[int, int]) -> Mat:
+def resize_img(img_src: Mat, dims: Tuple[int, int]) -> Mat:
     """
     Resize image to new dimensions
-    :param arg0: Input image
-    :param arg1: New dimensions in (width, height)
+    :param img_src: Input image
+    :param dims: New dimensions in (width, height)
     """
-def waitKey(arg0: int) -> int:
+def waitKey(msec: int) -> int:
     """
     Wait for a given period of time or until a key is pressed, whichever happens first
-    :param arg0: Time to wait in milliseconds. If 0 will wait indefinitely.
+    :param msec: Time to wait in milliseconds. If 0 will wait indefinitely.
     """
 def model_path(model_file: str) -> str:
     """
