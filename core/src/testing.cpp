@@ -1,6 +1,6 @@
 /*
-This file is hot garbage
-It will be removed eventually
+This file is a mess. It's primary use was to test modules as they were written.
+Better testing targets will be added in the near future.
 
 Copyright (C) 2024 Ian Sloat
 
