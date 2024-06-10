@@ -1,0 +1,1 @@
+This folder contains all the licenses for 3rd party dependencies used by the project. These get packaged with builds for redistribution. I cannot guarantee that **ALL** of the licenses are currently present. Some of them still need to be retrieved from OpenCV. 
