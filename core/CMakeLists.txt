@@ -35,9 +35,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Required packages
 find_package(OpenCV REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(protobuf REQUIRED)
-find_package(glog REQUIRED)
+find_package(Ceres REQUIRED)
 
 # Optional cuda files
 message("Looking for CUDA and CUDNN...")
