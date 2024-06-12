@@ -69,6 +69,10 @@ class TrackManagerUIPanel(bpy.types.Panel):
         else:
             row_ops.operator("motionengine.lock_tracks_operator", icon='UNLOCKED', text='')
 
+        mute_ops = layout.row(align=True)
+        mute_ops.operator("motionengine.mute_tracks_operator")
+        mute_ops.operator("motionengine.unmute_tracks_operator")
+
         if utils.is_valid_joint_name(active_track.name):
             split_name = active_track.name.split('.')
             joint_id = int(split_name[-1])
