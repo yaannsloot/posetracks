@@ -90,7 +90,11 @@ def get_msvc_versions():
     if not os.path.exists(vswhere_path):
         print('Downloading vswhere.exe...')
         download_file(vswhere_dl, download_dir)
-    vswhere_output = invoke_command_output(vswhere_path).decode('utf-8')
+    product_prefix = 'Microsoft.VisualStudio.Product'
+    products = ['BuildTools', 'Community', 'Professional', 'Enterprise']
+    products = [f'{product_prefix}.{prod}' for prod in products]
+    products.insert(0, '-products')
+    vswhere_output = invoke_command_output(vswhere_path, *products).decode('utf-8')
     buf = io.StringIO(vswhere_output)
     all_versions = {}
     current_ver = {}
