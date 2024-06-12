@@ -178,7 +178,13 @@ def check_ceres(cmake_generator):
     invoke_command('cmake', '--build', gflags_build_path, '--config', 'Release')
     invoke_command('cmake', '--install', gflags_build_path, '--prefix',
                    os.path.join(gflags_build_path, 'install'))
-    eigen_cmake_dir = os.path.join(eigen_path, 'cmake')
+    print('Setting up Eigen...')
+    invoke_command('cmake', '-S', eigen_path, '-B', eigen_build_path, '-G', cmake_generator,
+                   '-DBUILD_TESTING=OFF')
+    invoke_command('cmake', '--build', eigen_build_path, '--config', 'Release')
+    invoke_command('cmake', '--install', eigen_build_path, '--prefix',
+                   os.path.join(eigen_build_path, 'install'))
+    eigen_cmake_dir = os.path.join(eigen_build_path, 'install', 'share', 'eigen3', 'cmake')
     glog_cmake_dir = os.path.join(glog_build_path, 'install', 'lib', 'cmake', 'glog')
     gflags_cmake_dir = os.path.join(gflags_build_path, 'install', 'lib', 'cmake', 'gflags')
     print('Building Ceres Solver...')
