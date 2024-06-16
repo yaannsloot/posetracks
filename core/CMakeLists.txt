@@ -40,7 +40,7 @@ find_package(Ceres REQUIRED)
 # Optional cuda files
 message("Looking for CUDA and CUDNN...")
 set(CUDA_LIBRARIES)
-set(USING_CUDA OFF)
+option(USING_CUDA OFF)
 find_package(CUDAToolkit)
 find_package(CUDNN)
 if(CUDAToolkit_FOUND AND CUDNN_FOUND)
