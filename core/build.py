@@ -36,6 +36,7 @@ glog_dl = "https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz"
 gflags_dl = "https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz"
 ceres_dl = "http://ceres-solver.org/ceres-solver-2.2.0.tar.gz"
 pybind_dl = "https://github.com/pybind/pybind11/archive/refs/tags/v2.12.0.tar.gz"
+zlib_dl = "http://www.winimage.com/zLibDll/zlib123dllx64.zip"
 
 
 def fullpath(path):
@@ -131,8 +132,10 @@ def find_pkg_root(pkg_prefix):
     return pkg_path
 
 
-def find_package(name, source):
+def find_package(name, source, root_dir=''):
     extract_dir = fullpath(download_dir)
+    if len(root_dir) > 0:
+        extract_dir = os.path.join(extract_dir, root_dir)
     a = urlparse(source)
     src_name = os.path.basename(a.path)
     src_ext = os.path.splitext(src_name)[1]
@@ -246,6 +249,10 @@ def check_onnx():
             onnxruntime_providers_tensorrt_dll, onnxruntime_providers_tensorrt_lib)
 
 
+def check_zlib():
+    zlib_path = find_package('zlib', zlib_dl, 'zlib')
+    return os.path.join(zlib_path[0], 'dll_x64', 'zlibwapi.dll')
+
 def main():
     # Setup
     prepare_directory(download_dir, False)
@@ -270,6 +277,8 @@ def main():
     invoke_command('cmake', '--install', pybind_build_path, '--prefix',
                    os.path.join(pybind_build_path, 'install'))
     pybind_cmake = os.path.join(pybind_build_path, 'install', 'share', 'cmake', 'pybind11')
+    print('Checking for zlib...')
+    zlib_shared_path = check_zlib()
 
     # Build
     print('Building MotionEngine Core...')
@@ -290,6 +299,7 @@ def main():
     shutil.copy(onnx_vars[4], me_redis_bin_path)
     shutil.copy(onnx_vars[6], me_redis_bin_path)
     shutil.copy(onnx_vars[8], me_redis_bin_path)
+    shutil.copy(zlib_shared_path, me_redis_bin_path)
     print('Build complete!')
 
 
