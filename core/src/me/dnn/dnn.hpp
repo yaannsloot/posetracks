@@ -327,11 +327,11 @@ namespace me::dnn {
 
 	std::vector<size_t> nms(std::vector<Detection>& detections, float iou_thresh);
 
-	std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = false);
+	std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size);
 
-	std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = false);
+	std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size);
 
-	void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda = false);
+	void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size);
 
 	bool checkForProvider(const std::string provider_str);
 

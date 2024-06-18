@@ -15,7 +15,6 @@ set(ADDITIONAL_COMPILE_OPTIONS)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options(
         /bigobj
-        /W4
         /arch:AVX2
         /Ob2
         /Oi
@@ -37,24 +36,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
 
-# Optional cuda files
-message("Looking for CUDA and CUDNN...")
-set(CUDA_LIBRARIES)
-option(USING_CUDA OFF)
-find_package(CUDAToolkit)
-find_package(CUDNN)
-if(CUDAToolkit_FOUND AND CUDNN_FOUND)
-    message("Found CUDA and CUDNN.")
-    set(CUDA_LIBRARIES
-        CUDA::cudart
-        CUDA::curand
-        CUDA::cublas
-        CUDA::cuda_driver
-        ${CUDNN_LIBRARIES}
-    )
-    set(USING_CUDA ON)
-endif()
-
 # Find onnxruntime which has no cmake support
 message("Looking for ONNXRuntime...")
 find_path(ONNXRUNTIME_ROOT_DIR NO_DEFAULT_PATH REQUIRED)
@@ -74,6 +55,7 @@ set(ONNXRUNTIME_LIBRARIES
     ${ONNXRUNTIME_LIBRARY_SHARED}
 )
 
+option(USING_CUDA ON)
 
 if(USING_CUDA)
     message("Looking for ONNXRuntime CUDA extensions...")
@@ -93,12 +75,6 @@ if(USING_CUDA)
         ${ONNXRUNTIME_LIBRARY_TENSORRT}
     )
 endif()
-
-option(USE_CUDA_IMGPROC OFF)
-
-if(USE_CUDA_IMGPROC)
-    add_definitions(-DME_CUDA_IMGPROC_ENABLED)
-endif(USE_CUDA_IMGPROC)
 
 if(USING_CUDA)
     add_definitions(-DME_CUDA_ENABLED)
@@ -137,7 +113,6 @@ add_executable(MEPoseTest ${SOURCES_ME_POSE_TEST})
 # Test linking
 target_link_libraries(MEPoseTest PRIVATE
     ${OpenCV_LIBS}
-    ${CUDA_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
     me_objects
 )

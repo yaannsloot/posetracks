@@ -11,7 +11,6 @@ target_link_libraries(MEPython.cp311 PRIVATE
     ${OpenCV_LIBS}
     Python::Python
     pybind11::module
-    ${CUDA_LIBRARIES}
     ${ONNXRUNTIME_LIBRARIES}
     me_objects
 )

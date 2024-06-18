@@ -10,7 +10,6 @@
 !/.gitignore
 
 # Allow specific directories
-!/cmake
 !/module
 !/src
 !/cmake/*

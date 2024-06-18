@@ -19,12 +19,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "dnn.hpp"
 
-#ifdef ME_CUDA_IMGPROC_ENABLED
-#include <opencv2/cudaimgproc.hpp>
-#include <opencv2/cudawarping.hpp>
-#include <opencv2/cudaarithm.hpp>
-#endif
-
 #include <onnxruntime_cxx_api.h>
 #include <execution>
 
@@ -697,7 +691,7 @@ namespace me::dnn {
 		return selected_indices;
 	}
 
-	std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {
+	std::vector<float> LetterboxImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size) {
 		auto in_h = static_cast<float>(src.rows);
 		auto in_w = static_cast<float>(src.cols);
 		float out_h = (float)out_size.height;
@@ -713,34 +707,14 @@ namespace me::dnn {
 		int left = (static_cast<int>(out_w) - mid_w) / 2;
 		int right = (static_cast<int>(out_w) - mid_w + 1) / 2;
 
-#ifdef ME_CUDA_IMGPROC_ENABLED
-		if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
-			cv::cuda::GpuMat gpuIn;
-			cv::cuda::GpuMat gpuOut;
-
-			gpuIn.upload(src);
-
-			cv::cuda::resize(gpuIn, gpuOut, cv::Size(mid_w, mid_h));
-
-			cv::cuda::copyMakeBorder(gpuOut, gpuOut, top, down, left, right, cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
-
-			gpuOut.download(dst);
-#else
-		if (use_cuda) {
-			cv::resize(src, dst, cv::Size(mid_w, mid_h));
-			cv::copyMakeBorder(dst, dst, top, down, left, right, cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
-#endif
-		}
-		else {
-			cv::resize(src, dst, cv::Size(mid_w, mid_h));
-			cv::copyMakeBorder(dst, dst, top, down, left, right, cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
-		}
+		cv::resize(src, dst, cv::Size(mid_w, mid_h));
+		cv::copyMakeBorder(dst, dst, top, down, left, right, cv::BORDER_CONSTANT, cv::Scalar(114, 114, 114));
 
 		std::vector<float> pad_info{ static_cast<float>(left), static_cast<float>(top), scale };
 		return pad_info;
 	}
 
-	std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {
+	std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size) {
 		auto in_h = static_cast<float>(src.rows);
 		auto in_w = static_cast<float>(src.cols);
 		float out_h = (float)out_size.height;
@@ -756,56 +730,16 @@ namespace me::dnn {
 		int top = (mid_h - static_cast<int>(out_h)) / 2;
 		int left = (mid_w - static_cast<int>(out_w)) / 2;
 
-#ifdef ME_CUDA_IMGPROC_ENABLED
-		if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
-			cv::cuda::GpuMat gpuIn;
-			cv::cuda::GpuMat gpuOut;
-
-			gpuIn.upload(src);
-
-			cv::cuda::resize(gpuIn, gpuOut, cv::Size(mid_w, mid_h));
-
-			// Crop the image to the output size
-			cv::cuda::GpuMat gpuCrop(gpuOut, cv::Rect(left, top, out_w, out_h));
-			gpuCrop.download(dst);
-		}
-#else
-		if (use_cuda) {
-			cv::resize(src, dst, cv::Size(mid_w, mid_h));
-			// Crop the image to the output size
-			dst = dst(cv::Rect(left, top, out_w, out_h));
-		}
-#endif
-		else {
-			cv::resize(src, dst, cv::Size(mid_w, mid_h));
-			// Crop the image to the output size
-			dst = dst(cv::Rect(left, top, out_w, out_h));
-		}
+		cv::resize(src, dst, cv::Size(mid_w, mid_h));
+		// Crop the image to the output size
+		dst = dst(cv::Rect(left, top, out_w, out_h));
 
 		std::vector<float> pad_info{ static_cast<float>(left), static_cast<float>(top), scale };
 		return pad_info;
 	}
 
-	void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size, bool use_cuda) {
-#ifdef ME_CUDA_IMGPROC_ENABLED
-		if (cv::cuda::getCudaEnabledDeviceCount() > 0 && use_cuda) {
-			cv::cuda::GpuMat gpuIn;
-			cv::cuda::GpuMat gpuOut;
-
-			gpuIn.upload(src);
-
-			cv::cuda::resize(gpuIn, gpuOut, out_size);
-
-			gpuOut.download(dst);
-		}
-#else
-		if (use_cuda) {
-			cv::resize(src, dst, out_size);
-		}
-#endif
-		else {
-			cv::resize(src, dst, out_size);
-		}
+	void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size) {
+		cv::resize(src, dst, out_size);
 	}
 
 	bool checkForProvider(const std::string provider_str) {
