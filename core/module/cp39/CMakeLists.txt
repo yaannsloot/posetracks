@@ -8,11 +8,9 @@ find_package(pybind11 REQUIRED)
 add_library(MEPython.cp39 SHARED ${SOURCES_MOTIONENGINE_PYBIND})
 
 target_link_libraries(MEPython.cp39 PRIVATE
-    ${OpenCV_LIBS}
+    ${LINK_LIST_BASE}
     Python::Python
     pybind11::module
-    ${ONNXRUNTIME_LIBRARIES}
-    me_objects
 )
 
 target_compile_features(MEPython.cp39 PRIVATE cxx_std_17)

@@ -20,6 +20,7 @@ import os
 import shutil
 import zipfile
 import tarfile
+import platform
 import subprocess
 import urllib.request
 from urllib.parse import urlparse
@@ -28,7 +29,8 @@ download_dir = '3rd_party'
 
 # Download links to required packages and tools
 vswhere_dl = "https://github.com/microsoft/vswhere/releases/download/3.1.7/vswhere.exe"
-onnxruntime_dl = "https://github.com/microsoft/onnxruntime/releases/download/v1.18.0/onnxruntime-win-x64-gpu-cuda12-1.18.0.zip"
+onnxruntime_dl_win = "https://github.com/microsoft/onnxruntime/releases/download/v1.18.0/onnxruntime-win-x64-gpu-cuda12-1.18.0.zip"
+onnxruntime_dl_linux = "https://github.com/microsoft/onnxruntime/releases/download/v1.18.0/onnxruntime-linux-x64-gpu-cuda12-1.18.0.tgz"
 opencv_dl = "https://github.com/opencv/opencv/archive/refs/tags/4.10.0.tar.gz"
 opencv_contrib_dl = "https://github.com/opencv/opencv_contrib/archive/refs/tags/4.10.0.tar.gz"
 eigen_dl = "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz"
@@ -36,7 +38,16 @@ glog_dl = "https://github.com/google/glog/archive/refs/tags/v0.6.0.tar.gz"
 gflags_dl = "https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz"
 ceres_dl = "http://ceres-solver.org/ceres-solver-2.2.0.tar.gz"
 pybind_dl = "https://github.com/pybind/pybind11/archive/refs/tags/v2.12.0.tar.gz"
-zlib_dl = "http://www.winimage.com/zLibDll/zlib123dllx64.zip"
+zlib_dl_win = "http://www.winimage.com/zLibDll/zlib123dllx64.zip"
+
+# Platform vars
+pathsep = os.path.pathsep
+if platform.system() == 'Linux':
+    build_platform = 'linux'
+elif platform.system() == 'Windows':
+    build_platform = 'windows'
+else:
+    build_platform = 'mac'
 
 
 def fullpath(path):
@@ -214,26 +225,45 @@ def check_opencv(cmake_generator, ceres_cmake):
                    f'-DOPENCV_EXTRA_MODULES_PATH={os.path.join(opencv_contrib_path, "modules")}',
                    '-DBUILD_JAVA=OFF', '-DBUILD_opencv_python3=OFF', '-DBUILD_opencv_python_bindings_generator=OFF',
                    '-DBUILD_opencv_python_tests=OFF', '-DWITH_CUDA=OFF', '-DBUILD_PERF_TESTS=OFF', '-DBUILD_TESTS=OFF',
-                   '-DBUILD_opencv_apps=OFF')
+                   '-DBUILD_opencv_apps=OFF', '-DBUILD_opencv_wechat_qrcode=OFF')
     invoke_command('cmake', '--build', opencv_build_path, '--config', 'Release')
     invoke_command('cmake', '--install', opencv_build_path, '--prefix',
                    os.path.join(opencv_build_path, 'install'))
-    opencv_install_dir = os.path.join(opencv_build_path, 'install', 'x64')
-    return os.path.join(opencv_install_dir, os.listdir(opencv_install_dir)[0], 'staticlib')
+    if build_platform == 'windows':
+        opencv_install_dir = os.path.join(opencv_build_path, 'install', 'x64')
+        return os.path.join(opencv_install_dir, os.listdir(opencv_install_dir)[0], 'staticlib')
+    elif build_platform == 'linux':
+        return os.path.join(opencv_build_path, 'install', 'lib', 'cmake', 'opencv4')
+    else:
+        return # put macos stuff here
 
 
 def check_onnx():
-    onnx_path, _ = find_package('onnxruntime', onnxruntime_dl)
+    if build_platform == 'windows':
+        onnx_path, _ = find_package('onnxruntime', onnxruntime_dl_win)
+    elif build_platform == 'linux':
+        onnx_path, _ = find_package('onnxruntime', onnxruntime_dl_linux)
     onnx_path_lib = os.path.join(onnx_path, 'lib')
     onnx_path_include = os.path.join(onnx_path, 'include')
-    onnxruntime_dll = os.path.join(onnx_path_lib, 'onnxruntime.dll')
-    onnxruntime_lib = os.path.join(onnx_path_lib, 'onnxruntime.lib')
-    onnxruntime_providers_cuda_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_cuda.dll')
-    onnxruntime_providers_cuda_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_cuda.lib')
-    onnxruntime_providers_shared_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_shared.dll')
-    onnxruntime_providers_shared_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_shared.lib')
-    onnxruntime_providers_tensorrt_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_tensorrt.dll')
-    onnxruntime_providers_tensorrt_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_tensorrt.lib')
+    if build_platform == 'windows':
+        onnxruntime_dll = os.path.join(onnx_path_lib, 'onnxruntime.dll')
+        onnxruntime_lib = os.path.join(onnx_path_lib, 'onnxruntime.lib')
+        onnxruntime_providers_cuda_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_cuda.dll')
+        onnxruntime_providers_cuda_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_cuda.lib')
+        onnxruntime_providers_shared_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_shared.dll')
+        onnxruntime_providers_shared_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_shared.lib')
+        onnxruntime_providers_tensorrt_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_tensorrt.dll')
+        onnxruntime_providers_tensorrt_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_tensorrt.lib')
+    # For linux just set the .so files for both lib and dll vars
+    elif build_platform == 'linux':
+        onnxruntime_dll = os.path.join(onnx_path_lib, 'libonnxruntime.so.1.18.0')
+        onnxruntime_lib = os.path.join(onnx_path_lib, 'libonnxruntime.so.1.18.0')
+        onnxruntime_providers_cuda_dll = os.path.join(onnx_path_lib, 'libonnxruntime_providers_cuda.so')
+        onnxruntime_providers_cuda_lib = os.path.join(onnx_path_lib, 'libonnxruntime_providers_cuda.so')
+        onnxruntime_providers_shared_dll = os.path.join(onnx_path_lib, 'libonnxruntime_providers_shared.so')
+        onnxruntime_providers_shared_lib = os.path.join(onnx_path_lib, 'libonnxruntime_providers_shared.so')
+        onnxruntime_providers_tensorrt_dll = os.path.join(onnx_path_lib, 'libonnxruntime_providers_tensorrt.so')
+        onnxruntime_providers_tensorrt_lib = os.path.join(onnx_path_lib, 'libonnxruntime_providers_tensorrt.so')
     include_check = os.path.exists(onnx_path_include)
     base_lib_check = os.path.exists(onnxruntime_dll) and os.path.exists(onnxruntime_lib)
     cuda_lib_check = os.path.exists(onnxruntime_providers_cuda_dll) and os.path.exists(onnxruntime_providers_cuda_lib)
@@ -249,20 +279,19 @@ def check_onnx():
             onnxruntime_providers_tensorrt_dll, onnxruntime_providers_tensorrt_lib)
 
 
-def check_zlib():
-    zlib_path = find_package('zlib', zlib_dl, 'zlib')
-    return os.path.join(zlib_path[0], 'dll_x64', 'zlibwapi.dll')
-
 def main():
     # Setup
     prepare_directory(download_dir, False)
-    print('Checking for MSVC...')
-    msvc_vers = get_msvc_versions()
-    if len(msvc_vers) == 0:
-        print('ERROR: Could not find MSVC build tools. Aborting...')
-    msvc = msvc_vers[0]
-    generator = msvc[1]['cmake_generator']
-    print(f'Found {msvc[0]}')
+    if build_platform == 'windows':
+        print('Checking for MSVC...')
+        msvc_vers = get_msvc_versions()
+        if len(msvc_vers) == 0:
+            print('ERROR: Could not find MSVC build tools. Aborting...')
+        msvc = msvc_vers[0]
+        generator = msvc[1]['cmake_generator']
+        print(f'Found {msvc[0]}')
+    else:
+        generator = 'Unix Makefiles'
     print('Checking for Ceres Solver...')
     ceres_cmake = check_ceres(generator)
     print('Checking for OpenCV...')
@@ -277,8 +306,10 @@ def main():
     invoke_command('cmake', '--install', pybind_build_path, '--prefix',
                    os.path.join(pybind_build_path, 'install'))
     pybind_cmake = os.path.join(pybind_build_path, 'install', 'share', 'cmake', 'pybind11')
-    print('Checking for zlib...')
-    zlib_shared_path = check_zlib()
+    if build_platform == 'windows':
+        print('Checking for zlib...')
+        zlib_path = find_package('zlib', zlib_dl_win, 'zlib')
+        zlib_shared_path = os.path.join(zlib_path[0], 'dll_x64', 'zlibwapi.dll')
 
     # Build
     print('Building MotionEngine Core...')
@@ -289,17 +320,21 @@ def main():
     print(me_prefix_path)
     invoke_command('cmake', '-S', me_path, '-B', me_build_path, '-G', generator,
                    f'-DCMAKE_PREFIX_PATH={me_prefix_path}', f'-DONNXRUNTIME_ROOT_DIR={onnx_vars[0]}',
-                   f'-DONNXRUNTIME_INCLUDE_DIR={onnx_vars[1]}')
+                   f'-DONNXRUNTIME_INCLUDE_DIR={onnx_vars[1]}', '-DUSING_CUDA=ON')
     invoke_command('cmake', '--build', me_build_path, '--config', 'Release')
     invoke_command('cmake', '--install', me_build_path)
     me_redis_path = os.path.join(me_build_path, 'redis')
-    me_redis_bin_path = os.path.join(me_redis_path, 'bin')
+    if build_platform == 'windows':
+        me_redis_bin_path = os.path.join(me_redis_path, 'bin')
+    else:
+        me_redis_bin_path = os.path.join(me_redis_path, 'lib')
     prepare_directory(me_redis_bin_path)
     shutil.copy(onnx_vars[2], me_redis_bin_path)
     shutil.copy(onnx_vars[4], me_redis_bin_path)
     shutil.copy(onnx_vars[6], me_redis_bin_path)
     shutil.copy(onnx_vars[8], me_redis_bin_path)
-    shutil.copy(zlib_shared_path, me_redis_bin_path)
+    if build_platform == 'windows':
+        shutil.copy(zlib_shared_path, me_redis_bin_path)
     print('Build complete!')
 
 

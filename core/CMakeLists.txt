@@ -76,10 +76,6 @@ if(USING_CUDA)
     )
 endif()
 
-if(USING_CUDA)
-    add_definitions(-DME_CUDA_ENABLED)
-endif()
-
 # include directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -110,12 +106,20 @@ endforeach()
 # Testing targets
 add_executable(MEPoseTest ${SOURCES_ME_POSE_TEST})
 
-# Test linking
-target_link_libraries(MEPoseTest PRIVATE
+set(LINK_LIST_BASE
     ${OpenCV_LIBS}
     ${ONNXRUNTIME_LIBRARIES}
     me_objects
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
+     OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+)
+    set(LINK_LIST_BASE tbb ${LINK_LIST_BASE})
+endif()
+
+# Test linking
+target_link_libraries(MEPoseTest PRIVATE ${LINK_LIST_BASE})
 
 # Test compile flags
 target_compile_features(MEPoseTest PRIVATE cxx_std_17)
