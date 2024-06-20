@@ -62,7 +62,7 @@ cython_debug/
 # Project specific ignores
 /MotionEngine/bin/
 /motionengine_trt_cache
-/*.zip
-/*.txt
-/*.onnx
+*.zip
+*.txt
+*.onnx
 *.pyc
