@@ -1,6 +1,8 @@
 {
   "feature_extraction": {
-    "driver": "dnn.GenericFeatureModel",
-    "download_link": "https://drive.google.com/uc?export=download&id=1ChWRrii44p4BFvsgVXMQSi56lWwuLGFV"
+    "shufflenetv2_person_100": {
+      "driver": "dnn.GenericFeatureModel",
+      "download_link": "https://drive.google.com/uc?export=download&id=1ChWRrii44p4BFvsgVXMQSi56lWwuLGFV"
+    }
   }
 }

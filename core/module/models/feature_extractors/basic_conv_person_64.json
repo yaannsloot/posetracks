@@ -1,6 +1,8 @@
 {
   "feature_extraction": {
-    "driver": "dnn.GenericFeatureModel",
-    "download_link": "https://drive.google.com/uc?export=download&id=1bCPo6fAYux-fvBwGQOipril8slm9U1h_"
+    "basic_conv_person_64": {
+      "driver": "dnn.GenericFeatureModel",
+      "download_link": "https://drive.google.com/uc?export=download&id=1bCPo6fAYux-fvBwGQOipril8slm9U1h_"
+    }
   }
 }

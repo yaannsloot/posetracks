@@ -1,6 +1,8 @@
 {
   "tag_detection": {
-    "driver": "dnn.TagNetModel",
-    "download_link": "https://drive.google.com/uc?export=download&id=1T90mTIyTH2s1dR_mXBHaHq_90_YEIVNY"
+    "basic_reg_v1": {
+      "driver": "dnn.TagNetModel",
+      "download_link": "https://drive.google.com/uc?export=download&id=1T90mTIyTH2s1dR_mXBHaHq_90_YEIVNY"
+    }
   }
 }

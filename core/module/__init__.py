@@ -185,7 +185,7 @@ class model_dict(dict):
         if os.path.exists(self['path']):
             return
         print(f"Downloading {os.path.basename(self['path'])}")
-        urllib.request.urlretrieve(self['download_file'], self['path'])
+        urllib.request.urlretrieve(self['download_link'], self['path'])
 
 
 def _update_model_dict():
