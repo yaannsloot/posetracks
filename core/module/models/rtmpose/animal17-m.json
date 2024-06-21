@@ -7,7 +7,8 @@
 			"precision_ap": 72.2,
 			"depth_class": 2,
 			"gflops": 2.57,
-			"keypoints": 17
+			"keypoints": 17,
+			"download_link": "https://drive.google.com/uc?export=download&id=1EL19v_m7I6ocw4MDD5-g-vd5sYzCtsyn"
 		}
 	}
 }

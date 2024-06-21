@@ -88,7 +88,8 @@
 			"precision_ap": 50.1,
 			"depth_class": 4,
 			"gflops": 155.6,
-			"mparams": 54.2
+			"mparams": 54.2,
+			"download_link": "https://drive.google.com/uc?export=download&id=1lzS_HgrDG7RHe-P5iP00YDlmAdawSADQ"
 		}
 	}
 }

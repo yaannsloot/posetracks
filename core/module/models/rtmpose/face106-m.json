@@ -7,7 +7,8 @@
 			"precision_nme": 1.44,
 			"depth_class": 2,
 			"gflops": 2.852,
-			"keypoints": 106
+			"keypoints": 106,
+			"download_link": "https://drive.google.com/uc?export=download&id=1FdBLuEZjjzvZ3DTBo5kOKY3_-Vnql5zZ"
 		}
 	}
 }
