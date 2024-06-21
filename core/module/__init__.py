@@ -19,7 +19,7 @@ import os
 import sys
 import json
 import importlib
-from typing import Union
+import urllib.request
 
 # Temporarily add module directory to environment
 _old_path = os.environ.get('PATH', '')
@@ -110,6 +110,7 @@ _pyc.Pointf.__getitem__ = _point_getitem_func
 _pyc.Pointf.__setitem__ = _point_setitem_func
 _pyc.Pointf.__len__ = _point_len_func
 
+
 class Point3dIterator:
     def __init__(self, point):
         self.point = point
@@ -179,6 +180,14 @@ def _find_driver(drv_attr_path):
     return result
 
 
+class model_dict(dict):
+    def fetch(self):
+        if os.path.exists(self['path']):
+            return
+        print(f"Downloading {os.path.basename(self['path'])}")
+        urllib.request.urlretrieve(self['download_file'], self['path'])
+
+
 def _update_model_dict():
     m = {}
     for dirpath, dirnames, filenames in os.walk(_model_dir):
@@ -191,12 +200,10 @@ def _update_model_dict():
                     model_def = json.load(f)
                 except json.JSONDecodeError as e:
                     continue
-            for category in model_def:
-                cat_models = model_def[category]
-                for cat_model in cat_models:
+            for category, cat_models in model_def.items():
+                for cat_model, cat_model_def in cat_models.items():
                     cat_model_path = f'{os.path.join(dirpath, cat_model)}.onnx'
-                    cat_model_def = cat_models[cat_model]
-                    if not os.path.exists(cat_model_path):
+                    if not os.path.exists(cat_model_path) and 'download_link' not in cat_model_def:
                         continue
                     resolved_driver = _find_driver(cat_model_def['driver'])
                     if resolved_driver is None:
@@ -205,7 +212,7 @@ def _update_model_dict():
                     cat_model_def['path'] = cat_model_path
                     if category not in m:
                         m[category] = {}
-                    m[category][cat_model] = cat_model_def
+                    m[category][cat_model] = model_dict(cat_model_def)
     return m
 
 
