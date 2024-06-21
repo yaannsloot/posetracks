@@ -33,7 +33,8 @@ pose_model = me.dnn.PoseModel()
 
 
 class TaskSettings:
-    def __init__(self, clip_info: utils.ClipTrackingData, pose_model_path, pose_driver, pose_exec=me.dnn.CUDA,
+    def __init__(self, clip_info: utils.ClipTrackingData, pose_model_path, pose_driver, pose_model_dict,
+                 pose_exec=me.dnn.CUDA,
                  batch_size=32):
         self.clip_info = clip_info
         self.pose_model_path = pose_model_path
@@ -41,6 +42,7 @@ class TaskSettings:
             self.pose_driver = pose_driver[0]
         else:
             self.pose_driver = pose_driver
+        self.pose_model_dict = pose_model_dict
         self.pose_exec = pose_exec
         self.batch_size = batch_size
 
@@ -85,6 +87,13 @@ def pose_task(task_settings: TaskSettings):
         pose_model = task_settings.pose_driver()
         event_queue.put(events.InfoEvent('Loading pose model...',
                                          f'Loading model {task_settings.pose_model_path}'))
+        try:
+            task_settings.pose_model_dict.fetch()
+        except:
+            event_queue.put(events.ErrorEvent('Failed to download pose model',
+                                              'An exception occurred while downloading pose model: '
+                                              f'{traceback.format_exc()}'))
+            return
         pose_model.load(task_settings.pose_model_path, task_settings.pose_exec)
         if not pose_model.is_loaded():
             event_queue.put(events.ErrorEvent('Failed to load pose model',
@@ -286,6 +295,7 @@ class DetectPosesOperator(bpy.types.Operator):
             utils.ClipTrackingData(current_clip),
             pose_model_path,
             pose_model_driver,
+            pose_model_sel,
             pose_exec
         )
 

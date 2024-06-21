@@ -41,8 +41,10 @@ tag_model = me.dnn.FeatureModel()
 
 
 class TaskSettings:
-    def __init__(self, clip_info: utils.ClipInfo, det_model_path, det_driver, tag_model_path='',
-                 tag_driver=me.dnn.CVTagDetector,
+    def __init__(self, clip_info: utils.ClipInfo, det_model_path, det_driver, tag_model_path,
+                 tag_driver,
+                 det_model_dict,
+                 tag_model_dict,
                  det_exec=me.dnn.CUDA,
                  tag_exec=me.dnn.CUDA,
                  det_conf=0.5,
@@ -62,6 +64,8 @@ class TaskSettings:
             self.tag_driver = tag_driver[0]
         else:
             self.tag_driver = tag_driver
+        self.det_model_dict = det_model_dict
+        self.tag_model_dict = tag_model_dict
         self.det_exec = det_exec
         self.tag_exec = tag_exec
         self.det_conf = det_conf
@@ -107,6 +111,13 @@ def tag_task(task_settings: TaskSettings):
         else:
             event_queue.put(events.InfoEvent('Loading tag model...',
                                              f'Loading model {task_settings.tag_model_path}'))
+            try:
+                task_settings.tag_model_dict.fetch()
+            except:
+                event_queue.put(events.ErrorEvent('Failed to download tag model',
+                                                  'An exception occurred while downloading tag model: '
+                                                  f'{traceback.format_exc()}'))
+                return
             tag_model.load(task_settings.tag_model_path, task_settings.tag_exec)
             if not tag_model.is_loaded():
                 event_queue.put(events.ErrorEvent('Failed to load tag model',
@@ -115,6 +126,13 @@ def tag_task(task_settings: TaskSettings):
         det_model = task_settings.det_driver()
         event_queue.put(events.InfoEvent('Loading detection model...',
                                          f'Loading model {task_settings.det_model_path}'))
+        try:
+            task_settings.det_model_dict.fetch()
+        except:
+            event_queue.put(events.ErrorEvent('Failed to download detection model',
+                                              'An exception occurred while downloading detection model: '
+                                              f'{traceback.format_exc()}'))
+            return
         det_model.load(task_settings.det_model_path, task_settings.det_exec)
         if not det_model.is_loaded():
             event_queue.put(events.ErrorEvent('Failed to load detection model',
@@ -306,9 +324,18 @@ class DetectTagsOperator(bpy.types.Operator):
         except ValueError:
             target_dict = me.DICT_4X4_50
 
+        tag_model_sel = {}
         if properties.tag_detector_type_enum == 'ML':
-            tag_model_path = me.model_path('TagNet/basic_reg_v1.onnx')
-            tag_model_driver = me.dnn.TagNetModel
+            tag_models = me.get_models('tag_detection')
+            for t in tag_models:
+                if t[0] == 'basic_reg_v1':
+                    tag_model_sel = t[1]
+                    break
+            if not tag_model_sel:
+                self.report({'ERROR'}, 'Could not find suitable model based on provided settings')
+                return {'FINISHED'}
+            tag_model_path = tag_model_sel['path']
+            tag_model_driver = tag_model_sel['driver']
             self.last_tag_type = 'ML'
         else:
             tag_model_path = ''
@@ -323,6 +350,8 @@ class DetectTagsOperator(bpy.types.Operator):
             det_model_driver,
             tag_model_path,
             tag_model_driver,
+            det_model_sel,
+            tag_model_sel,
             det_exec,
             tag_exec,
             properties.det_tag_conf,

@@ -33,6 +33,8 @@ feat_model = me.dnn.FeatureModel()
 
 class TaskSettings:
     def __init__(self, clip_info: utils.ClipInfo, det_model_path, feat_model_path, det_driver, feat_driver,
+                 det_model_dict,
+                 feat_model_dict,
                  det_exec=me.dnn.CUDA,
                  feat_exec=me.dnn.CUDA,
                  det_conf=0.5,
@@ -53,6 +55,8 @@ class TaskSettings:
             self.feat_driver = feat_driver[0]
         else:
             self.feat_driver = feat_driver
+        self.det_model_dict = det_model_dict
+        self.feat_model_dict = feat_model_dict
         self.det_exec = det_exec
         self.feat_exec = feat_exec
         self.det_conf = det_conf
@@ -94,6 +98,13 @@ def detection_task(task_settings: TaskSettings):
         feat_model = task_settings.feat_driver()
         event_queue.put(events.InfoEvent('Loading feature model...',
                                          f'Loading model {task_settings.feat_model_path}'))
+        try:
+            task_settings.feat_model_dict.fetch()
+        except:
+            event_queue.put(events.ErrorEvent('Failed to download feature model',
+                                              'An exception occurred while downloading feature model: '
+                                              f'{traceback.format_exc()}'))
+            return
         feat_model.load(task_settings.feat_model_path, task_settings.feat_exec)
         if not feat_model.is_loaded():
             event_queue.put(events.ErrorEvent('Failed to load feature model',
@@ -102,6 +113,13 @@ def detection_task(task_settings: TaskSettings):
         det_model = task_settings.det_driver()
         event_queue.put(events.InfoEvent('Loading detection model...',
                                          f'Loading model {task_settings.det_model_path}'))
+        try:
+            task_settings.det_model_dict.fetch()
+        except:
+            event_queue.put(events.ErrorEvent('Failed to download detection model',
+                                              'An exception occurred while downloading detection model: '
+                                              f'{traceback.format_exc()}'))
+            return
         det_model.load(task_settings.det_model_path, task_settings.det_exec)
         if not det_model.is_loaded():
             event_queue.put(events.ErrorEvent('Failed to load detection model',
@@ -273,6 +291,18 @@ class DetectObjectsOperator(bpy.types.Operator):
         det_model_driver = det_model_sel['driver']
         det_model_classes = det_model_sel['classes']
 
+        feat_models = me.get_models('feature_extraction')
+        feat_model_sel = None
+        for f in feat_models:
+            if f[0] == 'basic_conv_person_64':
+                feat_model_sel = f[1]
+                break
+        if feat_model_sel is None:
+            self.report({'ERROR'}, 'Could not find suitable model based on provided settings')
+            return {'FINISHED'}
+        feat_model_path = feat_model_sel['path']
+        feat_model_driver = feat_model_sel['driver']
+
         try:
             target_cid = det_model_classes.index(str(properties.det_class_enum))
         except ValueError:
@@ -283,9 +313,11 @@ class DetectObjectsOperator(bpy.types.Operator):
         task_settings = TaskSettings(
             utils.ClipInfo(current_clip),
             det_model_path,
-            me.model_path('Features/basic_conv_person_64.onnx'),
+            feat_model_path,
             det_model_driver,
-            me.dnn.GenericFeatureModel,
+            feat_model_driver,
+            det_model_sel,
+            feat_model_sel,
             det_exec,
             feat_exec,
             properties.det_conf,
