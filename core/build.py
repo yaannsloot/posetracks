@@ -26,6 +26,7 @@ import urllib.request
 from urllib.parse import urlparse
 
 download_dir = '3rd_party'
+download_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), download_dir)
 
 # Download links to required packages and tools
 vswhere_dl = "https://github.com/microsoft/vswhere/releases/download/3.1.7/vswhere.exe"
