@@ -21,8 +21,10 @@ import core.build
 
 dir_list = ['operators', 'property_groups', 'ui']
 file_list = ['__init__.py', 'events.py', 'global_vars.py', 'pose_autogen_defs.py', 'utils.py', 'LICENSE']
+
+
 def main():
-    #core.build.main()
+    core.build.main()
     print('Packaging...')
     base_dir = os.path.dirname(os.path.abspath(__file__))
     build_dir = 'build'
