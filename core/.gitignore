@@ -12,14 +12,9 @@
 # Allow specific directories
 !/module
 !/src
-!/cmake/*
-!/module/*
-!/src/*
-!/tool/*
-/tools/bin
-
 
 # Allow specific files
 !/CMakeLists.txt
-!/.gitattributes
+!/LICENSE
+!/README.md
 !/build.py

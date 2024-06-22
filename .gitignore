@@ -59,11 +59,35 @@ dmypy.json
 .pytype/
 cython_debug/
 
+# Ignore everything by default
+/*
+/*/
+/build
+/out
+/.vs
+/desktop.ini
+
 # Project specific ignores
-/MotionEngine/bin/
-/motionengine_trt_cache
 *.zip
 *.txt
 *.onnx
 *.pyc
-/build
+
+# Allow gitignore
+!/.gitignore
+
+# Allowed directories
+!/core
+!/operators
+!/property_groups
+!/ui
+
+# Allowed files
+!/LICENSE
+!/README.md
+!/__init__.py
+!/build.py
+!/events.py
+!/global_vars.py
+!/pose_autogen_defs.py
+!/utils.py
