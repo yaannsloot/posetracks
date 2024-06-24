@@ -50,7 +50,7 @@ class TaskSettings:
                  det_conf=0.5,
                  det_iou=0.5,
                  target_cid=0,
-                 cv_dict=me.DICT_4X4_50,
+                 cv_dict=me.DICT_4X4,
                  cv_resample=True,
                  batch_size=32):
         self.clip_info = clip_info
@@ -247,7 +247,7 @@ class DetectTagsOperator(bpy.types.Operator):
     cancelled_listener = events.CancelledEventListener()
     error_listener = events.ErrorEventListener()
     queued_clip = None
-    last_tag_type = me.DICT_4X4_50.name
+    last_tag_type = me.DICT_4X4.name
 
     def __init__(self):
         super().__init__()
