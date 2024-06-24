@@ -37,6 +37,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "me/tracking/data.hpp"
 #include "me/tracking/camera.hpp"
 #include "me/tracking/triangulation.hpp"
+#include "me/tracking/filters.hpp"
 
 // Dependencies
 #include <opencv2/sfm/triangulation.hpp>
@@ -66,22 +67,10 @@ PYBIND11_MODULE(MEPython, m)
 
 	// Base
 	py::enum_<cv::aruco::PredefinedDictionaryType>(m, "TagDictionary")
-		.value("DICT_4X4_50", cv::aruco::PredefinedDictionaryType::DICT_4X4_50)
-		.value("DICT_4X4_100", cv::aruco::PredefinedDictionaryType::DICT_4X4_100)
-		.value("DICT_4X4_250", cv::aruco::PredefinedDictionaryType::DICT_4X4_250)
-		.value("DICT_4X4_1000", cv::aruco::PredefinedDictionaryType::DICT_4X4_1000)
-		.value("DICT_5X5_50", cv::aruco::PredefinedDictionaryType::DICT_5X5_50)
-		.value("DICT_5X5_100", cv::aruco::PredefinedDictionaryType::DICT_5X5_100)
-		.value("DICT_5X5_250", cv::aruco::PredefinedDictionaryType::DICT_5X5_250)
-		.value("DICT_5X5_1000", cv::aruco::PredefinedDictionaryType::DICT_5X5_1000)
-		.value("DICT_6X6_50", cv::aruco::PredefinedDictionaryType::DICT_6X6_50)
-		.value("DICT_6X6_100", cv::aruco::PredefinedDictionaryType::DICT_6X6_100)
-		.value("DICT_6X6_250", cv::aruco::PredefinedDictionaryType::DICT_6X6_250)
-		.value("DICT_6X6_1000", cv::aruco::PredefinedDictionaryType::DICT_6X6_1000)
-		.value("DICT_7X7_50", cv::aruco::PredefinedDictionaryType::DICT_7X7_50)
-		.value("DICT_7X7_100", cv::aruco::PredefinedDictionaryType::DICT_7X7_100)
-		.value("DICT_7X7_250", cv::aruco::PredefinedDictionaryType::DICT_7X7_250)
-		.value("DICT_7X7_1000", cv::aruco::PredefinedDictionaryType::DICT_7X7_1000)
+		.value("DICT_4X4", cv::aruco::PredefinedDictionaryType::DICT_4X4_1000)
+		.value("DICT_5X5", cv::aruco::PredefinedDictionaryType::DICT_5X5_1000)
+		.value("DICT_6X6", cv::aruco::PredefinedDictionaryType::DICT_6X6_1000)
+		.value("DICT_7X7", cv::aruco::PredefinedDictionaryType::DICT_7X7_1000)
 		.value("DICT_ARUCO_ORIGINAL", cv::aruco::PredefinedDictionaryType::DICT_ARUCO_ORIGINAL)
 		.value("DICT_APRILTAG_16h5", cv::aruco::PredefinedDictionaryType::DICT_APRILTAG_16h5)
 		.value("DICT_APRILTAG_25h9", cv::aruco::PredefinedDictionaryType::DICT_APRILTAG_25h9)
@@ -658,5 +647,15 @@ PYBIND11_MODULE(MEPython, m)
 		py::call_guard<py::gil_scoped_release>());
 
 	m_tracking.def("triangulate_static", &me::tracking::triangulateStatic, py::call_guard<py::gil_scoped_release>());
+
+	m_tracking.def("g_kernel_1d", &me::tracking::g_kernel_1d,
+		py::arg("width") = 3,
+		py::call_guard<py::gil_scoped_release>());
+
+	m_tracking.def("mirror_idx", &me::tracking::mirror_idx, py::call_guard<py::gil_scoped_release>());
+
+	m_tracking.def("g_conv_1d", &me::tracking::g_conv_1d,
+		py::arg("input"), py::arg("kernel_radius") = 1,
+		py::call_guard<py::gil_scoped_release>());
 
 }

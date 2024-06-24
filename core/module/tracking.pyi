@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-from . import dnn, Pointf, Point3D
-from typing import Dict, List, Tuple, overload
+from . import dnn, Point, Pointf, Point3D
+from typing import Dict, List, Tuple, Union, Iterator, overload
 
 class Mat3x1:
     def __init__(self) -> None:
@@ -130,7 +130,7 @@ class Tag3D:
         :param arg4: Fourth corner point
         """
     def __getitem__(self, arg0: int) -> Point: ...
-    def __iter__(self) -> typing.Iterator[Point]: ...
+    def __iter__(self) -> Iterator[Point]: ...
     def __setitem__(self, arg0: int, arg1: Union[Point, Tuple[float, float]]) -> None: ...
 
 class TrackingData:
@@ -195,7 +195,7 @@ def solve_static_set(t_data: List[TrackingData], cam_Kk: List[Kk]) -> List[Rt]:
     :return: A list of transformations for each camera relative to the first.
     """
 	
-def solve_camera_with_tag(observed_tag: dnn.Tag, cam_Kk: Kk, square_length: double=1.0) -> Rt:
+def solve_camera_with_tag(observed_tag: dnn.Tag, cam_Kk: Kk, square_length: float=1.0) -> Rt:
 	"""
 	Solve a camera's position using an observed tag as the origin
 	:param observed_tag: The observed reference tag
@@ -212,3 +212,28 @@ def triangulate_static(t_data: List[TrackingData], cam_Kk: List[Kk], cam_Rt: Lis
     :param cam_Kk: List of camera intrinsic information. Must be the same size as t_data
     :return: Triangulated tracking data
 	"""
+
+def g_kernel_1d(width: int=3) -> List[float]:
+    """
+    Create a gaussian kernel
+    :param width: Width of the kernel
+    :return: A list containing the values of the kernel
+    """
+
+def mirror_idx(index: int, orig_length: int) -> int:
+    """
+    Get the mirror index of an element based on the provided index.
+    If the provided index points to an out-of-bounds location, a mirror index will be returned.
+    :param index: Target index. Can be positive or negative.
+    :param orig_length: Original length of the list
+    """
+
+def g_conv_1d(input: List[float], kernel_radius: int=1) -> List[float]:
+    """
+    Perform a 1D convolution on a provided input list using a gaussian kernel.
+    Input will be padded with values such that the result retains the starting and ending values
+    of the original list.
+    :param input: Input list
+    :param kernel_radius: Radius of the kernel. A value of 1 would yield a 3 value kernel, 2 would yield 5, and so on.
+    :return: The result of convolution on the input list
+    """
