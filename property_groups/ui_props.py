@@ -42,7 +42,7 @@ try:
 except ValueError:
     obj_det_class_default = 1
 
-tag_dictionary_members = [e for e in me.TagDictionary.__members__]
+tag_dictionary_members = list(me.TagDictionary.__members__)
 
 tag_detector_cv_dict_list_items = []
 for m in tag_dictionary_members:

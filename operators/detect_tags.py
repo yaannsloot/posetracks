@@ -316,13 +316,16 @@ class DetectTagsOperator(bpy.types.Operator):
 
         selected_dict = properties.tag_detector_cv_dict_list_enum
 
-        tag_dictionary_members = [e for e in me.TagDictionary.__members__]
+        tag_dictionary_names = list(me.TagDictionary.__members__)
+        tag_dictionary_values = [int(e) for e in me.TagDictionary.__members__.values()]
 
         try:
-            dict_id = tag_dictionary_members.index(selected_dict)
-            target_dict = me.TagDictionary(dict_id)
+            dict_idx = tag_dictionary_names.index(selected_dict)
+            target_dict = me.TagDictionary(tag_dictionary_values[dict_idx])
         except ValueError:
-            target_dict = me.DICT_4X4_50
+            target_dict = me.DICT_4X4
+
+        print(target_dict)
 
         tag_model_sel = {}
         if properties.tag_detector_type_enum == 'ML':
