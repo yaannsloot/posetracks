@@ -92,3 +92,4 @@ cython_debug/
 !/pose_autogen_defs.py
 !/utils.py
 !/blender_manifest.toml
+!/gen_headers.py
