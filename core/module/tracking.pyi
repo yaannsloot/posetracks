@@ -148,7 +148,18 @@ class TrackingData:
         :param reduce_tags: Tf true, use center point for tags
         :return:
         """
-		
+    def set_pose(self, frame: int, name: str, pose: dnn.Pose) -> None: ...
+    @overload
+    def set_joint(self, frame: int, name: str, id: int, joint: dnn.Joint) -> None: ...
+
+    @overload
+    def set_joint(self, frame: int, name: str, id: int, pt: Point, prob: float) -> None: ...
+
+    @overload
+    def set_joint(self, frame: int, name: str, id: int, x: float, y: float, prob: float) -> None: ...
+    def set_detection(self, frame: int, name: str, det: dnn.Detection) -> None: ...
+    def set_tag(self, frame: int, id: int, tag: dnn.Tag) -> None: ...
+
 class TrackingData3D:
     detections: Dict[int, Dict[str, Tuple[int, Point3D]]]
     poses: Dict[int, Dict[str, Dict[int, Point3D]]]

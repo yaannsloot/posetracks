@@ -24,7 +24,6 @@ from . import crypto
 from . import data
 from . import dnn
 from . import io
-from . import threading
 from . import tracking
 import numpy as np
 
@@ -38,10 +37,61 @@ DICT_APRILTAG_36h10: TagDictionary
 DICT_APRILTAG_36h11: TagDictionary
 DICT_ARUCO_ORIGINAL: TagDictionary
 
+VER_2_93_0: BlenderVersion
+VER_2_93_4: BlenderVersion
+VER_3_0_0: BlenderVersion
+VER_3_1_0: BlenderVersion
+VER_3_2_0: BlenderVersion
+VER_3_3_0: BlenderVersion
+VER_3_4_0: BlenderVersion
+VER_3_5_0: BlenderVersion
+VER_3_6_0: BlenderVersion
+VER_3_6_8: BlenderVersion
+VER_4_0_0: BlenderVersion
+VER_4_1_0: BlenderVersion
+VER_4_1_1: BlenderVersion
+VER_4_2_0: BlenderVersion
+
 models: Dict[str, Dict[str, Dict[str, ...]]]
 """
 Dictionary of models bundled with module. Includes various performance metrics.
 """
+
+class BlenderVersion:
+    __members__: ClassVar[dict] = ...  # read-only
+    VER_2_93_0: ClassVar[TagDictionary] = ...
+    VER_2_93_4: ClassVar[TagDictionary] = ...
+    VER_3_0_0: ClassVar[TagDictionary] = ...
+    VER_3_1_0: ClassVar[TagDictionary] = ...
+    VER_3_2_0: ClassVar[TagDictionary] = ...
+    VER_3_3_0: ClassVar[TagDictionary] = ...
+    VER_3_4_0: ClassVar[TagDictionary] = ...
+    VER_3_5_0: ClassVar[TagDictionary] = ...
+    VER_3_6_0: ClassVar[TagDictionary] = ...
+    VER_3_6_8: ClassVar[TagDictionary] = ...
+    VER_4_0_0: ClassVar[TagDictionary] = ...
+    VER_4_1_0: ClassVar[TagDictionary] = ...
+    VER_4_1_1: ClassVar[TagDictionary] = ...
+    VER_4_2_0: ClassVar[TagDictionary] = ...
+    __entries: ClassVar[dict] = ...
+    def __init__(self, value: int) -> None: ...
+    def __eq__(self, other: object) -> bool: ...
+    def __hash__(self) -> int: ...
+    def __index__(self) -> int: ...
+    def __int__(self) -> int: ...
+    def __ne__(self, other: object) -> bool: ...
+    @property
+    def name(self) -> str: ...
+    @property
+    def value(self) -> int: ...
+
+def clip_tracking_data(clip, joint_conf_thresh: float = 0, filter_locked: bool = False) -> tracking.TrackingData:
+    """
+    Retrieve tracking data from the provided movie clip
+    :param joint_conf_thresh: Minimum joint confidence score
+    :param filter_locked: If true, will ignore tracks that are not locked
+    :return: MotionEngine compatible tracking data object
+    """
 
 class Mat:
     """
@@ -308,4 +358,19 @@ def rand_img_gray(size: Tuple[int, int]) -> Mat:
     """
     Returns a randomly generated grayscale image
     :param size: Size of the image
+    """
+
+def set_compatibility_mode(ver: BlenderVersion) -> None:
+    """
+    Set the internal compatibility version for the core module
+    """
+
+def set_pose_sources(sources: List[str]) -> None:
+    """
+    Set the list of pose source names for the core module's name filter
+    """
+
+def set_tag_sources(sources: List[str]) -> None:
+    """
+    Set the list of tag source names for the core module's name filter
     """

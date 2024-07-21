@@ -21,6 +21,7 @@ import concurrent.futures
 
 if 'MotionEngine' in locals():
     import importlib
+
     importlib.reload(MotionEngine)
     importlib.reload(global_vars)
     importlib.reload(ui)
@@ -45,10 +46,56 @@ bl_info = {
     "warning": "Experimental software! Some features might not work as expected",
     "wiki_url": "",
     "tracker_url": "",
-    "category": "Motion Tracking"}
+    "category": "Tracking"}
+
+registered = False
 
 
 def register():
+    global registered
+
+    # Core lib compatibility mapping
+
+    if not ((2, 93, 0) < bpy.app.version <= (4, 2, 0)):
+        print("[MotionEngine] Registration failed.")
+        registered = False
+        return
+
+    compat_ver = None
+
+    if bpy.app.version < (2, 93, 4):
+        compat_ver = MotionEngine.VER_2_93_0
+    elif bpy.app.version < (3, 0, 0):
+        compat_ver = MotionEngine.VER_2_93_4
+    elif bpy.app.version < (3, 1, 0):
+        compat_ver = MotionEngine.VER_3_0_0
+    elif bpy.app.version < (3, 2, 0):
+        compat_ver = MotionEngine.VER_3_1_0
+    elif bpy.app.version < (3, 3, 0):
+        compat_ver = MotionEngine.VER_3_2_0
+    elif bpy.app.version < (3, 4, 0):
+        compat_ver = MotionEngine.VER_3_3_0
+    elif bpy.app.version < (3, 5, 0):
+        compat_ver = MotionEngine.VER_3_4_0
+    elif bpy.app.version < (3, 6, 0):
+        compat_ver = MotionEngine.VER_3_5_0
+    elif bpy.app.version < (3, 6, 8):
+        compat_ver = MotionEngine.VER_3_6_0
+    elif bpy.app.version < (4, 0, 0):
+        compat_ver = MotionEngine.VER_3_6_8
+    elif bpy.app.version < (4, 1, 0):
+        compat_ver = MotionEngine.VER_4_0_0
+    elif bpy.app.version < (4, 2, 0):
+        compat_ver = MotionEngine.VER_4_1_0
+    else:
+        compat_ver = MotionEngine.VER_4_2_0
+
+    MotionEngine.set_compatibility_mode(compat_ver)
+
+    print(f"[MotionEngine] Set compatibility mode to {str(compat_ver)}")
+
+    # Component registration
+
     gc.collect()
 
     for CLASS in property_groups.ALL_CLASSES:
@@ -71,26 +118,29 @@ def register():
 
     print("[MotionEngine] Registration complete.")
 
+    registered = True
+
 
 def unregister():
-    for CLASS in ui.ALL_CLASSES:
-        bpy.utils.unregister_class(CLASS)
+    if registered:
+        for CLASS in ui.ALL_CLASSES:
+            bpy.utils.unregister_class(CLASS)
 
-    for CLASS in operators.ALL_CLASSES:
-        bpy.utils.unregister_class(CLASS)
+        for CLASS in operators.ALL_CLASSES:
+            bpy.utils.unregister_class(CLASS)
 
-    for CLASS in property_groups.ALL_CLASSES:
-        bpy.utils.unregister_class(CLASS)
+        for CLASS in property_groups.ALL_CLASSES:
+            bpy.utils.unregister_class(CLASS)
 
-    global_vars.ui_lock_state = False
+        global_vars.ui_lock_state = False
 
-    del bpy.types.Scene.motion_engine_ui_properties
+        del bpy.types.Scene.motion_engine_ui_properties
 
-    global_vars.shutdown_state = True
+        global_vars.shutdown_state = True
 
-    global_vars.executor.shutdown()
+        global_vars.executor.shutdown()
 
-    gc.collect()
+        gc.collect()
 
     print("[MotionEngine] Unregistration complete.")
 

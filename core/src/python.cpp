@@ -18,26 +18,26 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
 // Crypto module headers
-#include "me/crypto/sha1.hpp"
+#include "modules/crypto/sha1.hpp"
 
 // DNN module headers
-#include "me/dnn/rtmdet.hpp"
-#include "me/dnn/yolox.hpp"
-#include "me/dnn/rtmpose.hpp"
-#include "me/dnn/feature_extractor.hpp"
-#include "me/dnn/tag_net.hpp"
-#include "me/dnn/cv_tag_detector.hpp"
-#include "me/dnn/pose_topdown.hpp"
+#include "modules/dnn/rtmdet.hpp"
+#include "modules/dnn/yolox.hpp"
+#include "modules/dnn/rtmpose.hpp"
+#include "modules/dnn/feature_extractor.hpp"
+#include "modules/dnn/tag_net.hpp"
+#include "modules/dnn/cv_tag_detector.hpp"
+#include "modules/dnn/pose_topdown.hpp"
 
 // IO module headers
-#include "me/io/transcoder.hpp"
-#include "me/io/imagelist.hpp"
+#include "modules/io/transcoder.hpp"
+#include "modules/io/imagelist.hpp"
 
 // Tracking module headers
-#include "me/tracking/data.hpp"
-#include "me/tracking/camera.hpp"
-#include "me/tracking/triangulation.hpp"
-#include "me/tracking/filters.hpp"
+#include "modules/tracking/data.hpp"
+#include "modules/tracking/camera.hpp"
+#include "modules/tracking/triangulation.hpp"
+#include "modules/tracking/filters.hpp"
 
 // Dependencies
 #include <opencv2/sfm/triangulation.hpp>
@@ -51,7 +51,40 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <limits>
 #include <numeric>
 
+// Blender compatibility headers
+#include "modules/blender/bpy_types.hpp"
+#include "modules/blender/bpy_utils.hpp"
+
 namespace py = pybind11;
+
+template<typename T>
+T bpy_wrap(py::object py_obj) {
+	return T(reinterpret_cast<void*>(py_obj.attr("as_pointer")().cast<uintptr_t>()));
+}
+
+template<typename T>
+T* bpy_ptr(py::object py_obj) {
+	return (T*)reinterpret_cast<void*>(py_obj.attr("as_pointer")().cast<uintptr_t>());
+}
+
+namespace pybind11::detail {
+
+	template <> struct type_caster<MovieClip> {
+	public:
+		PYBIND11_TYPE_CASTER(MovieClip, _("MovieClip"));
+		bool load(handle src, bool) {
+			object py_obj = reinterpret_steal<object>(src);
+			object bpy_types = module::import("bpy.types");
+			object bpy_clip = bpy_types.attr("MovieClip");
+			if (isinstance(py_obj, bpy_clip)) {
+				value = bpy_wrap<MovieClip>(py_obj);
+				return true;
+			}
+			return false;
+		}
+	};
+
+}
 
 PYBIND11_MODULE(MEPython, m)
 {
@@ -66,6 +99,23 @@ PYBIND11_MODULE(MEPython, m)
 	// Enum bindings
 
 	// Base
+	py::enum_<BlenderVersion>(m, "BlenderVersion")
+		.value("VER_2_93_0", BlenderVersion::VER_2_93_0)
+		.value("VER_2_93_4", BlenderVersion::VER_2_93_4)
+		.value("VER_3_0_0", BlenderVersion::VER_3_0_0)
+		.value("VER_3_1_0", BlenderVersion::VER_3_1_0)
+		.value("VER_3_2_0", BlenderVersion::VER_3_2_0)
+		.value("VER_3_3_0", BlenderVersion::VER_3_3_0)
+		.value("VER_3_4_0", BlenderVersion::VER_3_4_0)
+		.value("VER_3_5_0", BlenderVersion::VER_3_5_0)
+		.value("VER_3_6_0", BlenderVersion::VER_3_6_0)
+		.value("VER_3_6_8", BlenderVersion::VER_3_6_8)
+		.value("VER_4_0_0", BlenderVersion::VER_4_0_0)
+		.value("VER_4_1_0", BlenderVersion::VER_4_1_0)
+		.value("VER_4_1_1", BlenderVersion::VER_4_1_1)
+		.value("VER_4_2_0", BlenderVersion::VER_4_2_0)
+		.export_values();
+
 	py::enum_<cv::aruco::PredefinedDictionaryType>(m, "TagDictionary")
 		.value("DICT_4X4", cv::aruco::PredefinedDictionaryType::DICT_4X4_1000)
 		.value("DICT_5X5", cv::aruco::PredefinedDictionaryType::DICT_5X5_1000)
@@ -538,7 +588,13 @@ PYBIND11_MODULE(MEPython, m)
 		.def_readwrite("poses", &me::tracking::TrackingData::poses)
 		.def_readwrite("detections", &me::tracking::TrackingData::detections)
 		.def_readwrite("tags", &me::tracking::TrackingData::tags)
-		.def("to_points", &me::tracking::TrackingData::to_points, py::call_guard<py::gil_scoped_release>(), py::arg("reduce_tags") = false);
+		.def("to_points", &me::tracking::TrackingData::to_points, py::call_guard<py::gil_scoped_release>(), py::arg("reduce_tags") = false)
+		.def("set_pose", &me::tracking::TrackingData::set_pose)
+		.def("set_joint", py::overload_cast<const int, const std::string, const int, const me::dnn::Joint&>(&me::tracking::TrackingData::set_joint))
+		.def("set_joint", py::overload_cast<const int, const std::string, const int, const cv::Point2d&, const double>(&me::tracking::TrackingData::set_joint))
+		.def("set_joint", py::overload_cast<const int, const std::string, const int, const double, const double, const double>(&me::tracking::TrackingData::set_joint))
+		.def("set_detection", &me::tracking::TrackingData::set_detection)
+		.def("set_tag", &me::tracking::TrackingData::set_tag);
 	py::class_<me::tracking::TrackingData3D>(m_tracking, "TrackingData3D")
 		.def(py::init<>())
 		.def_readwrite("poses", &me::tracking::TrackingData3D::poses)
@@ -549,28 +605,30 @@ PYBIND11_MODULE(MEPython, m)
 	// Function bindings
 
 	// Base
-		m.def("imread", [](std::string filename) {
-			cv::Mat image = cv::imread(filename);
-			auto return_obj = py::cast(image);
-			if (image.data == NULL)
-				return_obj = py::none();
-			return return_obj;
-		}, py::call_guard<py::gil_scoped_release>());
-		m.def("imwrite", [](std::string filename, cv::Mat& image) {
-			cv::imwrite(filename, image);
-		}, py::call_guard<py::gil_scoped_release>());
-		m.def("imshow", [](std::string window_name, cv::Mat& image) {
-			cv::imshow(window_name, image);
-		});
-		m.def("resize_img", [](cv::Mat& input, std::pair<int, int> out_size) {
-			cv::Mat result;
-			cv::resize(input, result, cv::Size(out_size.first, out_size.second));
-			return result;
-		});
-		m.def("waitKey", &cv::waitKey);
+	m.def("imread", [](std::string filename) {
+		cv::Mat image = cv::imread(filename);
+		auto return_obj = py::cast(image);
+		if (image.data == NULL)
+			return_obj = py::none();
+		return return_obj;
+	}, py::call_guard<py::gil_scoped_release>());
+	m.def("imwrite", [](std::string filename, cv::Mat& image) {
+		cv::imwrite(filename, image);
+	}, py::call_guard<py::gil_scoped_release>());
+	m.def("imshow", [](std::string window_name, cv::Mat& image) {
+		cv::imshow(window_name, image);
+	});
+	m.def("resize_img", [](cv::Mat& input, std::pair<int, int> out_size) {
+		cv::Mat result;
+		cv::resize(input, result, cv::Size(out_size.first, out_size.second));
+		return result;
+	});
+	m.def("waitKey", &cv::waitKey);
 
 
 	// Core
+	m.def("set_compatibility_mode", &set_compatibility_mode);
+
 	m.def("rand_img_rgb", [](std::pair<int, int> size) {
 		cv::Mat img(size.first, size.second, CV_8UC3);
 		cv::randu(img, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
@@ -581,6 +639,18 @@ PYBIND11_MODULE(MEPython, m)
 		cv::randu(img, 0, 255);
 		return img;
 	});
+
+	m.def("set_pose_sources", &set_pose_sources, py::call_guard<py::gil_scoped_release>());
+	m.def("set_tag_sources", &set_tag_sources, py::call_guard<py::gil_scoped_release>());
+	m.def("clip_tracking_data", [](py::object clip, const double joint_conf_thresh, const bool filter_locked) {
+		py::object bpy_types = py::module::import("bpy.types");
+		py::object bpy_clip = bpy_types.attr("MovieClip");
+		if (!isinstance(clip, bpy_clip))
+			throw py::type_error("arg0: clip must be of type bpy.types.MovieClip");
+		MovieClip blend_clip = bpy_wrap<MovieClip>(clip);
+		py::gil_scoped_release release;
+		return clip_tracking_data(blend_clip, joint_conf_thresh, filter_locked);
+	}, py::arg("clip"), py::arg("joint_conf_thresh") = 0, py::arg("filter_locked") = false);
 
 	// DNN
 	m_dnn.def("letterbox_image", [](const cv::Mat& src, cv::Mat& dst, py::tuple out_size) {

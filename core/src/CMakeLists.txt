@@ -9,12 +9,12 @@ MACRO(SUBDIRLIST result curdir)
   SET(${result} ${dirlist})
 ENDMACRO()
 
-SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR}/me)
+SUBDIRLIST(SUBDIRS ${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
 message("Looking for modules...")
 
 FOREACH(subdir ${SUBDIRS})
-  ADD_SUBDIRECTORY(me/${subdir})
+  ADD_SUBDIRECTORY(modules/${subdir})
 ENDFOREACH()
 
 message("done.")

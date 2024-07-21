@@ -18,21 +18,21 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <me/dnn/rtmdet.hpp>
-#include <me/dnn/rtmpose.hpp>
-#include <me/dnn/yolox.hpp>
-#include <me/dnn/pose_topdown.hpp>
-#include <me/dnn/cv_tag_detector.hpp>
-#include <me/dnn/tag_net.hpp>
-#include <me/dnn/feature_extractor.hpp>
-#include <me/io/imagelist.hpp>
-#include <me/io/transcoder.hpp>
+#include "modules/dnn/rtmdet.hpp"
+#include "modules/dnn/rtmpose.hpp"
+#include "modules/dnn/yolox.hpp"
+#include "modules/dnn/pose_topdown.hpp"
+#include "modules/dnn/cv_tag_detector.hpp"
+#include "modules/dnn/tag_net.hpp"
+#include "modules/dnn/feature_extractor.hpp"
+#include "modules/io/imagelist.hpp"
+#include "modules/io/transcoder.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/sfm/triangulation.hpp>
 #include <opencv2/sfm/projection.hpp>
-#include <me/threading/simplepool.hpp>
-#include <me/data/memory.hpp>
-#include <me/crypto/sha1.hpp>
+#include "modules/threading/simplepool.hpp"
+#include "modules/data/memory.hpp"
+#include "modules/crypto/sha1.hpp"
 #include <filesystem>
 #include <numeric>
 #include <random>
