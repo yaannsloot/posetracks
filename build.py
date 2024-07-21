@@ -20,7 +20,8 @@ import shutil
 import core.build
 
 dir_list = ['operators', 'property_groups', 'ui']
-file_list = ['__init__.py', 'events.py', 'global_vars.py', 'pose_autogen_defs.py', 'utils.py', 'LICENSE']
+file_list = ['__init__.py', 'events.py', 'global_vars.py', 'pose_autogen_defs.py', 'utils.py', 'blender_manifest.toml',
+             'LICENSE']
 
 
 def main():

@@ -1,0 +1,25 @@
+schema_version = "1.0.0"
+
+id = "motion_engine"
+version = "1.0.0"
+name = "MotionEngine"
+tagline = "Provides various computer vision and AI tracking tools in the clip editor"
+maintainer = "Ian Sloat"
+type = "add-on"
+website = "https://github.com/YaannSloot/MotionEngine"
+tags = ["Animation", "Tracking"]
+blender_version_min = "4.2.0"
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+copyright = [
+   "2023 Ian Sloat",
+   "2010 Blender Foundation",
+]
+
+platforms = ["windows-x64"] # Change to target platform before redistribution
+
+[permissions]
+files = "Needed for tracking functionality in the clip editor"
