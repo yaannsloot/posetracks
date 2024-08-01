@@ -25,6 +25,7 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESDNA_TYPES_2_93_4_H
 #define MAKESDNA_TYPES_2_93_4_H
 
+#include <stdint.h>
 #include "makesdna_types_2_93_0.h"
 
 struct bGPDstroke2_93_4;

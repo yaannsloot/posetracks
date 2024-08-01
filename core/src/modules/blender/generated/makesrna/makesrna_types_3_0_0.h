@@ -25,6 +25,8 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESRNA_TYPES_3_0_0_H
 #define MAKESRNA_TYPES_3_0_0_H
 
+#include <stdint.h>
+
 struct IDFilterEnumPropertyItem3_0_0;
 
 struct IDFilterEnumPropertyItem3_0_0 {

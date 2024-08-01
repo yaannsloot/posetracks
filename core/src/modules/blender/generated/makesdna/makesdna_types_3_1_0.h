@@ -25,6 +25,7 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESDNA_TYPES_3_1_0_H
 #define MAKESDNA_TYPES_3_1_0_H
 
+#include <stdint.h>
 #include "makesdna_types_2_93_4.h"
 #include "makesdna_types_3_0_0.h"
 #include "makesdna_types_2_93_0.h"

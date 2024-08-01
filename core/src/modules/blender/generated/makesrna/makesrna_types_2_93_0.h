@@ -25,6 +25,8 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESRNA_TYPES_2_93_0_H
 #define MAKESRNA_TYPES_2_93_0_H
 
+#include <stdint.h>
+
 struct PropertyElemRNA2_93_0;
 struct PointerRNA2_93_0;
 struct PropertyPointerRNA2_93_0;

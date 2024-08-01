@@ -25,21 +25,24 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESDNA_TYPES_3_2_0_H
 #define MAKESDNA_TYPES_3_2_0_H
 
+#include <stdint.h>
+#include "makesdna_types_3_1_0.h"
 #include "makesdna_types_2_93_4.h"
 #include "makesdna_types_3_0_0.h"
-#include "makesdna_types_3_1_0.h"
 #include "makesdna_types_2_93_0.h"
 
 struct bAnimVizSettings3_2_0;
 struct bPose3_2_0;
 struct BrushCurvesSculptSettings3_2_0;
 struct Brush3_2_0;
+struct Curve3_2_0;
 struct CustomDataExternal3_2_0;
 struct FluidDomainSettings3_2_0;
 struct BuildGpencilModifierData3_2_0;
 struct DashGpencilModifierSegment3_2_0;
 struct SimplifyGpencilModifierData3_2_0;
 struct EnvelopeGpencilModifierData3_2_0;
+struct bGPdata_Runtime3_2_0;
 struct IDOverrideLibrary3_2_0;
 struct ID_Runtime_Remap3_2_0;
 struct ID_Runtime3_2_0;
@@ -47,7 +50,9 @@ struct ID3_2_0;
 struct ViewLayerLightgroup3_2_0;
 struct LightgroupMembership3_2_0;
 struct ViewLayer3_2_0;
+struct TexPaintSlot3_2_0;
 struct MInt8Property3_2_0;
+struct Mesh3_2_0;
 struct UVProjectModifierData3_2_0;
 struct HookModifierData3_2_0;
 struct SurfaceModifierData3_2_0;
@@ -64,6 +69,7 @@ struct NodeGeometryMergeByDistance3_2_0;
 struct NodeGeometryStoreNamedAttribute3_2_0;
 struct NodeGeometryInputNamedAttribute3_2_0;
 struct NodeGeometryDuplicateElements3_2_0;
+struct Object3_2_0;
 struct ParticleSettings3_2_0;
 struct ImageFormatData3_2_0;
 struct PaintModeSettings3_2_0;
@@ -85,6 +91,7 @@ struct Volume_Runtime3_2_0;
 struct Volume3_2_0;
 struct wmWindow3_2_0;
 struct wmKeyMapItem3_2_0;
+struct World3_2_0;
 struct XrSessionSettings3_2_0;
 struct XrComponentPath3_2_0;
 struct XrActionMapBinding3_2_0;
@@ -98,11 +105,16 @@ struct PaintCurve3_2_0;
 struct CacheFile3_2_0;
 struct Camera3_2_0;
 struct Collection3_2_0;
+struct bGPdata3_2_0;
 struct Image3_2_0;
 struct Ipo3_2_0;
 struct Key3_2_0;
+struct Lattice3_2_0;
 struct LightProbe3_2_0;
+struct Light3_2_0;
+struct FreestyleLineStyle3_2_0;
 struct Mask3_2_0;
+struct Material3_2_0;
 struct MetaBall3_2_0;
 struct MovieClip3_2_0;
 struct NodeImageFile3_2_0;
@@ -112,10 +124,12 @@ struct BakeData3_2_0;
 struct RenderData3_2_0;
 struct Scene3_2_0;
 struct bScreen3_2_0;
+struct Simulation3_2_0;
 struct bSound3_2_0;
 struct SpaceSeq3_2_0;
 struct Script3_2_0;
 struct Speaker3_2_0;
+struct Tex3_2_0;
 struct Text3_2_0;
 struct UserDef3_2_0;
 struct VFont3_2_0;
@@ -157,6 +171,31 @@ struct DashGpencilModifierSegment3_2_0 {
     int flag;
 };
 
+struct bGPdata_Runtime3_2_0 {
+    void *sbuffer;
+    void *sbuffer_stroke_batch;
+    void *sbuffer_fill_batch;
+    bGPDstroke2_93_4 *sbuffer_gps;
+    short playing;
+    short matid;
+    short sbuffer_sflag;
+    char _pad1[2];
+    int sbuffer_used;
+    int sbuffer_size;
+    float vert_color_fill[4];
+    float arrow_start[8];
+    float arrow_end[8];
+    int arrow_start_style;
+    int arrow_end_style;
+    int tot_cp_points;
+    char _pad2[4];
+    bGPDcontrolpoint2_93_0 *cp_points;
+    Brush3_2_0 *sbuffer_brush;
+    void *gpencil_cache;
+    void *lineart_cache;
+    void *update_cache;
+};
+
 struct ID_Runtime_Remap3_2_0 {
     int status;
     int skipped_refcounted;
@@ -171,6 +210,15 @@ struct ViewLayerLightgroup3_2_0 {
 
 struct LightgroupMembership3_2_0 {
     char name[64];
+};
+
+struct TexPaintSlot3_2_0 {
+    Image3_2_0 *ima;
+    ImageUser3_0_0 *image_user;
+    char *uvname;
+    char *attribute_name;
+    int valid;
+    int interp;
 };
 
 struct MInt8Property3_2_0 {
@@ -508,6 +556,66 @@ struct Brush3_2_0 {
     BrushCurvesSculptSettings3_2_0 *curves_sculpt_settings;
 };
 
+struct Curve3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    ListBase2_93_0 nurb;
+    EditNurb2_93_0 *editnurb;
+    Object3_2_0 *bevobj, *taperobj, *textoncurve;
+    Ipo3_2_0 *ipo;
+    Key3_2_0 *key;
+    Material3_2_0 **mat;
+    CurveProfile2_93_0 *bevel_profile;
+    float loc[3];
+    float size[3];
+    short type;
+    char texflag;
+    char _pad0[7];
+    short twist_mode;
+    float twist_smooth, smallcaps_scale;
+    int pathlen;
+    short bevresol, totcol;
+    int flag;
+    float offset, extrude, bevel_radius;
+    short resolu, resolv;
+    short resolu_ren, resolv_ren;
+    int actnu;
+    int actvert;
+    char overflow;
+    char spacemode, align_y;
+    char bevel_mode;
+    char taper_radius_mode;
+    char _pad;
+    short lines;
+    float spacing, linedist, shear, fsize, wordspace, ulpos, ulheight;
+    float xof, yof;
+    float linewidth;
+    int pos;
+    int selstart, selend;
+    int len_char32;
+    int len;
+    char *str;
+    void *editfont;
+    char family[64];
+    VFont3_2_0 *vfont;
+    VFont3_2_0 *vfontb;
+    VFont3_2_0 *vfonti;
+    VFont3_2_0 *vfontbi;
+    TextBox2_93_0 *tb;
+    int totbox, actbox;
+    CharInfo2_93_0 *strinfo;
+    CharInfo2_93_0 curinfo;
+    float ctime;
+    float bevfac1, bevfac2;
+    char bevfac1_mapping, bevfac2_mapping;
+    char _pad2[6];
+    float fsize_realtime;
+    const void *curve_eval;
+    char edit_data_from_original;
+    char _pad3[7];
+    void *batch_cache;
+};
+
 struct FluidDomainSettings3_2_0 {
     FluidModifierData2_93_4 *fmd;
     void *fluid;
@@ -529,7 +637,7 @@ struct FluidDomainSettings3_2_0 {
     void *tex_velocity_z;
     void *tex_flags;
     void *tex_range_field;
-    Object3_0_0 *guide_parent;
+    Object3_2_0 *guide_parent;
     EffectorWeights3_0_0 *effector_weights;
     float p0[3];
     float p1[3];
@@ -695,7 +803,7 @@ struct FluidDomainSettings3_2_0 {
 
 struct BuildGpencilModifierData3_2_0 {
     GpencilModifierData2_93_0 modifier;
-    Material2_93_0 *material;
+    Material3_2_0 *material;
     char layername[64];
     int pass_index;
     char materialname[64];
@@ -708,7 +816,7 @@ struct BuildGpencilModifierData3_2_0 {
     short mode;
     short transition;
     short time_alignment;
-    Object3_0_0 *object;
+    Object3_2_0 *object;
     float percentage_fac;
     float fade_fac;
     char target_vgname[64];
@@ -718,7 +826,7 @@ struct BuildGpencilModifierData3_2_0 {
 
 struct SimplifyGpencilModifierData3_2_0 {
     GpencilModifierData2_93_0 modifier;
-    Material2_93_0 *material;
+    Material3_2_0 *material;
     char layername[64];
     char materialname[64];
     int pass_index;
@@ -734,7 +842,7 @@ struct SimplifyGpencilModifierData3_2_0 {
 
 struct EnvelopeGpencilModifierData3_2_0 {
     GpencilModifierData2_93_0 modifier;
-    Material2_93_0 *material;
+    Material3_2_0 *material;
     char layername[64];
     char vgname[64];
     int pass_index;
@@ -776,7 +884,7 @@ struct ViewLayer3_2_0 {
     short cryptomatte_levels;
     char _pad1[4];
     int samples;
-    Material2_93_0 *mat_override;
+    Material3_2_0 *mat_override;
     IDProperty3_0_0 *id_properties;
     FreestyleConfig2_93_0 freestyle_config;
     ViewLayerEEVEE2_93_0 eevee;
@@ -789,9 +897,63 @@ struct ViewLayer3_2_0 {
     void *object_bases_hash;
 };
 
+struct Mesh3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    Ipo3_2_0 *ipo;
+    Key3_2_0 *key;
+    Material3_2_0 **mat;
+    MVert3_1_0 *mvert;
+    MEdge2_93_0 *medge;
+    MPoly2_93_0 *mpoly;
+    MLoop2_93_0 *mloop;
+    int totvert;
+    int totedge;
+    int totpoly;
+    int totloop;
+    CustomData3_0_0 vdata, edata, pdata, ldata;
+    MDeformVert2_93_0 *dvert;
+    ListBase2_93_0 vertex_group_names;
+    int vertex_group_active_index;
+    int attributes_active_index;
+    MLoopUV2_93_0 *mloopuv;
+    MLoopCol2_93_0 *mloopcol;
+    void *edit_mesh;
+    MSelect2_93_0 *mselect;
+    int totselect;
+    int act_face;
+    Mesh3_2_0 *texcomesh;
+    float loc[3];
+    float size[3];
+    char texflag;
+    char editflag;
+    uint16_t flag;
+    float smoothresh;
+    char cd_flag;
+    char symmetry;
+    short totcol;
+    char remesh_mode;
+    char subdiv;
+    char subdivr;
+    char subsurftype;
+    MTFace2_93_0 *mtface;
+    TFace2_93_0 *tface;
+    MCol2_93_0 *mcol;
+    MFace2_93_0 *mface;
+    CustomData3_0_0 fdata;
+    int totface;
+    float remesh_voxel_size;
+    float remesh_voxel_adaptivity;
+    int face_sets_color_seed;
+    int face_sets_color_default;
+    char _pad1[4];
+    void *_pad2;
+    Mesh_Runtime3_0_0 runtime;
+};
+
 struct UVProjectModifierData3_2_0 {
     ModifierData3_1_0 modifier;
-    Object3_0_0 *projectors[10];
+    Object3_2_0 *projectors[10];
     char _pad2[4];
     int projectors_num;
     float aspectx, aspecty;
@@ -803,7 +965,7 @@ struct UVProjectModifierData3_2_0 {
 
 struct HookModifierData3_2_0 {
     ModifierData3_1_0 modifier;
-    Object3_0_0 *object;
+    Object3_2_0 *object;
     char subtarget[64];
     char flag;
     char falloff_type;
@@ -823,7 +985,7 @@ struct SurfaceModifierData3_2_0 {
     ModifierData3_1_0 modifier;
     MVert3_1_0 *x;
     MVert3_1_0 *v;
-    Mesh3_1_0 *mesh;
+    Mesh3_2_0 *mesh;
     void *bvhtree;
     int cfra, verts_num;
 };
@@ -840,7 +1002,7 @@ struct LaplacianDeformModifierData3_2_0 {
 
 struct DataTransferModifierData3_2_0 {
     ModifierData3_1_0 modifier;
-    Object3_0_0 *ob_source;
+    Object3_2_0 *ob_source;
     int data_types;
     int vmap_mode;
     int emap_mode;
@@ -862,7 +1024,7 @@ struct DataTransferModifierData3_2_0 {
 struct SurfaceDeformModifierData3_2_0 {
     ModifierData3_1_0 modifier;
     void *depsgraph;
-    Object3_0_0 *target;
+    Object3_2_0 *target;
     SDefVert3_2_0 *verts;
     float falloff;
     unsigned int mesh_verts_num, bind_verts_num, polys_num;
@@ -955,6 +1117,104 @@ struct NodeCryptomatte3_2_0 {
     NodeCryptomatte_Runtime2_93_0 runtime;
 };
 
+struct Object3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    DrawDataList2_93_0 drawdata;
+    void *sculpt;
+    short type, partype;
+    int par1, par2, par3;
+    char parsubstr[64];
+    Object3_2_0 *parent, *track;
+    Object3_2_0 *proxy;
+    Object3_2_0 *proxy_group;
+    Object3_2_0 *proxy_from;
+    Ipo3_2_0 *ipo;
+    bAction3_2_0 *action;
+    bAction3_2_0 *poselib;
+    bPose3_2_0 *pose;
+    void *data;
+    bGPdata3_2_0 *gpd;
+    bAnimVizSettings3_2_0 avs;
+    bMotionPath2_93_0 *mpath;
+    void *_pad0;
+    ListBase2_93_0 constraintChannels;
+    ListBase2_93_0 effect;
+    ListBase2_93_0 defbase;
+    ListBase2_93_0 modifiers;
+    ListBase2_93_0 greasepencil_modifiers;
+    ListBase2_93_0 fmaps;
+    ListBase2_93_0 shader_fx;
+    int mode;
+    int restore_mode;
+    Material3_2_0 **mat;
+    char *matbits;
+    int totcol;
+    int actcol;
+    float loc[3], dloc[3];
+    float scale[3];
+    float dsize[3];
+    float dscale[3];
+    float rot[3], drot[3];
+    float quat[4], dquat[4];
+    float rotAxis[3], drotAxis[3];
+    float rotAngle, drotAngle;
+    float obmat[4][4];
+    float parentinv[4][4];
+    float constinv[4][4];
+    float imat[4][4];
+    unsigned int lay;
+    short flag;
+    short colbits;
+    short transflag, protectflag;
+    short trackflag, upflag;
+    short nlaflag;
+    char _pad1;
+    char duplicator_visibility_flag;
+    short base_flag;
+    unsigned short base_local_view_bits;
+    unsigned short col_group, col_mask;
+    short rotmode;
+    char boundtype;
+    char collision_boundtype;
+    short dtx;
+    char dt;
+    char empty_drawtype;
+    float empty_drawsize;
+    float instance_faces_scale;
+    short index;
+    unsigned short actdef;
+    unsigned short actfmap;
+    char _pad2[2];
+    float color[4];
+    short softflag;
+    short visibility_flag;
+    short shapenr;
+    char shapeflag;
+    char _pad3[1];
+    ListBase2_93_0 constraints;
+    ListBase2_93_0 nlastrips;
+    ListBase2_93_0 hooks;
+    ListBase2_93_0 particlesystem;
+    PartDeflect2_93_0 *pd;
+    SoftBody3_0_0 *soft;
+    Collection3_2_0 *instance_collection;
+    FluidsimSettings2_93_0 *fluidsimSettings;
+    ListBase2_93_0 pc_ids;
+    RigidBodyOb2_93_0 *rigidbody_object;
+    RigidBodyCon2_93_0 *rigidbody_constraint;
+    float ima_ofs[2];
+    ImageUser3_0_0 *iuser;
+    char empty_image_visibility_flag;
+    char empty_image_depth;
+    char empty_image_flag;
+    char _pad8[5];
+    PreviewImage2_93_0 *preview;
+    ObjectLineArt2_93_0 lineart;
+    LightgroupMembership3_2_0 *lightgroup;
+    Object_Runtime3_0_0 runtime;
+};
+
 struct ParticleSettings3_2_0 {
     ID3_2_0 id;
     AnimData2_93_0 *adt;
@@ -1022,8 +1282,8 @@ struct ParticleSettings3_2_0 {
     Collection3_2_0 *instance_collection;
     ListBase2_93_0 instance_weights;
     Collection3_2_0 *force_group;
-    Object3_0_0 *instance_object;
-    Object3_0_0 *bb_ob;
+    Object3_2_0 *instance_object;
+    Object3_2_0 *bb_ob;
     Ipo3_2_0 *ipo;
     PartDeflect2_93_0 *pd;
     PartDeflect2_93_0 *pd2;
@@ -1179,7 +1439,7 @@ struct Sequence3_2_0 {
     Strip2_93_0 *strip;
     Ipo3_2_0 *ipo;
     Scene3_2_0 *scene;
-    Object3_0_0 *scene_camera;
+    Object3_2_0 *scene_camera;
     MovieClip3_2_0 *clip;
     Mask3_2_0 *mask;
     ListBase2_93_0 anims;
@@ -1284,7 +1544,7 @@ struct SpaceImage3_2_0 {
     ImageUser3_0_0 iuser;
     Scopes2_93_0 scopes;
     Histogram2_93_0 sample_line_hist;
-    bGPdata3_0_0 *gpd;
+    bGPdata3_2_0 *gpd;
     float cursor[2];
     float xof, yof;
     float zoom;
@@ -1320,7 +1580,7 @@ struct Volume3_2_0 {
     int frame_offset;
     int flag;
     int active_grid;
-    Material2_93_0 **mat;
+    Material3_2_0 **mat;
     short totcol;
     short _pad2[3];
     VolumeRender2_93_0 render;
@@ -1372,12 +1632,35 @@ struct wmWindow3_2_0 {
     void *cursor_keymap_status;
 };
 
+struct World3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    DrawDataList2_93_0 drawdata;
+    char _pad0[4];
+    short texact, mistype;
+    float horr, horg, horb;
+    float exposure, exp, range;
+    short mode;
+    char _pad2[6];
+    float misi, miststa, mistdist, misthi;
+    float aodist, aoenergy;
+    short flag;
+    char _pad3[6];
+    Ipo3_2_0 *ipo;
+    short pr_texture, use_nodes;
+    char _pad[4];
+    PreviewImage2_93_0 *preview;
+    void *nodetree;
+    LightgroupMembership3_2_0 *lightgroup;
+    ListBase2_93_0 gpumaterial;
+};
+
 struct XrSessionSettings3_2_0 {
     View3DShading2_93_0 shading;
     float base_scale;
     char _pad[3];
     char base_pose_type;
-    Object3_0_0 *base_pose_object;
+    Object3_2_0 *base_pose_object;
     float base_pose_location[3];
     float base_pose_angle;
     char draw_flags;
@@ -1518,7 +1801,7 @@ struct Camera3_2_0 {
     float shiftx, shifty;
     float dof_distance;
     Ipo3_2_0 *ipo;
-    Object3_0_0 *dof_ob;
+    Object3_2_0 *dof_ob;
     GPUDOFSettings2_93_0 gpu_dof;
     CameraDOFSettings2_93_0 dof;
     ListBase2_93_0 bg_images;
@@ -1547,6 +1830,41 @@ struct Collection3_2_0 {
     ListBase2_93_0 parents;
     SceneCollection2_93_0 *collection;
     ViewLayer3_2_0 *view_layer;
+};
+
+struct bGPdata3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    ListBase2_93_0 layers;
+    int flag;
+    int curve_edit_resolution;
+    float curve_edit_threshold;
+    float curve_edit_corner_angle;
+    ListBase2_93_0 palettes;
+    ListBase2_93_0 vertex_group_names;
+    float pixfactor;
+    float line_color[4];
+    float onion_factor;
+    int onion_mode;
+    int onion_flag;
+    short gstep;
+    short gstep_next;
+    float gcolor_prev[3];
+    float gcolor_next[3];
+    float zdepth_offset;
+    Material3_2_0 **mat;
+    short totcol;
+    short totlayer;
+    short totframe;
+    char _pad2[6];
+    int totstroke;
+    int totpoint;
+    short draw_mode;
+    short onion_keytype;
+    int select_last_index;
+    int vertex_group_active_index;
+    bGPgrid2_93_0 grid;
+    bGPdata_Runtime3_2_0 runtime;
 };
 
 struct Image3_2_0 {
@@ -1615,6 +1933,27 @@ struct Key3_2_0 {
     int uidgen;
 };
 
+struct Lattice3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    short pntsu, pntsv, pntsw, flag;
+    short opntsu, opntsv, opntsw;
+    char _pad2[3];
+    char typeu, typev, typew;
+    int actbp;
+    float fu, fv, fw, du, dv, dw;
+    BPoint2_93_0 *def;
+    Ipo3_2_0 *ipo;
+    Key3_2_0 *key;
+    MDeformVert2_93_0 *dvert;
+    char vgroup[64];
+    ListBase2_93_0 vertex_group_names;
+    int vertex_group_active_index;
+    char _pad0[4];
+    EditLatt2_93_0 *editlatt;
+    void *batch_cache;
+};
+
 struct LightProbe3_2_0 {
     ID3_2_0 id;
     AnimData2_93_0 *adt;
@@ -1633,11 +1972,86 @@ struct LightProbe3_2_0 {
     int grid_resolution_y;
     int grid_resolution_z;
     char _pad1[4];
-    Object3_0_0 *parallax_ob;
+    Object3_2_0 *parallax_ob;
     Image3_2_0 *image;
     Collection3_2_0 *visibility_grp;
     float distfalloff, distgridinf;
     char _pad[8];
+};
+
+struct Light3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    short type, flag;
+    int mode;
+    float r, g, b, k;
+    float shdwr, shdwg, shdwb, shdwpad;
+    float energy, dist, spotsize, spotblend;
+    float att1, att2;
+    float coeff_const, coeff_lin, coeff_quad;
+    char _pad0[4];
+    CurveMapping2_93_0 *curfalloff;
+    short falloff_type;
+    char _pad2[2];
+    float clipsta, clipend;
+    float bias;
+    float soft;
+    float bleedbias;
+    float bleedexp;
+    short bufsize, samp, buffers, filtertype;
+    char bufflag, buftype;
+    short area_shape;
+    float area_size, area_sizey, area_sizez;
+    float area_spread;
+    float sun_angle;
+    short texact, shadhalostep;
+    Ipo3_2_0 *ipo;
+    short pr_texture, use_nodes;
+    char _pad6[4];
+    float cascade_max_dist;
+    float cascade_exponent;
+    float cascade_fade;
+    int cascade_count;
+    float contact_dist;
+    float contact_bias;
+    float contact_spread;
+    float contact_thickness;
+    float diff_fac, volume_fac;
+    float spec_fac, att_dist;
+    PreviewImage2_93_0 *preview;
+    void *nodetree;
+};
+
+struct FreestyleLineStyle3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    float r, g, b, alpha;
+    float thickness;
+    int thickness_position;
+    float thickness_ratio;
+    int flag, caps;
+    int chaining;
+    unsigned int rounds;
+    float split_length;
+    float min_angle, max_angle;
+    float min_length, max_length;
+    unsigned int chain_count;
+    unsigned short split_dash1, split_gap1;
+    unsigned short split_dash2, split_gap2;
+    unsigned short split_dash3, split_gap3;
+    int sort_key, integration_type;
+    float texstep;
+    short texact, pr_texture;
+    short use_nodes;
+    char _pad[6];
+    unsigned short dash1, gap1, dash2, gap2, dash3, gap3;
+    int panel;
+    MTex3_0_0 *mtex[18];
+    void *nodetree;
+    ListBase2_93_0 color_modifiers;
+    ListBase2_93_0 alpha_modifiers;
+    ListBase2_93_0 thickness_modifiers;
+    ListBase2_93_0 geometry_modifiers;
 };
 
 struct Mask3_2_0 {
@@ -1651,6 +2065,46 @@ struct Mask3_2_0 {
     char _pad[4];
 };
 
+struct Material3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    short flag;
+    char _pad1[2];
+    float r, g, b, a;
+    float specr, specg, specb;
+    float alpha;
+    float ray_mirror;
+    float spec;
+    float gloss_mir;
+    float roughness;
+    float metallic;
+    char use_nodes;
+    char pr_type;
+    short pr_texture;
+    short pr_flag;
+    short index;
+    void *nodetree;
+    Ipo3_2_0 *ipo;
+    PreviewImage2_93_0 *preview;
+    float line_col[4];
+    short line_priority;
+    short vcol_alpha;
+    short paint_active_slot;
+    short paint_clone_slot;
+    short tot_slots;
+    char _pad2[2];
+    float alpha_threshold;
+    float refract_depth;
+    char blend_method;
+    char blend_shadow;
+    char blend_flag;
+    char _pad3[1];
+    TexPaintSlot3_2_0 *texpaintslot;
+    ListBase2_93_0 gpumaterial;
+    MaterialGPencilStyle2_93_0 *gp_style;
+    MaterialLineArt3_0_0 lineart;
+};
+
 struct MetaBall3_2_0 {
     ID3_2_0 id;
     AnimData2_93_0 *adt;
@@ -1658,7 +2112,7 @@ struct MetaBall3_2_0 {
     ListBase2_93_0 disp;
     ListBase2_93_0 *editelems;
     Ipo3_2_0 *ipo;
-    Material2_93_0 **mat;
+    Material3_2_0 **mat;
     char flag, flag2;
     short totcol;
     char texflag;
@@ -1683,7 +2137,7 @@ struct MovieClip3_2_0 {
     float aspx, aspy;
     void *anim;
     void *cache;
-    bGPdata3_0_0 *gpd;
+    bGPdata3_2_0 *gpd;
     MovieTracking2_93_0 tracking;
     void *tracking_context;
     MovieClipProxy2_93_0 proxy;
@@ -1734,7 +2188,7 @@ struct BakeData3_2_0 {
     char save_mode;
     char margin_type;
     char _pad[5];
-    Object3_0_0 *cage_object;
+    Object3_2_0 *cage_object;
 };
 
 struct RenderData3_2_0 {
@@ -1817,8 +2271,8 @@ struct RenderData3_2_0 {
 struct Scene3_2_0 {
     ID3_2_0 id;
     AnimData2_93_0 *adt;
-    Object3_0_0 *camera;
-    World2_93_0 *world;
+    Object3_2_0 *camera;
+    World3_2_0 *world;
     Scene3_2_0 *set;
     ListBase2_93_0 base;
     Base2_93_0 *basact;
@@ -1850,7 +2304,7 @@ struct Scene3_2_0 {
     int active_keyingset;
     ListBase2_93_0 keyingsets;
     UnitSettings2_93_0 unit;
-    bGPdata3_0_0 *gpd;
+    bGPdata3_2_0 *gpd;
     MovieClip3_2_0 *clip;
     PhysicsSettings3_0_0 physics_settings;
     void *_pad8;
@@ -1898,6 +2352,14 @@ struct bScreen3_2_0 {
     PreviewImage2_93_0 *preview;
 };
 
+struct Simulation3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    void *nodetree;
+    uint32_t flag;
+    char _pad[4];
+};
+
 struct bSound3_2_0 {
     ID3_2_0 id;
     char filepath[1024];
@@ -1941,7 +2403,7 @@ struct SpaceSeq3_2_0 {
     char gizmo_flag;
     char _pad[4];
     float cursor[2];
-    bGPdata3_0_0 *gpd;
+    bGPdata3_2_0 *gpd;
     SequencerScopes2_93_0 scopes;
     SequencerPreviewOverlay3_0_0 preview_overlay;
     SequencerTimelineOverlay3_0_0 timeline_overlay;
@@ -1978,6 +2440,45 @@ struct Speaker3_2_0 {
     float pitch;
     short flag;
     char _pad1[6];
+};
+
+struct Tex3_2_0 {
+    ID3_2_0 id;
+    AnimData2_93_0 *adt;
+    float noisesize, turbul;
+    float bright, contrast, saturation, rfac, gfac, bfac;
+    float filtersize;
+    char _pad2[4];
+    float mg_H, mg_lacunarity, mg_octaves, mg_offset, mg_gain;
+    float dist_amount, ns_outscale;
+    float vn_w1;
+    float vn_w2;
+    float vn_w3;
+    float vn_w4;
+    float vn_mexp;
+    short vn_distm, vn_coltype;
+    short noisedepth, noisetype;
+    short noisebasis, noisebasis2;
+    short imaflag, flag;
+    short type, stype;
+    float cropxmin, cropymin, cropxmax, cropymax;
+    int texfilter;
+    int afmax;
+    short xrepeat, yrepeat;
+    short extend;
+    short _pad0;
+    int len;
+    int frames, offset, sfra;
+    float checkerdist, nabla;
+    char _pad1[4];
+    ImageUser3_0_0 iuser;
+    void *nodetree;
+    Ipo3_2_0 *ipo;
+    Image3_2_0 *ima;
+    ColorBand2_93_0 *coba;
+    PreviewImage2_93_0 *preview;
+    char use_nodes;
+    char _pad[7];
 };
 
 struct Text3_2_0 {

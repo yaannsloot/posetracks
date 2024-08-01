@@ -25,6 +25,8 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESRNA_TYPES_3_3_0_H
 #define MAKESRNA_TYPES_3_3_0_H
 
+#include <stdint.h>
+
 struct StringPropertySearchVisitParams3_3_0;
 
 struct StringPropertySearchVisitParams3_3_0 {

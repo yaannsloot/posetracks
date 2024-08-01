@@ -25,6 +25,8 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESRNA_TYPES_3_6_0_H
 #define MAKESRNA_TYPES_3_6_0_H
 
+#include <stdint.h>
+
 struct PrimitiveStringRNA3_6_0;
 struct PrimitiveIntRNA3_6_0;
 struct PrimitiveFloatRNA3_6_0;

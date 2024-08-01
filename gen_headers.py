@@ -64,6 +64,22 @@ def remove_comments(text):
     return re.sub(pattern, replacer, text)
 
 
+def remove_if_directives(text):
+    pattern = re.compile(
+        r'#if.*#endif',
+        re.DOTALL
+    )
+    return re.sub(pattern, '', text)
+
+
+def remove_macros(text):
+    pattern = re.compile(
+        r'\s([A-Z_]*\(\w*\))\s',
+        re.DOTALL
+    )
+    return re.sub(pattern, '', text)
+
+
 def get_versions(repo):
     version_tags = [str(tag) for tag in repo.tags]
     versions = []
@@ -96,8 +112,10 @@ def extract_struct_definitions(file_content):
         r'(typedef\s+)?struct\s+(\w+)\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}\s*(\w+)?\s*;', re.DOTALL
     )
     matches = struct_pattern.finditer(file_content)
-    return {match.group(2): [line for line in match.group(0).splitlines() if not line.strip() == '']
-            for match in matches}
+    return {
+        match.group(2): [line for line in remove_macros(remove_if_directives(match.group(0))).splitlines()
+                         if not line.strip() == '']
+        for match in matches}
 
 
 def sep_enum(text):

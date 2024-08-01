@@ -25,8 +25,9 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESDNA_TYPES_4_1_1_H
 #define MAKESDNA_TYPES_4_1_1_H
 
-#include "makesdna_types_3_5_0.h"
+#include <stdint.h>
 #include "makesdna_types_2_93_0.h"
+#include "makesdna_types_3_5_0.h"
 
 struct uiList4_1_1;
 

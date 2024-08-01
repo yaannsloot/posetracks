@@ -25,18 +25,22 @@ gen_headers.py, which can be found in the project's root directory.
 #ifndef MAKESDNA_TYPES_4_0_0_H
 #define MAKESDNA_TYPES_4_0_0_H
 
-#include "makesdna_types_3_3_0.h"
-#include "makesdna_types_2_93_0.h"
-#include "makesdna_types_3_5_0.h"
-#include "makesdna_types_3_0_0.h"
-#include "makesdna_types_3_6_0.h"
-#include "makesdna_types_3_4_0.h"
+#include <stdint.h>
 #include "makesdna_types_3_2_0.h"
 #include "makesdna_types_3_1_0.h"
+#include "makesdna_types_3_5_0.h"
+#include "makesdna_types_2_93_0.h"
+#include "makesdna_types_3_6_0.h"
+#include "makesdna_types_3_0_0.h"
+#include "makesdna_types_3_4_0.h"
+#include "makesdna_types_3_3_0.h"
 
 struct bPoseChannel_BBoneSegmentBoundary4_0_0;
 struct bPoseChannel_Runtime4_0_0;
+struct bPoseChannel4_0_0;
+struct BoneColor4_0_0;
 struct Bone_Runtime4_0_0;
+struct Bone4_0_0;
 struct bArmature_Runtime4_0_0;
 struct bArmature4_0_0;
 struct BoneCollection4_0_0;
@@ -49,38 +53,64 @@ struct CollectionObject4_0_0;
 struct CollectionChild4_0_0;
 struct Collection4_0_0;
 struct CurveMap4_0_0;
+struct CurvesGeometry4_0_0;
 struct CustomData4_0_0;
+struct bGPDstroke4_0_0;
 struct OpacityGpencilModifierData4_0_0;
 struct GreasePencilDrawingBase4_0_0;
+struct GreasePencilDrawing4_0_0;
 struct GreasePencilDrawingReference4_0_0;
+struct GreasePencilFrame4_0_0;
 struct GreasePencilLayerFramesMapStorage4_0_0;
 struct GreasePencilLayerMask4_0_0;
+struct GreasePencilLayerTreeNode4_0_0;
+struct GreasePencilLayer4_0_0;
+struct GreasePencilLayerTreeGroup4_0_0;
 struct GreasePencilOnionSkinningSettings4_0_0;
+struct GreasePencil4_0_0;
 struct IDOverrideLibraryPropertyOperation4_0_0;
 struct IpoCurve4_0_0;
 struct Ipo4_0_0;
 struct LayerCollection4_0_0;
 struct LightProbe4_0_0;
 struct LightProbeConnectivityData4_0_0;
+struct Light4_0_0;
+struct Mesh4_0_0;
 struct NodesModifierBake4_0_0;
+struct NodesModifierData4_0_0;
 struct MeshToVolumeModifierData4_0_0;
 struct bNodeTreeInterfaceItem4_0_0;
+struct bNodeTreeInterfaceSocket4_0_0;
+struct bNodeTreeInterfacePanel4_0_0;
+struct bNodeTreeInterface4_0_0;
+struct bNodeSocket4_0_0;
+struct bNodePanelState4_0_0;
+struct bNode4_0_0;
 struct bNodePreview4_0_0;
+struct bNestedNodePath4_0_0;
+struct bNestedNodeRef4_0_0;
+struct bNodeTree4_0_0;
 struct bNodeSocketValueRotation4_0_0;
 struct GeometryNodeAssetTraits4_0_0;
 struct NodeKuwaharaData4_0_0;
 struct NodeTexVoronoi4_0_0;
 struct NodeShaderHairPrincipled4_0_0;
 struct NodeGeometryRaycast4_0_0;
+struct NodeRepeatItem4_0_0;
 struct NodeGeometryRepeatInput4_0_0;
+struct NodeGeometryRepeatOutput4_0_0;
 struct LightLinkingRuntime4_0_0;
 struct LightLinking4_0_0;
+struct Object4_0_0;
 struct ToolSettings4_0_0;
 struct RaytraceEEVEE4_0_0;
 struct SceneEEVEE4_0_0;
 struct SceneHydra4_0_0;
 struct Scene4_0_0;
 struct Panel4_0_0;
+struct AssetShelfSettings4_0_0;
+struct AssetShelf4_0_0;
+struct RegionAssetShelf4_0_0;
 struct SeqRetimingKey4_0_0;
 struct Sequence4_0_0;
 struct EQCurveMappingData4_0_0;
@@ -88,6 +118,8 @@ struct SoundEqualizerModifierData4_0_0;
 struct FileAssetSelectParams4_0_0;
 struct SpaceNodeOverlay4_0_0;
 struct SpaceNode4_0_0;
+struct MTex4_0_0;
+struct Tex4_0_0;
 struct ThemeUI4_0_0;
 struct ThemeAssetShelf4_0_0;
 struct ThemeSpace4_0_0;
@@ -95,6 +127,7 @@ struct bAddon4_0_0;
 struct bUserAssetLibrary4_0_0;
 struct bUserExtensionRepo4_0_0;
 struct UserDef_Experimental4_0_0;
+struct UserDef4_0_0;
 struct vec4f4_0_0;
 struct View2D4_0_0;
 struct RegionView3D4_0_0;
@@ -106,12 +139,17 @@ struct ViewerNodeViewerPathElem4_0_0;
 struct ReportTimerInfo4_0_0;
 struct wmWindowManager4_0_0;
 struct wmWindow4_0_0;
+struct World4_0_0;
 struct SpaceAction4_0_0;
+struct Brush4_0_0;
 struct CurveMapping4_0_0;
+struct Curves4_0_0;
+struct PointCloud4_0_0;
 struct RenderData4_0_0;
 struct ARegion4_0_0;
 struct CurvesModifierData4_0_0;
 struct HueCorrectModifierData4_0_0;
+struct SpaceProperties4_0_0;
 struct SpaceOutliner4_0_0;
 struct SpaceGraph4_0_0;
 struct SpaceNla4_0_0;
@@ -135,7 +173,7 @@ struct bArmature_Runtime4_0_0 {
 
 struct BoneCollectionMember4_0_0 {
     BoneCollectionMember4_0_0 *next, *prev;
-    Bone3_0_0 *bone;
+    Bone4_0_0 *bone;
 };
 
 struct BoneCollectionReference4_0_0 {
@@ -198,8 +236,8 @@ struct BrushGpencilSettings4_0_0 {
     CurveMapping4_0_0 *curve_rand_value;
     float outline_fac;
     char _pad1[4];
-    Material2_93_0 *material;
-    Material2_93_0 *material_alt;
+    Material3_5_0 *material;
+    Material3_5_0 *material_alt;
 };
 
 struct CollectionLightLinking4_0_0 {
@@ -237,9 +275,16 @@ struct GreasePencilDrawingBase4_0_0 {
     uint32_t flag;
 };
 
+struct GreasePencilFrame4_0_0 {
+    int drawing_index;
+    uint32_t flag;
+    int8_t type;
+    char _pad[3];
+};
+
 struct GreasePencilLayerFramesMapStorage4_0_0 {
     int *keys;
-    void *values;
+    GreasePencilFrame4_0_0 *values;
     int num;
     int flag;
 };
@@ -249,6 +294,15 @@ struct GreasePencilLayerMask4_0_0 {
     char *layer_name;
     uint16_t flag;
     char _pad[6];
+};
+
+struct GreasePencilLayerTreeNode4_0_0 {
+    GreasePencilLayerTreeNode4_0_0 *next, *prev;
+    GreasePencilLayerTreeGroup4_0_0 *parent;
+    char *name;
+    int8_t type;
+    uint8_t color[3];
+    uint32_t flag;
 };
 
 struct GreasePencilOnionSkinningSettings4_0_0 {
@@ -294,6 +348,17 @@ struct bNodeTreeInterfaceItem4_0_0 {
     char _pad[7];
 };
 
+struct bNodePanelState4_0_0 {
+    int identifier;
+    char flag;
+    char _pad[3];
+};
+
+struct bNestedNodePath4_0_0 {
+    int32_t node_id;
+    int32_t id_in_node;
+};
+
 struct bNodeSocketValueRotation4_0_0 {
     float value_euler[3];
 };
@@ -321,8 +386,23 @@ struct NodeGeometryRaycast4_0_0 {
     int8_t data_type;
 };
 
+struct NodeRepeatItem4_0_0 {
+    char *name;
+    short socket_type;
+    char _pad[2];
+    int identifier;
+};
+
 struct NodeGeometryRepeatInput4_0_0 {
     int32_t output_node_id;
+};
+
+struct NodeGeometryRepeatOutput4_0_0 {
+    NodeRepeatItem4_0_0 *items;
+    int items_num;
+    int active_index;
+    int next_identifier;
+    int inspection_index;
 };
 
 struct LightLinkingRuntime4_0_0 {
@@ -359,6 +439,26 @@ struct SeqRetimingKey4_0_0 {
 struct SpaceNodeOverlay4_0_0 {
     int flag;
     int preview_shape;
+};
+
+struct MTex4_0_0 {
+    short texco, mapto, blendtype;
+    char _pad2[2];
+    Object4_0_0 *object;
+    Tex4_0_0 *tex;
+    char uvname[68];
+    char projx, projy, projz, mapping;
+    char brush_map_mode, brush_angle_mode;
+    short which_output;
+    float ofs[3], size[3], rot, random_angle;
+    float r, g, b, k;
+    float def_var;
+    float colfac;
+    float alphafac;
+    float timefac, lengthfac, clumpfac, dampfac;
+    float kinkfac, kinkampfac, roughfac, padensfac, gravityfac;
+    float lifefac, sizefac, ivelfac, fieldfac;
+    float twistfac;
 };
 
 struct ThemeAssetShelf4_0_0 {
@@ -481,7 +581,7 @@ struct ReportTimerInfo4_0_0 {
 
 struct CollectionObject4_0_0 {
     CollectionObject4_0_0 *next, *prev;
-    Object3_0_0 *ob;
+    Object4_0_0 *ob;
     CollectionLightLinking4_0_0 light_linking;
     int _pad;
 };
@@ -495,7 +595,37 @@ struct CollectionChild4_0_0 {
 
 struct GreasePencilDrawingReference4_0_0 {
     GreasePencilDrawingBase4_0_0 base;
-    void *id_reference;
+    GreasePencil4_0_0 *id_reference;
+};
+
+struct bNodeTreeInterfaceSocket4_0_0 {
+    bNodeTreeInterfaceItem4_0_0 item;
+    char *name;
+    char *description;
+    char *socket_type;
+    int flag;
+    int attribute_domain;
+    char *default_attribute_name;
+    char *identifier;
+    void *socket_data;
+    IDProperty3_5_0 *properties;
+};
+
+struct bNodeTreeInterfacePanel4_0_0 {
+    bNodeTreeInterfaceItem4_0_0 item;
+    char *name;
+    char *description;
+    int flag;
+    char _pad[4];
+    bNodeTreeInterfaceItem4_0_0 **items_array;
+    int items_num;
+    int identifier;
+};
+
+struct bNestedNodeRef4_0_0 {
+    int32_t id;
+    char _pad[4];
+    bNestedNodePath4_0_0 path;
 };
 
 struct LightLinking4_0_0 {
@@ -619,8 +749,119 @@ struct bPoseChannel_Runtime4_0_0 {
     void *_pad;
 };
 
+struct BoneColor4_0_0 {
+    int8_t palette_index;
+    uint8_t _pad0[7];
+    ThemeWireColor2_93_0 custom;
+};
+
+struct bPoseChannel4_0_0 {
+    bPoseChannel4_0_0 *next, *prev;
+    IDProperty3_5_0 *prop;
+    ListBase2_93_0 constraints;
+    char name[64];
+    short flag;
+    short ikflag;
+    short protectflag;
+    short agrp_index;
+    char constflag;
+    char selectflag;
+    char drawflag;
+    char bboneflag;
+    char _pad0[4];
+    Bone4_0_0 *bone;
+    bPoseChannel4_0_0 *parent;
+    bPoseChannel4_0_0 *child;
+    ListBase2_93_0 iktree;
+    ListBase2_93_0 siktree;
+    bMotionPath2_93_0 *mpath;
+    Object4_0_0 *custom;
+    bPoseChannel4_0_0 *custom_tx;
+    float custom_scale;
+    float custom_scale_xyz[3];
+    float custom_translation[3];
+    float custom_rotation_euler[3];
+    float loc[3];
+    float size[3];
+    float eul[3];
+    float quat[4];
+    float rotAxis[3], rotAngle;
+    short rotmode;
+    char _pad[2];
+    float chan_mat[4][4];
+    float pose_mat[4][4];
+    float disp_mat[4][4];
+    float disp_tail_mat[4][4];
+    float constinv[4][4];
+    float pose_head[3];
+    float pose_tail[3];
+    float limitmin[3], limitmax[3];
+    float stiffness[3];
+    float ikstretch;
+    float ikrotweight;
+    float iklinweight;
+    float roll1, roll2;
+    float curve_in_x, curve_in_z;
+    float curve_out_x, curve_out_z;
+    float ease1, ease2;
+    float scale_in_x , scale_in_z;
+    float scale_out_x , scale_out_z;
+    float scale_in[3], scale_out[3];
+    bPoseChannel4_0_0 *bbone_prev;
+    bPoseChannel4_0_0 *bbone_next;
+    void *temp;
+    bPoseChannelDrawData2_93_0 *draw_data;
+    bPoseChannel4_0_0 *orig_pchan;
+    BoneColor4_0_0 color;
+    bPoseChannel_Runtime4_0_0 runtime;
+};
+
 struct Bone_Runtime4_0_0 {
     ListBase2_93_0 collections;
+};
+
+struct Bone4_0_0 {
+    Bone4_0_0 *next, *prev;
+    IDProperty3_5_0 *prop;
+    Bone4_0_0 *parent;
+    ListBase2_93_0 childbase;
+    char name[64];
+    float roll;
+    float head[3];
+    float tail[3];
+    float bone_mat[3][3];
+    int flag;
+    char _pad1[4];
+    BoneColor4_0_0 color;
+    char inherit_scale_mode;
+    char _pad[3];
+    float arm_head[3];
+    float arm_tail[3];
+    float arm_mat[4][4];
+    float arm_roll;
+    float dist, weight;
+    float xwidth, length, zwidth;
+    float rad_head, rad_tail;
+    float roll1, roll2;
+    float curve_in_x, curve_in_z;
+    float curve_out_x, curve_out_z;
+    float ease1, ease2;
+    float scale_in_x , scale_in_z;
+    float scale_out_x , scale_out_z;
+    float scale_in[3], scale_out[3];
+    float size[3];
+    int layer;
+    short segments;
+    char bbone_mapping_mode;
+    char _pad2[7];
+    char bbone_prev_type;
+    char bbone_next_type;
+    int bbone_flag;
+    short bbone_prev_flag;
+    short bbone_next_flag;
+    Bone4_0_0 *bbone_prev;
+    Bone4_0_0 *bbone_next;
+    Bone_Runtime4_0_0 runtime;
 };
 
 struct bArmature4_0_0 {
@@ -630,7 +871,7 @@ struct bArmature4_0_0 {
     void *bonehash;
     void *_pad1;
     ListBase2_93_0 *edbo;
-    Bone3_0_0 *act_bone;
+    Bone4_0_0 *act_bone;
     void *act_edbone;
     char needs_flush_to_id;
     char _pad0[3];
@@ -680,7 +921,7 @@ struct Camera4_0_0 {
     float fisheye_polynomial_k3;
     float fisheye_polynomial_k4;
     Ipo4_0_0 *ipo;
-    Object3_0_0 *dof_ob;
+    Object4_0_0 *dof_ob;
     GPUDOFSettings2_93_0 gpu_dof;
     CameraDOFSettings3_3_0 dof;
     ListBase2_93_0 bg_images;
@@ -707,9 +948,51 @@ struct Collection4_0_0 {
     Collection_Runtime3_6_0 runtime;
 };
 
+struct CurvesGeometry4_0_0 {
+    int *curve_offsets;
+    CustomData4_0_0 point_data;
+    CustomData4_0_0 curve_data;
+    int point_num;
+    int curve_num;
+    ListBase2_93_0 vertex_group_names;
+    int vertex_group_active_index;
+    char _pad[4];
+    void *runtime;
+};
+
+struct bGPDstroke4_0_0 {
+    bGPDstroke4_0_0 *next, *prev;
+    bGPDspoint2_93_0 *points;
+    bGPDtriangle2_93_0 *triangles;
+    int totpoints;
+    int tot_triangles;
+    short thickness;
+    short flag, _pad[2];
+    double inittime;
+    char colorname[128];
+    int mat_nr;
+    short caps[2];
+    float hardness;
+    float aspect_ratio[2];
+    float fill_opacity_fac;
+    float boundbox_min[3];
+    float boundbox_max[3];
+    float uv_rotation;
+    float uv_translation[2];
+    float uv_scale;
+    int select_index;
+    char _pad4[4];
+    MDeformVert2_93_0 *dvert;
+    void *_pad3;
+    float vert_color_fill[4];
+    bGPDcurve2_93_0 *editcurve;
+    bGPDstroke_Runtime3_4_0 runtime;
+    void *_pad5;
+};
+
 struct OpacityGpencilModifierData4_0_0 {
     GpencilModifierData2_93_0 modifier;
-    Material2_93_0 *material;
+    Material3_5_0 *material;
     char layername[64];
     char materialname[64];
     char vgname[64];
@@ -721,6 +1004,44 @@ struct OpacityGpencilModifierData4_0_0 {
     int layer_pass;
     float hardness;
     CurveMapping4_0_0 *curve_intensity;
+};
+
+struct GreasePencilDrawing4_0_0 {
+    GreasePencilDrawingBase4_0_0 base;
+    CurvesGeometry4_0_0 geometry;
+    void *runtime;
+};
+
+struct GreasePencilLayer4_0_0 {
+    GreasePencilLayerTreeNode4_0_0 base;
+    GreasePencilLayerFramesMapStorage4_0_0 frames_storage;
+    int8_t blend_mode;
+    char _pad[3];
+    float opacity;
+    ListBase2_93_0 masks;
+    void *runtime;
+};
+
+struct GreasePencilLayerTreeGroup4_0_0 {
+    GreasePencilLayerTreeNode4_0_0 base;
+    ListBase2_93_0 children;
+    void *runtime;
+};
+
+struct GreasePencil4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    GreasePencilDrawingBase4_0_0 **drawing_array;
+    int drawing_array_num;
+    char _pad[4];
+    GreasePencilLayerTreeGroup4_0_0 *root_group_ptr;
+    GreasePencilLayer4_0_0 *active_layer;
+    Material3_5_0 **material_array;
+    short material_array_num;
+    char _pad2[2];
+    uint32_t flag;
+    GreasePencilOnionSkinningSettings4_0_0 onion_skinning_settings;
+    void *runtime;
 };
 
 struct IpoCurve4_0_0 {
@@ -800,9 +1121,120 @@ struct LightProbe4_0_0 {
     Collection4_0_0 *visibility_grp;
 };
 
+struct Light4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    short type, flag;
+    int mode;
+    float r, g, b;
+    float energy;
+    float radius;
+    float spotsize;
+    float spotblend;
+    short area_shape;
+    short _pad1;
+    float area_size;
+    float area_sizey;
+    float area_sizez;
+    float area_spread;
+    float sun_angle;
+    float shdwr, shdwg, shdwb;
+    short pr_texture, use_nodes;
+    float bias;
+    float clipsta;
+    float clipend;
+    float cascade_max_dist;
+    float cascade_exponent;
+    float cascade_fade;
+    int cascade_count;
+    float contact_dist;
+    float contact_bias;
+    float contact_thickness;
+    float diff_fac, volume_fac;
+    float spec_fac, att_dist;
+    float shadow_softness_factor;
+    float shadow_trace_distance;
+    float _pad3;
+    PreviewImage2_93_0 *preview;
+    bNodeTree4_0_0 *nodetree;
+    Ipo4_0_0 *ipo;
+    float energy_deprecated;
+    float _pad2;
+};
+
+struct Mesh4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    Ipo4_0_0 *ipo;
+    Key2_93_0 *key;
+    Material3_5_0 **mat;
+    int totvert;
+    int totedge;
+    int faces_num;
+    int totloop;
+    int *face_offset_indices;
+    CustomData4_0_0 vert_data;
+    CustomData4_0_0 edge_data;
+    CustomData4_0_0 face_data;
+    CustomData4_0_0 loop_data;
+    ListBase2_93_0 vertex_group_names;
+    int vertex_group_active_index;
+    int attributes_active_index;
+    void *edit_mesh;
+    MSelect2_93_0 *mselect;
+    int totselect;
+    int act_face;
+    Mesh4_0_0 *texcomesh;
+    float texspace_location[3];
+    float texspace_size[3];
+    char texspace_flag;
+    char editflag;
+    uint16_t flag;
+    float smoothresh;
+    float remesh_voxel_size;
+    float remesh_voxel_adaptivity;
+    int face_sets_color_seed;
+    int face_sets_color_default;
+    char *active_color_attribute;
+    char *default_color_attribute;
+    char symmetry;
+    char remesh_mode;
+    short totcol;
+    char cd_flag;
+    char subdiv;
+    char subdivr;
+    char subsurftype;
+    MPoly3_6_0 *mpoly;
+    MLoop2_93_0 *mloop;
+    MVert3_5_0 *mvert;
+    MEdge3_6_0 *medge;
+    MDeformVert2_93_0 *dvert;
+    MTFace2_93_0 *mtface;
+    TFace2_93_0 *tface;
+    MCol2_93_0 *mcol;
+    MFace2_93_0 *mface;
+    CustomData4_0_0 fdata_legacy;
+    int totface_legacy;
+    char _pad1[4];
+    void *runtime;
+};
+
+struct NodesModifierData4_0_0 {
+    ModifierData3_5_0 modifier;
+    bNodeTree4_0_0 *node_group;
+    NodesModifierSettings2_93_0 settings;
+    char *simulation_bake_directory;
+    int8_t flag;
+    char _pad[3];
+    int bakes_num;
+    NodesModifierBake4_0_0 *bakes;
+    void *_pad2;
+    void *runtime;
+};
+
 struct MeshToVolumeModifierData4_0_0 {
     ModifierData3_5_0 modifier;
-    Object3_0_0 *object;
+    Object4_0_0 *object;
     int resolution_mode;
     float voxel_size;
     int voxel_amount;
@@ -812,9 +1244,98 @@ struct MeshToVolumeModifierData4_0_0 {
     void *_pad3;
 };
 
+struct bNodeTreeInterface4_0_0 {
+    bNodeTreeInterfacePanel4_0_0 root_panel;
+    int active_index;
+    int next_uid;
+    void *runtime;
+};
+
+struct bNodeSocket4_0_0 {
+    bNodeSocket4_0_0 *next, *prev;
+    IDProperty3_5_0 *prop;
+    char identifier[64];
+    char name[64];
+    void *storage;
+    short type;
+    short flag;
+    short limit;
+    short in_out;
+    void *typeinfo;
+    char idname[64];
+    void *default_value;
+    short stack_index;
+    char display_shape;
+    char attribute_domain;
+    char _pad[4];
+    char label[64];
+    char short_label[64];
+    char description[64];
+    char *default_attribute_name;
+    int own_index;
+    int to_index;
+    bNodeLink2_93_0 *link;
+    bNodeStack2_93_0 ns;
+    void *runtime;
+};
+
+struct bNode4_0_0 {
+    bNode4_0_0 *next, *prev;
+    ListBase2_93_0 inputs, outputs;
+    char name[64];
+    int32_t identifier;
+    int flag;
+    char idname[64];
+    void *typeinfo;
+    int16_t type;
+    char _pad1[2];
+    int16_t custom1, custom2;
+    float custom3, custom4;
+    ID3_4_0 *id;
+    void *storage;
+    IDProperty3_5_0 *prop;
+    bNode4_0_0 *parent;
+    float locx, locy;
+    float width, height;
+    float offsetx, offsety;
+    char label[64];
+    float color[3];
+    int num_panel_states;
+    bNodePanelState4_0_0 *panel_states_array;
+    void *runtime;
+};
+
 struct bNodePreview4_0_0 {
     bNodeInstanceHashEntry2_93_0 hash_entry;
     void *ibuf;
+};
+
+struct bNodeTree4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    ID3_4_0 *owner_id;
+    void *typeinfo;
+    char idname[64];
+    bGPdata3_0_0 *gpd;
+    float view_center[2];
+    ListBase2_93_0 nodes, links;
+    int type;
+    int cur_index;
+    int flag;
+    short edit_quality;
+    short render_quality;
+    int chunksize;
+    int execution_mode;
+    rctf2_93_0 viewer_border;
+    ListBase2_93_0 inputs_legacy , outputs_legacy;
+    bNodeTreeInterface4_0_0 tree_interface;
+    void *previews;
+    bNodeInstanceKey2_93_0 active_viewer_key;
+    int nested_node_refs_num;
+    bNestedNodeRef4_0_0 *nested_node_refs;
+    GeometryNodeAssetTraits4_0_0 *geometry_node_asset_traits;
+    PreviewImage2_93_0 *preview;
+    void *runtime;
 };
 
 struct NodeTexVoronoi4_0_0 {
@@ -825,6 +1346,107 @@ struct NodeTexVoronoi4_0_0 {
     int normalize;
     int coloring;
     char _pad[4];
+};
+
+struct Object4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    DrawDataList2_93_0 drawdata;
+    void *sculpt;
+    short type;
+    short partype;
+    int par1, par2, par3;
+    char parsubstr[64];
+    Object4_0_0 *parent, *track;
+    Object4_0_0 *proxy;
+    Object4_0_0 *proxy_group;
+    Object4_0_0 *proxy_from;
+    Ipo4_0_0 *ipo;
+    bAction3_1_0 *action;
+    bAction3_1_0 *poselib;
+    bPose3_2_0 *pose;
+    void *data;
+    bGPdata3_0_0 *gpd;
+    bAnimVizSettings3_2_0 avs;
+    bMotionPath2_93_0 *mpath;
+    void *_pad0;
+    ListBase2_93_0 constraintChannels;
+    ListBase2_93_0 effect;
+    ListBase2_93_0 defbase;
+    ListBase2_93_0 fmaps;
+    ListBase2_93_0 modifiers;
+    ListBase2_93_0 greasepencil_modifiers;
+    ListBase2_93_0 shader_fx;
+    int mode;
+    int restore_mode;
+    Material3_5_0 **mat;
+    char *matbits;
+    int totcol;
+    int actcol;
+    float loc[3], dloc[3];
+    float scale[3];
+    float dsize[3];
+    float dscale[3];
+    float rot[3], drot[3];
+    float quat[4], dquat[4];
+    float rotAxis[3], drotAxis[3];
+    float rotAngle, drotAngle;
+    float object_to_world[4][4];
+    float world_to_object[4][4];
+    float parentinv[4][4];
+    float constinv[4][4];
+    unsigned int lay;
+    short flag;
+    short colbits;
+    short transflag, protectflag;
+    short trackflag, upflag;
+    short nlaflag;
+    char _pad1;
+    char duplicator_visibility_flag;
+    short base_flag;
+    unsigned short base_local_view_bits;
+    unsigned short col_group, col_mask;
+    short rotmode;
+    char boundtype;
+    char collision_boundtype;
+    short dtx;
+    char dt;
+    char empty_drawtype;
+    float empty_drawsize;
+    float instance_faces_scale;
+    short index;
+    unsigned short actdef;
+    char _pad2[4];
+    float color[4];
+    short softflag;
+    short visibility_flag;
+    short shapenr;
+    char shapeflag;
+    char _pad3[1];
+    ListBase2_93_0 constraints;
+    ListBase2_93_0 nlastrips;
+    ListBase2_93_0 hooks;
+    ListBase2_93_0 particlesystem;
+    PartDeflect2_93_0 *pd;
+    SoftBody3_0_0 *soft;
+    Collection4_0_0 *instance_collection;
+    FluidsimSettings2_93_0 *fluidsimSettings;
+    ListBase2_93_0 pc_ids;
+    RigidBodyOb2_93_0 *rigidbody_object;
+    RigidBodyCon2_93_0 *rigidbody_constraint;
+    float ima_ofs[2];
+    ImageUser3_0_0 *iuser;
+    char empty_image_visibility_flag;
+    char empty_image_depth;
+    char empty_image_flag;
+    uint8_t modifier_flag;
+    char _pad8[4];
+    PreviewImage2_93_0 *preview;
+    ObjectLineArt3_3_0 lineart;
+    LightgroupMembership3_2_0 *lightgroup;
+    LightLinking4_0_0 *light_linking;
+    LightProbeObjectCache3_6_0 *lightprobe_cache;
+    Object_Runtime3_0_0 runtime;
 };
 
 struct ToolSettings4_0_0 {
@@ -1015,8 +1637,8 @@ struct Scene4_0_0 {
     ID3_4_0 id;
     AnimData2_93_0 *adt;
     DrawDataList2_93_0 drawdata;
-    Object3_0_0 *camera;
-    World2_93_0 *world;
+    Object4_0_0 *camera;
+    World4_0_0 *world;
     Scene4_0_0 *set;
     ListBase2_93_0 base;
     Base3_4_0 *basact;
@@ -1028,7 +1650,7 @@ struct Scene4_0_0 {
     short flag;
     char use_nodes;
     char _pad3[1];
-    void *nodetree;
+    bNodeTree4_0_0 *nodetree;
     Editing3_2_0 *ed;
     ToolSettings4_0_0 *toolsettings;
     void *_pad4;
@@ -1088,6 +1710,31 @@ struct Panel4_0_0 {
     Panel_Runtime3_0_0 runtime;
 };
 
+struct AssetShelfSettings4_0_0 {
+    AssetShelfSettings4_0_0 *next, *prev;
+    AssetLibraryReference3_0_0 asset_library_reference;
+    ListBase2_93_0 enabled_catalog_paths;
+    const char *active_catalog_path;
+    char search_string[64];
+    short preview_size;
+    short display_flag;
+    char _pad1[4];
+};
+
+struct AssetShelf4_0_0 {
+    AssetShelf4_0_0 *next, *prev;
+    char idname[64];
+    void *type;
+    AssetShelfSettings4_0_0 settings;
+    short preferred_row_count;
+    char _pad[6];
+};
+
+struct RegionAssetShelf4_0_0 {
+    ListBase2_93_0 shelves;
+    AssetShelf4_0_0 *active_shelf;
+};
+
 struct Sequence4_0_0 {
     Sequence4_0_0 *next, *prev;
     void *tmp;
@@ -1111,7 +1758,7 @@ struct Sequence4_0_0 {
     Strip3_6_0 *strip;
     Ipo4_0_0 *ipo;
     Scene4_0_0 *scene;
-    Object3_0_0 *scene_camera;
+    Object4_0_0 *scene_camera;
     MovieClip3_5_0 *clip;
     Mask3_6_0 *mask;
     ListBase2_93_0 anims;
@@ -1206,17 +1853,59 @@ struct SpaceNode4_0_0 {
     float xof, yof;
     float zoom;
     ListBase2_93_0 treepath;
-    void *edittree;
-    void *nodetree;
+    bNodeTree4_0_0 *edittree;
+    bNodeTree4_0_0 *nodetree;
     char tree_idname[64];
     int treetype;
     short texfrom;
     char shaderfrom;
     char geometry_nodes_type;
-    void *geometry_nodes_tool_tree;
+    bNodeTree4_0_0 *geometry_nodes_tool_tree;
     bGPdata3_0_0 *gpd;
     SpaceNodeOverlay4_0_0 overlay;
     void *runtime;
+};
+
+struct Tex4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    DrawDataList2_93_0 drawdata;
+    float noisesize, turbul;
+    float bright, contrast, saturation, rfac, gfac, bfac;
+    float filtersize;
+    char _pad2[4];
+    float mg_H, mg_lacunarity, mg_octaves, mg_offset, mg_gain;
+    float dist_amount, ns_outscale;
+    float vn_w1;
+    float vn_w2;
+    float vn_w3;
+    float vn_w4;
+    float vn_mexp;
+    short vn_distm, vn_coltype;
+    short noisedepth, noisetype;
+    short noisebasis, noisebasis2;
+    short imaflag, flag;
+    short type, stype;
+    float cropxmin, cropymin, cropxmax, cropymax;
+    int texfilter;
+    int afmax;
+    short xrepeat, yrepeat;
+    short extend;
+    short _pad0;
+    int len;
+    int frames;
+    int offset;
+    int sfra;
+    float checkerdist, nabla;
+    char _pad1[4];
+    ImageUser3_0_0 iuser;
+    bNodeTree4_0_0 *nodetree;
+    Ipo4_0_0 *ipo;
+    Image3_6_0 *ima;
+    ColorBand2_93_0 *coba;
+    PreviewImage2_93_0 *preview;
+    char use_nodes;
+    char _pad[7];
 };
 
 struct ThemeUI4_0_0 {
@@ -1394,6 +2083,167 @@ struct ThemeSpace4_0_0 {
     unsigned char metadatatext[4];
 };
 
+struct UserDef4_0_0 {
+    int versionfile, subversionfile;
+    int flag;
+    unsigned int dupflag;
+    char pref_flag;
+    char savetime;
+    char mouse_emulate_3_button_modifier;
+    char _pad4[1];
+    char tempdir[768];
+    char fontdir[768];
+    char renderdir[1024];
+    char render_cachedir[768];
+    char textudir[768];
+    char pythondir_legacy[768];
+    char sounddir[768];
+    char i18ndir[768];
+    char image_editor[1024];
+    char text_editor[1024];
+    char text_editor_args[256];
+    char anim_player[1024];
+    int anim_player_preset;
+    short v2d_min_gridsize;
+    short timecode_style;
+    short versions;
+    short dbl_click_time;
+    char _pad0[3];
+    char mini_axis_type;
+    int uiflag;
+    char uiflag2;
+    char gpu_flag;
+    char _pad8[6];
+    char app_flag;
+    char viewzoom;
+    short language;
+    int mixbufsize;
+    int audiodevice;
+    int audiorate;
+    int audioformat;
+    int audiochannels;
+    float ui_scale;
+    int ui_line_width;
+    int dpi;
+    float scale_factor;
+    float inv_scale_factor;
+    float pixelsize;
+    int virtual_pixel;
+    int scrollback;
+    char node_margin;
+    char node_preview_res;
+    short transopts;
+    short menuthreshold1, menuthreshold2;
+    char app_template[64];
+    ListBase2_93_0 themes;
+    ListBase2_93_0 uifonts;
+    ListBase2_93_0 uistyles;
+    ListBase2_93_0 user_keymaps;
+    ListBase2_93_0 user_keyconfig_prefs;
+    ListBase2_93_0 addons;
+    ListBase2_93_0 autoexec_paths;
+    ListBase2_93_0 script_directories;
+    ListBase2_93_0 user_menus;
+    ListBase2_93_0 asset_libraries;
+    ListBase2_93_0 extension_repos;
+    char keyconfigstr[64];
+    short active_asset_library;
+    short active_extension_repo;
+    char _pad14[6];
+    short undosteps;
+    int undomemory;
+    float gpu_viewport_quality;
+    short gp_manhattandist, gp_euclideandist, gp_eraser;
+    short gp_settings;
+    char _pad13[4];
+    SolidLight3_4_0 light_param[4];
+    float light_ambient[3];
+    char gizmo_flag;
+    char gizmo_size;
+    char gizmo_size_navigate_v3d;
+    char _pad3[5];
+    short edit_studio_light;
+    short lookdev_sphere_size;
+    short vbotimeout, vbocollectrate;
+    short textimeout, texcollectrate;
+    int memcachelimit;
+    int prefetchframes;
+    float pad_rot_angle;
+    char _pad12[4];
+    short rvisize;
+    short rvibright;
+    short recent_files;
+    short smooth_viewtx;
+    short glreslimit;
+    short color_picker_type;
+    char auto_smoothing_new;
+    char ipo_new;
+    char keyhandles_new;
+    char _pad11[4];
+    char view_frame_type;
+    int view_frame_keyframes;
+    float view_frame_seconds;
+    short gpu_backend;
+    short playback_fps_samples;
+    char _pad7[2];
+    short widget_unit;
+    short anisotropic_filter;
+    short tablet_api;
+    float pressure_threshold_max;
+    float pressure_softness;
+    float ndof_sensitivity;
+    float ndof_orbit_sensitivity;
+    float ndof_deadzone;
+    int ndof_flag;
+    short ogl_multisamples;
+    short image_draw_method;
+    float glalphaclip;
+    short autokey_mode;
+    short autokey_flag;
+    short animation_flag;
+    char text_render;
+    char navigation_mode;
+    float view_rotate_sensitivity_turntable;
+    float view_rotate_sensitivity_trackball;
+    ColorBand2_93_0 coba_weight;
+    float sculpt_paint_overlay_col[3];
+    float gpencil_new_layer_col[4];
+    char drag_threshold_mouse;
+    char drag_threshold_tablet;
+    char drag_threshold;
+    char move_threshold;
+    char font_path_ui[1024];
+    char font_path_ui_mono[1024];
+    int compute_device_type;
+    float fcu_inactive_alpha;
+    short pie_tap_timeout;
+    short pie_initial_timeout;
+    short pie_animation_timeout;
+    short pie_menu_confirm;
+    short pie_menu_radius;
+    short pie_menu_threshold;
+    short _pad6[2];
+    char factor_display_type;
+    char viewport_aa;
+    char render_display_type;
+    char filebrowser_display_type;
+    char sequencer_disk_cache_dir[1024];
+    int sequencer_disk_cache_compression;
+    int sequencer_disk_cache_size_limit;
+    short sequencer_disk_cache_flag;
+    short sequencer_proxy_setup;
+    float collection_instance_empty_size;
+    char text_flag;
+    char _pad10[1];
+    char file_preview_type;
+    char statusbar_flag;
+    WalkNavigation2_93_0 walk_navigation;
+    UserDef_SpaceData2_93_0 space_data;
+    UserDef_FileSpaceData2_93_0 file_space_data;
+    UserDef_Experimental4_0_0 experimental;
+    UserDef_Runtime2_93_0 runtime;
+};
+
 struct wmWindowManager4_0_0 {
     ID3_4_0 id;
     wmWindow4_0_0 *windrawable;
@@ -1467,6 +2317,30 @@ struct wmWindow4_0_0 {
     void *cursor_keymap_status;
 };
 
+struct World4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    DrawDataList2_93_0 drawdata;
+    char _pad0[4];
+    short texact, mistype;
+    float horr, horg, horb;
+    float exposure, exp, range;
+    short mode;
+    char _pad2[6];
+    float misi, miststa, mistdist, misthi;
+    float aodist, aoenergy;
+    short flag;
+    char _pad3[2];
+    int probe_resolution;
+    Ipo4_0_0 *ipo;
+    short pr_texture, use_nodes;
+    char _pad[4];
+    PreviewImage2_93_0 *preview;
+    bNodeTree4_0_0 *nodetree;
+    LightgroupMembership3_2_0 *lightgroup;
+    ListBase2_93_0 gpumaterial;
+};
+
 struct SpaceAction4_0_0 {
     SpaceLink2_93_0 *next, *prev;
     ListBase2_93_0 regionbase;
@@ -1484,6 +2358,161 @@ struct SpaceAction4_0_0 {
     char cache_display;
     char _pad1[6];
     SpaceAction_Runtime2_93_0 runtime;
+};
+
+struct Brush4_0_0 {
+    ID3_4_0 id;
+    BrushClone2_93_0 clone;
+    CurveMapping4_0_0 *curve;
+    MTex4_0_0 mtex;
+    MTex4_0_0 mask_mtex;
+    Brush4_0_0 *toggle_brush;
+    void *icon_imbuf;
+    PreviewImage2_93_0 *preview;
+    ColorBand2_93_0 *gradient;
+    PaintCurve2_93_0 *paint_curve;
+    char icon_filepath[1024];
+    float normal_weight;
+    float rake_factor;
+    short blend;
+    short ob_mode;
+    float weight;
+    int size;
+    int flag;
+    int flag2;
+    int sampling_flag;
+    int mask_pressure;
+    float jitter;
+    int jitter_absolute;
+    int overlay_flags;
+    int spacing;
+    int smooth_stroke_radius;
+    float smooth_stroke_factor;
+    float rate;
+    float rgb[3];
+    float alpha;
+    float hardness;
+    float flow;
+    float wet_mix;
+    float wet_persistence;
+    float density;
+    int paint_flags;
+    float tip_roundness;
+    float tip_scale_x;
+    float secondary_rgb[3];
+    float dash_ratio;
+    int dash_samples;
+    int sculpt_plane;
+    float plane_offset;
+    int gradient_spacing;
+    char gradient_stroke_mode;
+    char gradient_fill_mode;
+    char _pad0[5];
+    char falloff_shape;
+    float falloff_angle;
+    char sculpt_tool;
+    char uv_sculpt_tool;
+    char vertexpaint_tool;
+    char weightpaint_tool;
+    char imagepaint_tool;
+    char mask_tool;
+    char gpencil_tool;
+    char gpencil_vertex_tool;
+    char gpencil_sculpt_tool;
+    char gpencil_weight_tool;
+    char curves_sculpt_tool;
+    char _pad1[5];
+    float autosmooth_factor;
+    float tilt_strength_factor;
+    float topology_rake_factor;
+    float crease_pinch_factor;
+    float normal_radius_factor;
+    float area_radius_factor;
+    float wet_paint_radius_factor;
+    float plane_trim;
+    float height;
+    float texture_sample_bias;
+    int curve_preset;
+    float disconnected_distance_max;
+    int deform_target;
+    int automasking_flags;
+    int automasking_boundary_edges_propagation_steps;
+    int elastic_deform_type;
+    float elastic_deform_volume_preservation;
+    int snake_hook_deform_type;
+    int pose_deform_type;
+    float pose_offset;
+    int pose_smooth_iterations;
+    int pose_ik_segments;
+    int pose_origin_type;
+    int boundary_deform_type;
+    int boundary_falloff_type;
+    float boundary_offset;
+    int cloth_deform_type;
+    int cloth_force_falloff_type;
+    int cloth_simulation_area_type;
+    float cloth_mass;
+    float cloth_damping;
+    float cloth_sim_limit;
+    float cloth_sim_falloff;
+    float cloth_constraint_softbody_strength;
+    int smooth_deform_type;
+    float surface_smooth_shape_preservation;
+    float surface_smooth_current_vertex;
+    int surface_smooth_iterations;
+    float multiplane_scrape_angle;
+    int smear_deform_type;
+    int slide_deform_type;
+    int texture_overlay_alpha;
+    int mask_overlay_alpha;
+    int cursor_overlay_alpha;
+    float unprojected_radius;
+    float sharp_threshold;
+    int blur_kernel_radius;
+    int blur_mode;
+    float fill_threshold;
+    float add_col[4];
+    float sub_col[4];
+    float stencil_pos[2];
+    float stencil_dimension[2];
+    float mask_stencil_pos[2];
+    float mask_stencil_dimension[2];
+    BrushGpencilSettings4_0_0 *gpencil_settings;
+    BrushCurvesSculptSettings3_5_0 *curves_sculpt_settings;
+    int automasking_cavity_blur_steps;
+    float automasking_cavity_factor;
+    CurveMapping4_0_0 *automasking_cavity_curve;
+};
+
+struct Curves4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    CurvesGeometry4_0_0 geometry;
+    int flag;
+    int attributes_active_index;
+    Material3_5_0 **mat;
+    short totcol;
+    char symmetry;
+    char selection_domain;
+    char _pad[4];
+    Object4_0_0 *surface;
+    char *surface_uv_map;
+    void *batch_cache;
+};
+
+struct PointCloud4_0_0 {
+    ID3_4_0 id;
+    AnimData2_93_0 *adt;
+    int flag;
+    int totpoint;
+    CustomData4_0_0 pdata;
+    int attributes_active_index;
+    int _pad4;
+    Material3_5_0 **mat;
+    short totcol;
+    short _pad3[3];
+    void *runtime;
+    void *batch_cache;
 };
 
 struct ARegion4_0_0 {
@@ -1527,6 +2556,26 @@ struct CurvesModifierData4_0_0 {
 struct HueCorrectModifierData4_0_0 {
     SequenceModifierData2_93_0 modifier;
     CurveMapping4_0_0 curve_mapping;
+};
+
+struct SpaceProperties4_0_0 {
+    SpaceLink2_93_0 *next, *prev;
+    ListBase2_93_0 regionbase;
+    char spacetype;
+    char link_flag;
+    char _pad0[6];
+    View2D4_0_0 v2d;
+    short space_subtype;
+    short mainb, mainbo, mainbuser;
+    short preview;
+    char _pad[4];
+    char flag;
+    char outliner_sync;
+    void *path;
+    int pathflag, dataicon;
+    ID3_4_0 *pinid;
+    void *texuser;
+    void *runtime;
 };
 
 struct SpaceOutliner4_0_0 {
