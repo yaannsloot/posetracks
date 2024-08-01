@@ -31,6 +31,7 @@ BlenderVersion get_compatability_mode();
 
 class BlenderDataWrapper {
 public:
+	BlenderDataWrapper() : data_ptr(nullptr) {};
 	BlenderDataWrapper(void* data_ptr) : data_ptr(data_ptr) {};
 	bool is_null() const { return data_ptr == nullptr; };
 protected:
@@ -40,6 +41,7 @@ protected:
 // Blender DNA enums
 
 enum TrackFlags {
+	TRACK_SELECT = 1,
 	TRACK_HAS_BUNDLE = (1 << 1),
 	TRACK_DISABLE_RED = (1 << 2),
 	TRACK_DISABLE_GREEN = (1 << 3),
@@ -54,13 +56,46 @@ enum TrackFlags {
 	TRACK_USE_2D_STAB_ROT = (1 << 12),
 };
 
+enum ObjectType {
+	OB_EMPTY = 0,
+	OB_MESH = 1,
+	/** Curve object is still used but replaced by "Curves" for the future (see #95355). */
+	OB_CURVES_LEGACY = 2,
+	OB_SURF = 3,
+	OB_FONT = 4,
+	OB_MBALL = 5,
+	OB_LAMP = 10,
+	OB_CAMERA = 11,
+	OB_SPEAKER = 12,
+	OB_LIGHTPROBE = 13,
+	OB_LATTICE = 22,
+	OB_ARMATURE = 25,
+	OB_GPENCIL_LEGACY = 26,
+	OB_CURVES = 27,
+	OB_POINTCLOUD = 28,
+	OB_VOLUME = 29,
+	OB_GREASE_PENCIL = 30,
+	OB_TYPE_MAX,
+};
+
 // Blender DNA wrappers
 class Library;
 class AssetMetaData;
 class IDProperty;
 class IDOverrideLibrary;
+class NlaTrack;
+class NlaStrip;
+class ChannelDriver;
+class AnimOverride;
+class BezTriple;
+class FPoint;
+class FCurve;
 class AnimData;
+class ThemeWireColor;
 class bGPdata;
+class bConstraintChannel;
+class bActionChannel;
+class bActionGroup;
 class bAction;
 class bPose;
 class bAnimVizSettings;
@@ -98,6 +133,7 @@ class PreviewImage;
 class ObjectLineArt;
 class Object_Rumtime;
 class Object;
+class Camera;
 
 template <typename T>
 class ListBase : public BlenderDataWrapper {
@@ -213,17 +249,150 @@ IDOverrideLibrary ID<T>::override_library() const { ID_RETURN_AS(IDOverrideLibra
 template <typename T>
 ID<T> ID<T>::orig_id() const { ID_RETURN_AS(ID<T>, orig_id) }
 
+class NlaTrack : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+};
+
+class NlaStrip : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+};
+
+class ChannelDriver : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+};
+
+class AnimOverride : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+};
+
+typedef float(*BezTripleVecs)[3];
+
+class BezTriple : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	BezTripleVecs vec() const;
+	float& tilt() const;
+	float& weight() const;
+	float& radius() const;
+	char& ipo() const;
+	uint8_t& h1() const;
+	uint8_t& h2() const;
+	uint8_t& f1() const;
+	uint8_t& f2() const;
+	uint8_t& f3() const;
+	char& hide() const;
+	char& easing() const;
+	float& back() const;
+	float& amplitude() const;
+	float& period() const;
+	char& auto_handle_type() const;
+};
+
+class FPoint : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	float* vec() const;
+	int& flag() const;
+};
+
+class FCurve : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	FCurve next() const;
+	FCurve prev() const;
+	bActionGroup grp() const;
+	ChannelDriver driver() const;
+	// add modifiers when type is identified
+	BezTriple bezt(size_t idx) const;
+	FPoint fpt(size_t idx) const;
+	unsigned int totvert() const;
+	int& active_keyframe_index() const;
+	float curval() const;
+	short& flag() const;
+	short& extend() const;
+	char& auto_smoothing() const;
+	int& color_mode() const;
+	float* color() const;
+	float prev_norm_factor() const;
+	float prev_offset() const;
+};
+
+class PreviewImage : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+};
+
+class bConstraintChannel : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	bConstraintChannel next() const;
+	bConstraintChannel prev() const;
+	Ipo ipo() const;
+	short& flag() const;
+	std::string name() const;
+};
+
+class bActionChannel : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	bActionChannel next() const;
+	bActionChannel prev() const;
+	bActionGroup grp() const;
+	Ipo ipo() const;
+	ListBase<bConstraintChannel> constraintChannels() const;
+	int& flag() const;
+	std::string name() const;
+	int& temp() const;
+};
+
+class bActionGroup : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	bActionGroup next() const;
+	bActionGroup prev() const;
+	ListBase<bActionChannel> channels() const;
+	int& flag() const;
+	int& customCol() const;
+	std::string name() const;
+	ThemeWireColor cs() const;
+};
+
+class bAction : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	ID<bAction> id() const;
+	ListBase<FCurve> curves() const;
+	ListBase<bActionGroup> groups() const;
+	// Add markers when type is determined
+	int& flag() const;
+	int& active_marker() const;
+	int idroot() const;
+	PreviewImage preview() const;
+};
+
 class AnimData : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	bAction action() const;
+	bAction tmpact() const;
+	ListBase<NlaTrack> nla_tracks() const;
+	NlaTrack act_track() const;
+	NlaStrip actstrip() const;
+	ListBase<ChannelDriver> drivers() const;
+	ListBase<AnimOverride> overrides() const;
+	// There are more member vars in AnimData, but they may not be necessary
+};
+
+class ThemeWireColor : public BlenderDataWrapper {
 public:
 	using BlenderDataWrapper::BlenderDataWrapper;
 };
 
 class bGPdata : public BlenderDataWrapper {
-public:
-	using BlenderDataWrapper::BlenderDataWrapper;
-};
-
-class bAction : public BlenderDataWrapper {
 public:
 	using BlenderDataWrapper::BlenderDataWrapper;
 };
@@ -266,6 +435,24 @@ public:
 class MovieTrackingCamera : public BlenderDataWrapper {
 public:
 	using BlenderDataWrapper::BlenderDataWrapper;
+	short& distortion_model() const;
+	float& sensor_width() const;
+	float& pixel_aspect() const;
+	float& focal() const;
+	short& units() const;
+	float& k1() const;
+	float& k2() const;
+	float& k3() const;
+	float& division_k1() const;
+	float& division_k2() const;
+	float& nuke_k1() const;
+	float& nuke_k2() const;
+	float& brown_k1() const;
+	float& brown_k2() const;
+	float& brown_k3() const;
+	float& brown_k4() const;
+	float& brown_p1() const;
+	float& brown_p2() const;
 };
 
 typedef float(*Corners)[2];
@@ -287,24 +474,27 @@ public:
 	MovieTrackingTrack next() const;
 	MovieTrackingTrack prev() const;
 	const std::string name() const;
-	float *offset() const;
-	const int markersnr() const;
-	MovieTrackingMarker markers(size_t idx) const;
-	float *bundle_pos() const;
-	float &error() const;
-	int &flag() const;
-	int &pat_flag() const;
-	int &search_flag() const;
-	float *color() const;
-	short &frames_limit() const;
-	short &margin() const;
-	short &pattern_match() const;
-	short &motion_model() const;
-	int &algorithm_flag() const;
-	float &minimum_correlation() const;
+	float* offset() const;
+	int& markersnr() const;
+	MovieTrackingMarker marker(size_t idx) const;
+	MovieTrackingMarker find_frame(int frame, bool exact = true) const;
+	float* bundle_pos() const;
+	float& error() const;
+	int& flag() const;
+	int& pat_flag() const;
+	int& search_flag() const;
+	float* color() const;
+	short& frames_limit() const;
+	short& margin() const;
+	short& pattern_match() const;
+	short& motion_model() const;
+	int& algorithm_flag() const;
+	float& minimum_correlation() const;
 	bGPdata gpd() const;
-	float &weight() const;
-	float &weight_stab() const;
+	float& weight() const;
+	float& weight_stab() const;
+private:
+	MovieTrackingMarker tracking_marker_get(int framenr) const;
 };
 
 class MovieTrackingPlaneTrack : public BlenderDataWrapper {
@@ -455,11 +645,6 @@ public:
 	using BlenderDataWrapper::BlenderDataWrapper;
 };
 
-class PreviewImage : public BlenderDataWrapper {
-public:
-	using BlenderDataWrapper::BlenderDataWrapper;
-};
-
 class ObjectLineArt : public BlenderDataWrapper {
 public:
 	using BlenderDataWrapper::BlenderDataWrapper;
@@ -491,6 +676,51 @@ private:
 	char* matbits;
 	size_t totcol;
 };
+
+// There is an issue with the parser in gen_headers.py. Not all Object variants are present
+// UPDATE: resolved. Replace headers when possible
+
+#define OBJECT_BASE_RETURN_BODY_TO_3_4_0(A, B, C) \
+	if (get_compatability_mode() < BlenderVersion::VER_2_93_4) \
+		return A ( B reinterpret_cast<Object2_93_0*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_3_0_0) \
+		return A ( B reinterpret_cast<Object2_93_4*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_3_2_0) \
+		return A ( B reinterpret_cast<Object3_0_0*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_3_3_0) \
+		return A ( B reinterpret_cast<Object3_2_0*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_3_4_0) \
+		return A ( B reinterpret_cast<Object3_3_0*>(data_ptr)-> C);
+
+#define OBJECT_BASE_RETURN_BODY_POST_3_4_0(A, B, C) \
+	else if (get_compatability_mode() < BlenderVersion::VER_3_6_0) \
+		return A ( B reinterpret_cast<Object3_4_0*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_4_0_0) \
+		return A ( B reinterpret_cast<Object3_6_0*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_4_1_0) \
+		return A ( B reinterpret_cast<Object4_0_0*>(data_ptr)-> C); \
+	else if (get_compatability_mode() < BlenderVersion::VER_4_2_0) \
+		return A ( B reinterpret_cast<Object4_1_0*>(data_ptr)-> C);
+
+#define OBJECT_BASE_RETURN_BODY_POST_4_2_0(A, B, C) \
+	return A ( B reinterpret_cast<Object4_2_0*>(data_ptr)-> C);
+
+#define OBJECT_RETURN_MAT_4_2_0(A) \
+	return reinterpret_cast<Object4_2_0*>(data_ptr)->runtime-> A .ptr();
+
+#define OBJECT_BASE_RETURN_BODY(A, B, C) \
+	OBJECT_BASE_RETURN_BODY_TO_3_4_0(A, B, C) \
+	OBJECT_BASE_RETURN_BODY_POST_3_4_0(A, B, C) \
+	OBJECT_BASE_RETURN_BODY_POST_4_2_0(A, B, C)
+
+#define OBJECT_RETURN_REF(T, M) OBJECT_BASE_RETURN_BODY(T, &, M)
+#define OBJECT_RETURN_AS(T, M) OBJECT_BASE_RETURN_BODY(T,, M)
+#define OBJECT_RETURN(M) OBJECT_BASE_RETURN_BODY(,, M)
+
+#define OBJECT_RETURN_MATS(M, N) \
+	OBJECT_BASE_RETURN_BODY_TO_3_4_0(,, M) \
+	OBJECT_BASE_RETURN_BODY_POST_3_4_0(,, N) \
+	OBJECT_RETURN_MAT_4_2_0(N)
 
 typedef float(*Mat)[4];
 
@@ -563,7 +793,6 @@ public:
 	float& instance_faces_scale() const;
 	short& index() const;
 	unsigned short& actdef() const;
-	unsigned short& actfmap() const;
 	float* color() const;
 	short& softflag() const;
 	char& shapeflag() const;
@@ -583,9 +812,40 @@ public:
 	PreviewImage preview() const;
 	ObjectLineArt lineart() const;
 	Object_Rumtime runtime() const;
+
+	// Keep in mind the enum type of this object when retrieving it's data block (can be null)
+	template <typename T>
+	T data() const {
+		OBJECT_RETURN_AS(T, data);
+	}
 private:
 	void** mat() const;
 	char* matbits() const;
 	int totcol() const;
 	int actcol() const;
+};
+
+class Camera : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	ID<Camera> id() const;
+	AnimData adt() const;
+	char& type() const;
+	char& dtx() const;
+	short& flag() const;
+	float& passepartalpha() const;
+	float& clip_start() const;
+	float& clip_end() const;
+	float& lens() const;
+	float& ortho_scale() const;
+	float& drawsize() const;
+	float& sensor_x() const;
+	float& sensor_y() const;
+	float& shiftx() const;
+	float& shifty() const;
+	float& dof_distance() const;
+	Ipo ipo() const;
+	// gpu_dof, dof, and bg_images should be added later
+	char& sensor_fit() const;
+	// stereo and runtime should be added later
 };
