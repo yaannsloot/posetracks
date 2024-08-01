@@ -21,6 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "../dnn/dnn.hpp"
 #include "../tracking/data.hpp"
 
+const me::tracking::Mat4x4 flip_mtx = {
+	1, -1, -1, 1,
+	-1, 1, 1, -1,
+	-1, 1, 1, -1,
+	1, 1, 1, 1
+};
+
 void set_pose_sources(const std::vector<std::string>& sources);
 
 void set_tag_sources(const std::vector<std::string>& sources);
@@ -32,3 +39,9 @@ me::dnn::Detection marker_to_detection(const MovieTrackingMarker marker, const i
 me::dnn::Joint marker_to_joint(const MovieTrackingMarker marker, const int width, const int height);
 
 me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh = 0, const bool filter_locked = false);
+
+std::vector<MovieTrackingTrack> get_selected_tracks(MovieTrackingObject object);
+
+me::tracking::Kk get_clip_Kk(MovieClip clip);
+
+me::tracking::Rt get_obj_Rt(Object obj, bool apply_flip = false, bool invert = true);

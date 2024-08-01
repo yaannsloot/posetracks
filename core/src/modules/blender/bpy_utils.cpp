@@ -188,7 +188,7 @@ me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double
 		TrackTagInfo tag_info = get_track_tag_info(track);
 		int markersnr = track.markersnr();
 		for (int m = 0; m < markersnr; ++m) {
-			MovieTrackingMarker marker = track.markers(m);
+			MovieTrackingMarker marker = track.marker(m);
 			int framenr = marker.framenr();
 			if (pose_info.valid) {
 				auto joint = marker_to_joint(marker, lastsize[0], lastsize[1]);
@@ -207,4 +207,46 @@ me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double
 		}
 	}
 	return data;
+}
+
+std::vector<MovieTrackingTrack> get_selected_tracks(MovieTrackingObject object) {
+	auto tracks = object.tracks();
+	std::vector<MovieTrackingTrack> out;
+	for (MovieTrackingTrack track = tracks.first(); !track.is_null(); track = track.next()) {
+		if (track.flag() & TRACK_SELECT)
+			out.push_back(track);
+	}
+	return out;
+}
+
+me::tracking::Kk get_clip_Kk(MovieClip clip) {
+	me::tracking::Kk result;
+	MovieTrackingCamera settings = clip.tracking().camera();
+	const int* size = clip.last_size();
+	result.k(0) = static_cast<double>(settings.k1());
+	result.k(1) = static_cast<double>(settings.k2());
+	result.k(2) = static_cast<double>(settings.k3());
+	double f = static_cast<double>(settings.focal() * size[0] / settings.sensor_width());
+	result.K(0, 0) = f;
+	result.K(1, 1) = f;
+	result.K(0, 2) = static_cast<double>(size[0]) / 2;
+	result.K(1, 2) = static_cast<double>(size[1]) / 2;
+	return result;
+}
+
+me::tracking::Rt get_obj_Rt(Object obj, bool apply_flip, bool invert) {
+	me::tracking::Mat4x4 obj_mat;
+	Mat obj_world = obj.obmat();
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			obj_mat(i, j) = static_cast<double>(obj_world[i][j]);
+		}
+	}
+	if (apply_flip)
+		obj_mat = obj_mat.mul(flip_mtx);
+	me::tracking::Rt result;
+	result.from4x4(obj_mat);
+	if (invert)
+		result.invert();
+	return result;
 }
