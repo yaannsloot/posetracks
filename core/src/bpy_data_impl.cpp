@@ -58,7 +58,7 @@ ret_type class_name::operator[](const int& idx) const { \
 #define DEF_INDEX_OP_STR(class_name, ret_type) \
 ret_type class_name::operator[](const std::string& name) const { \
 	REF_FUNC_RET_HEADER(ret_type()); \
-	py::object ret_obj = obj->attr("__getitem__")(name); \
+	py::object ret_obj = obj->attr("get")(name, py::none()); \
 	return ret_type(&ret_obj); \
 }
 
@@ -145,6 +145,26 @@ int PyID::get_property_int(const std::string& prop_name) const {
 	REF_FUNC_RET_HEADER(0);
 	py::object ret_obj = obj->attr("get")(prop_name, py::none());
 	return (ret_obj.is_none()) ? 0 : ret_obj.cast<int>();
+}
+
+void PyID::set_property_str(const std::string& prop_name, const std::string& val) {
+	REF_FUNC_HEADER;
+	obj->attr("__setitem__")(prop_name, val);
+}
+
+void PyID::set_property_bool(const std::string& prop_name, const bool val) {
+	REF_FUNC_HEADER;
+	obj->attr("__setitem__")(prop_name, val);
+}
+
+void PyID::set_property_float(const std::string& prop_name, const float val) {
+	REF_FUNC_HEADER;
+	obj->attr("__setitem__")(prop_name, val);
+}
+
+void PyID::set_property_int(const std::string& prop_name, const int val) {
+	REF_FUNC_HEADER;
+	obj->attr("__setitem__")(prop_name, val);
 }
 
 // -------------------- BlendDataActions --------------------
@@ -263,8 +283,14 @@ PyAction PyBlendDataActions::new_action(const std::string& name) {
 void PyBlendDataActions::remove(bAction action, bool do_unlink, bool do_id_user, bool do_ui_user) {
 	REF_FUNC_HEADER;
 	std::string name = action.id().name();
-	name = name.substr(2, name.size() - 2);
+	name = name.substr(2);
 	py::object py_action = obj->attr("__getitem__")(name);
+	obj->attr("remove")(py_action, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
+}
+
+void PyBlendDataActions::remove(PyAction action, bool do_unlink, bool do_id_user, bool do_ui_user) {
+	REF_FUNC_HEADER;
+	py::object py_action = *reinterpret_cast<py::object*>(action.py_obj);
 	obj->attr("remove")(py_action, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
 }
 
@@ -382,7 +408,7 @@ DEF_INTERN(PyMovieClip, MovieClip)
 void PyBlendDataMovieClips::remove(MovieClip clip, bool do_unlink, bool do_id_user, bool do_ui_user) {
 	REF_FUNC_HEADER;
 	std::string name = clip.id().name();
-	name = name.substr(2, name.size() - 2);
+	name = name.substr(2);
 	py::object py_clip = obj->attr("__getitem__")(name);
 	obj->attr("remove")(py_clip, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
 }
@@ -395,6 +421,85 @@ PyMovieClip PyBlendDataMovieClips::load(const std::string& filepath, bool check_
 
 DEF_ITEMS(PyBlendDataMovieClips, MovieClip)
 DEF_INDEX_OP_ALL(PyBlendDataMovieClips, PyMovieClip)
+
+// -------------------- BlendDataCollections --------------------
+
+// PyCollectionChildren
+
+const int PyCollectionChildren::size() {
+	REF_FUNC_RET_HEADER(0);
+	return obj->attr("__len__")().cast<int>();
+}
+
+void PyCollectionChildren::link(PyBCollection child) {
+	REF_FUNC_HEADER;
+	py::object ref_obj = *reinterpret_cast<py::object*>(child.py_obj);
+	obj->attr("link")(ref_obj);
+}
+
+void PyCollectionChildren::unlink(PyBCollection child) {
+	REF_FUNC_HEADER;
+	py::object ref_obj = *reinterpret_cast<py::object*>(child.py_obj);
+	obj->attr("unlink")(ref_obj);
+}
+
+DEF_INDEX_OP_ALL(PyCollectionChildren, PyBCollection)
+
+// PyCollectionObjects
+
+const int PyCollectionObjects::size() {
+	REF_FUNC_RET_HEADER(0);
+	return obj->attr("__len__")().cast<int>();
+}
+
+void PyCollectionObjects::link(PyBObject child) {
+	REF_FUNC_HEADER;
+	py::object ref_obj = *reinterpret_cast<py::object*>(child.py_obj);
+	obj->attr("link")(ref_obj);
+}
+
+void PyCollectionObjects::unlink(PyBObject child) {
+	REF_FUNC_HEADER;
+	py::object ref_obj = *reinterpret_cast<py::object*>(child.py_obj);
+	obj->attr("unlink")(ref_obj);
+}
+
+DEF_INDEX_OP_ALL(PyCollectionObjects, PyBObject)
+
+// PyBCollection
+
+PyCollectionChildren PyBCollection::children() const {
+	REF_FUNC_RET_HEADER(PyCollectionChildren());
+	py::object ret_obj = obj->attr("children");
+	return PyCollectionChildren(&ret_obj);
+}
+
+PyCollectionObjects PyBCollection::objects() const {
+	REF_FUNC_RET_HEADER(PyCollectionObjects());
+	py::object ret_obj = obj->attr("objects");
+	return PyCollectionObjects(&ret_obj);
+}
+
+DEF_INTERN(PyBCollection, Collection)
+
+// PyBlendDataCollections
+
+PyBCollection PyBlendDataCollections::new_collection(const std::string& name) {
+	REF_FUNC_RET_HEADER(PyBCollection());
+	py::object ret_obj = obj->attr("new")(name);
+	return PyBCollection(&ret_obj);
+}
+
+void PyBlendDataCollections::remove(Collection collection, bool do_unlink, bool do_id_user, bool do_ui_user) {
+	REF_FUNC_HEADER;
+	std::string name = collection.id().name();
+	name = name.substr(2);
+	py::object b_obj = obj->attr("__getitem__")(name);
+	obj->attr("remove")(b_obj, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
+}
+
+DEF_ITEMS(PyBlendDataCollections, Collection)
+DEF_INDEX_OP_ALL(PyBlendDataCollections, PyBCollection)
 
 // -------------------- BlendDataObjects --------------------
 
@@ -414,7 +519,24 @@ void PyAnimData::set_active_action(PyAction action) const {
 
 DEF_INTERN(PyAnimData, AnimData)
 
+// PyBMat
+
+float PyBMat::get(const int row, const int col) const {
+	REF_FUNC_RET_HEADER(0.0f);
+	return obj->attr("__getitem__")(row).attr("__getitem__")(col).cast<float>();
+}
+
+void PyBMat::set(const int row, const int col, const float val) {
+	REF_FUNC_HEADER;
+	obj->attr("__getitem__")(row).attr("__setitem__")(col, val);
+}
+
 // PyBObject
+
+PyID PyBObject::as_id() const {
+	REF_FUNC_RET_HEADER(PyID());
+	return PyID(py_obj);
+}
 
 PyAnimData PyBObject::animation_data() const {
 	REF_FUNC_RET_HEADER(PyAnimData());
@@ -424,7 +546,7 @@ PyAnimData PyBObject::animation_data() const {
 
 PyAnimData PyBObject::animation_data_create() const {
 	REF_FUNC_RET_HEADER(PyAnimData());
-	py::object ret_obj = obj->attr("animation_data_create");
+	py::object ret_obj = obj->attr("animation_data_create")();
 	return PyAnimData(&ret_obj);
 }
 
@@ -439,20 +561,31 @@ PyID PyBObject::data() const {
 	return PyID(&ret_obj);
 }
 
+PyBMat PyBObject::matrix_world() const {
+	REF_FUNC_RET_HEADER(PyBMat());
+	py::object ret_obj = obj->attr("matrix_world");
+	return PyBMat(&ret_obj);
+}
+
+void PyBObject::select_set(bool val) {
+	REF_FUNC_HEADER;
+	obj->attr("select_set")(val);
+}
+
 DEF_INTERN(PyBObject, Object)
 
 // PyBlendDataObjects
 
 PyBObject PyBlendDataObjects::new_object(const std::string& name) {
 	REF_FUNC_RET_HEADER(PyBObject());
-	py::object ret_obj = obj->attr("new")(name);
+	py::object ret_obj = obj->attr("new")(name, py::none());
 	return PyBObject(&ret_obj);
 }
 
 void PyBlendDataObjects::remove(Object object, bool do_unlink, bool do_id_user, bool do_ui_user) {
 	REF_FUNC_HEADER;
 	std::string name = object.id().name();
-	name = name.substr(2, name.size() - 2);
+	name = name.substr(2);
 	py::object b_obj = obj->attr("__getitem__")(name);
 	obj->attr("remove")(b_obj, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
 }
@@ -475,6 +608,12 @@ PySceneObjects PyScene::objects() const {
 	return PySceneObjects(&ret_obj);
 }
 
+PyBCollection PyScene::collection() const {
+	REF_FUNC_RET_HEADER(PyBCollection());
+	py::object ret_obj = obj->attr("collection");
+	return PyBCollection(&ret_obj);
+}
+
 // -------------------- BlendData --------------------
 
 PyBlendData::PyBlendData() {
@@ -489,6 +628,12 @@ PyBlendDataActions PyBlendData::actions() const {
 	REF_FUNC_RET_HEADER(PyBlendDataActions());
 	py::object ret_obj = obj->attr("actions");
 	return PyBlendDataActions(&ret_obj);
+}
+
+PyBlendDataCollections PyBlendData::collections() const {
+	REF_FUNC_RET_HEADER(PyBlendDataCollections());
+	py::object ret_obj = obj->attr("collections");
+	return PyBlendDataCollections(&ret_obj);
 }
 
 PyBlendDataMovieClips PyBlendData::movieclips() const {
@@ -538,10 +683,33 @@ PyBlendArea PyBlendContext::area() const {
 	return PyBlendArea(&ret_obj);
 }
 
+PyBObject PyLayerObjects::get_active() const {
+	REF_FUNC_RET_HEADER(PyBObject());
+	py::object ret_obj = obj->attr("active");
+	return PyBObject(&ret_obj);
+}
+
+void PyLayerObjects::set_active(PyBObject ref) {
+	REF_FUNC_HEADER;
+	obj->attr("active") = *reinterpret_cast<py::object*>(ref.py_obj);
+}
+
+PyLayerObjects PyViewLayer::objects() const {
+	REF_FUNC_RET_HEADER(PyLayerObjects());
+	py::object ret_obj = obj->attr("objects");
+	return PyLayerObjects(&ret_obj);
+}
+
 PyScene PyBlendContext::scene() const {
 	REF_FUNC_RET_HEADER(PyScene());
 	py::object ret_obj = obj->attr("scene");
 	return PyScene(&ret_obj);
+}
+
+PyViewLayer PyBlendContext::view_layer() const {
+	REF_FUNC_RET_HEADER(PyViewLayer());
+	py::object ret_obj = obj->attr("view_layer");
+	return PyViewLayer(&ret_obj);
 }
 
 PyMovieClip PyBlendContext::edit_movieclip() const {
@@ -561,4 +729,17 @@ void PyBOperator::report(const std::string& type, const std::string& message) co
 	std::vector<std::string> type_enum{ type };
 	py::set py_type_enum = py::cast(type_enum);
 	obj->attr("report")(py_type_enum, message);
+}
+
+PyBlendOps::PyBlendOps() {
+	py::gil_scoped_acquire lock;
+	this->py_obj = new py::object;
+	py::object bpy = py::module::import("bpy");
+	py::object ops = bpy.attr("ops");
+	*reinterpret_cast<py::object*>(this->py_obj) = ops;
+}
+
+void PyBlendOps::OP_OBJ_ParentSet(const std::string& type, bool xmirror, bool keep_transform) {
+	REF_FUNC_HEADER;
+	obj->attr("object").attr("parent_set")(py::arg("type") = type, py::arg("xmirror") = xmirror, py::arg("keep_transform") = keep_transform);
 }

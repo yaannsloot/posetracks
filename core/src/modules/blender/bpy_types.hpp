@@ -78,6 +78,17 @@ enum ObjectType {
 	OB_TYPE_MAX,
 };
 
+enum EmptyDrawtype {
+	OB_ARROWS = 1,
+	OB_PLAINAXES = 2,
+	OB_CIRCLE = 3,
+	OB_SINGLE_ARROW = 4,
+	OB_CUBE = 5,
+	OB_EMPTY_SPHERE = 6,
+	OB_EMPTY_CONE = 7,
+	OB_EMPTY_IMAGE = 8,
+};
+
 // Blender DNA wrappers
 class Library;
 class AssetMetaData;
@@ -623,6 +634,7 @@ public:
 class Collection : public BlenderDataWrapper {
 public:
 	using BlenderDataWrapper::BlenderDataWrapper;
+	ID<Collection> id() const;
 };
 
 class FluidsimSettings : public BlenderDataWrapper {

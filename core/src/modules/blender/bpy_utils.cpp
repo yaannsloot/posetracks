@@ -99,7 +99,7 @@ me::dnn::Joint marker_to_joint(const MovieTrackingMarker marker, const int width
 	return me::dnn::Joint(x, y, area);
 }
 
-std::vector<std::string> split_str(const std::string& str, const char delim = '.') {
+std::vector<std::string> split_str(const std::string& str, const char delim) {
 	std::vector<std::string> strings;
 	std::string last;
 	for (const char& c : str) {
@@ -116,7 +116,7 @@ std::vector<std::string> split_str(const std::string& str, const char delim = '.
 	return strings;
 }
 
-const std::string join_string(std::vector<std::string>::iterator begin, std::vector<std::string>::iterator end, const char delim = '.') {
+const std::string join_string(std::vector<std::string>::iterator begin, std::vector<std::string>::iterator end, const char delim) {
 	std::string out;
 	auto last_it = std::prev(end);
 	for (; begin != end; ++begin) {
@@ -226,7 +226,9 @@ me::tracking::Kk get_clip_Kk(MovieClip clip) {
 	result.k(0) = static_cast<double>(settings.k1());
 	result.k(1) = static_cast<double>(settings.k2());
 	result.k(2) = static_cast<double>(settings.k3());
-	double f = static_cast<double>(settings.focal() * size[0] / settings.sensor_width());
+	// focal seems to be in px units so this isn't needed
+	// double f = static_cast<double>(settings.focal() * size[0] / settings.sensor_width());
+	double f = static_cast<double>(settings.focal());
 	result.K(0, 0) = f;
 	result.K(1, 1) = f;
 	result.K(0, 2) = static_cast<double>(size[0]) / 2;
@@ -234,12 +236,12 @@ me::tracking::Kk get_clip_Kk(MovieClip clip) {
 	return result;
 }
 
-me::tracking::Rt get_obj_Rt(Object obj, bool apply_flip, bool invert) {
+me::tracking::Rt get_obj_Rt(PyBObject obj, bool apply_flip, bool invert) {
 	me::tracking::Mat4x4 obj_mat;
-	Mat obj_world = obj.obmat();
+	PyBMat obj_world = obj.matrix_world();
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
-			obj_mat(i, j) = static_cast<double>(obj_world[i][j]);
+			obj_mat(i, j) = static_cast<double>(obj_world.get(i, j));
 		}
 	}
 	if (apply_flip)
@@ -249,4 +251,55 @@ me::tracking::Rt get_obj_Rt(Object obj, bool apply_flip, bool invert) {
 	if (invert)
 		result.invert();
 	return result;
+}
+
+PyBCollection resolve_collection_path(const std::vector<std::string>& collection_path, bool make_collections) {
+	PyBlendData data;
+	PyBlendDataCollections all_collections = data.collections();
+	PyBlendContext context;
+	PyScene scene = context.scene();
+	PyBCollection scene_root = scene.collection();
+	PyBCollection current = scene_root;
+	for (auto& c : collection_path) {
+		PyCollectionChildren children = current.children();
+		PyBCollection child = children[c];
+		if (child.is_null() && !make_collections)
+			return PyBCollection();
+		PyBCollection collection = all_collections[c];
+		if (collection.is_null())
+			collection = all_collections.new_collection(c);
+		if (child.is_null()) {
+			children.link(collection);
+			current = collection;
+		}
+		else {
+			current = collection;
+		}
+	}
+	return current;
+}
+
+PyBObject get_empty(const std::string& name, const std::vector<std::string>& collection_path) {
+	PyBlendData data;
+	PyBlendContext context;
+	PyBlendDataObjects objects = data.objects();
+	PyBObject py_empty = objects[name];
+	if (py_empty.is_null())
+		py_empty = objects.new_object(name);
+	Object empty = py_empty.intern();
+	empty.empty_drawtype() = OB_EMPTY_SPHERE;
+	empty.empty_drawsize() = 0.1f;
+	PyBCollection collection = resolve_collection_path(collection_path);
+	PyCollectionObjects c_objects = collection.objects();
+	if(c_objects[name].is_null())
+		collection.objects().link(py_empty);
+	std::string action_name = name + "_Action";
+	PyBlendDataActions actions = data.actions();
+	PyAction py_action = actions[action_name];
+	if (py_action.is_null())
+		py_action = actions.new_action(action_name);
+	py_empty.animation_data_clear();
+	PyAnimData py_anim_data = py_empty.animation_data_create();
+	py_anim_data.set_active_action(py_action);
+	return py_empty;
 }

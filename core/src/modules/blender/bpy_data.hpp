@@ -25,6 +25,40 @@ Includes conversions to wrapper classes from bpy_types.hpp
 #include "bpy_types.hpp"
 #include <set>
 
+class PyKeyframe;
+class PyFCurveKeyframePoints;
+class PyActionGroup;
+class PyFCurve;
+class PyActionFCurves;
+class PyAction;
+class PyBlendDataActions;
+class PyAnimData;
+class PyMovieTrackingMarkers;
+class PyMovieTrackingTrack;
+class PyMovieTrackingTracks;
+class PyMovieTrackingPlaneTracks;
+class PyMovieTrackingObject;
+class PyMovieTrackingObjects;
+class PyMovieTracking;
+class PyMovieClip;
+class PyBlendDataMovieClips;
+class PyCollectionChildren;
+class PyCollectionObjects;
+class PyBCollection;
+class PyBlendDataCollections;
+class PyBMat;
+class PyBObject;
+class PyBlendDataObjects;
+class PySceneObjects;
+class PyScene;
+class PyBlendData;
+class PyFCurveSeq;
+class PyBlendArea;
+class PyLayerObjects;
+class PyViewLayer;
+class PyBlendContext;
+class PyBOperator;
+
 template <typename T>
 class ListBaseData {
 public:
@@ -62,18 +96,13 @@ public:
 	bool get_property_bool (const std::string& prop_name) const;
 	float get_property_float(const std::string& prop_name) const;
 	int get_property_int(const std::string& prop_name) const;
+	void set_property_str(const std::string& prop_name, const std::string& val);
+	void set_property_bool(const std::string& prop_name, const bool val);
+	void set_property_float(const std::string& prop_name, const float val);
+	void set_property_int(const std::string& prop_name, const int val);
 };
 
 // -------------------- BlendDataActions --------------------
-
-class PyKeyframe;
-class PyFCurveKeyframePoints;
-class PyActionGroup;
-class PyFCurve;
-class PyActionFCurves;
-class PyAction;
-class PyBlendDataActions;
-class PyAnimData;
 
 class PyAnimData : public PyRef { // Part of blender object
 public:
@@ -139,6 +168,7 @@ class PyAction : public PyRef {
 public:
 	using PyRef::PyRef;
 	friend PyAnimData;
+	friend PyBlendDataActions;
 	bAction intern() const;
 	PyActionFCurves fcurves() const;
 	// Add groups
@@ -151,22 +181,13 @@ public:
 	using PyRef::PyRef;
 	ListBaseData<bAction> items() const;
 	PyAction new_action(const std::string& name = std::string());
-	void remove(bAction action, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true);
+	void remove(bAction action, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true); // Causes crashes at the moment
+	void remove(PyAction action, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true);
 	PyAction operator[](const int& idx) const;
 	PyAction operator[](const std::string& name) const;
 };
 
 // -------------------- BlendDataMovieClips --------------------
-
-class PyMovieTrackingMarkers;
-class PyMovieTrackingTrack;
-class PyMovieTrackingTracks;
-class PyMovieTrackingPlaneTracks;
-class PyMovieTrackingObject;
-class PyMovieTrackingObjects;
-class PyMovieTracking;
-class PyMovieClip;
-class PyBlendDataMovieClips;
 
 class PyMovieTrackingMarkers : public PyRef {
 public:
@@ -243,19 +264,69 @@ public:
 	PyMovieClip operator[](const std::string& name) const;
 };
 
+// -------------------- BlendDataCollections --------------------
+
+class PyCollectionChildren : public PyRef {
+public:
+	using PyRef::PyRef;
+	const int size();
+	void link(PyBCollection child); // Could also be Collection idk
+	void unlink(PyBCollection child);
+	PyBCollection operator[](const int& idx) const;
+	PyBCollection operator[](const std::string& name) const;
+};
+
+class PyCollectionObjects : public PyRef {
+public:
+	using PyRef::PyRef;
+	const int size();
+	void link(PyBObject child); // Could also be Object idk
+	void unlink(PyBObject child);
+	PyBObject operator[](const int& idx) const;
+	PyBObject operator[](const std::string& name) const;
+};
+
+class PyBCollection : public PyRef {
+public:
+	using PyRef::PyRef;
+	friend PyCollectionChildren;
+	Collection intern() const;
+	PyCollectionChildren children() const;
+	PyCollectionObjects objects() const;
+};
+
+class PyBlendDataCollections : public PyRef {
+public:
+	using PyRef::PyRef;
+	ListBaseData<Collection> items() const;
+	PyBCollection new_collection(const std::string& name = std::string());
+	void remove(Collection collection, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true);
+	PyBCollection operator[](const int& idx) const;
+	PyBCollection operator[](const std::string& name) const;
+};
+
 // -------------------- BlendDataObjects --------------------
 
-class PyBObject; // BObject, as to not to redefine PyObject in the C API
-class PyBlendDataObjects;
+class PyBMat : public PyRef {
+public:
+	using PyRef::PyRef;
+	float get(const int row, const int col) const;
+	void set(const int row, const int col, const float val);
+};
 
 class PyBObject : public PyRef {
 public:
 	using PyRef::PyRef;
+	friend PyCollectionObjects;
+	friend PyLayerObjects;
+	PyID as_id() const;
 	Object intern() const;
 	PyAnimData animation_data() const;
 	PyAnimData animation_data_create() const;
 	void animation_data_clear() const;
 	PyID data() const;
+	PyBMat matrix_world() const;
+	void select_set(bool val);
 };
 
 class PyBlendDataObjects : public PyRef {
@@ -283,18 +354,16 @@ public:
 	using PyRef::PyRef;
 	// add intern later
 	PySceneObjects objects() const;
+	PyBCollection collection() const;
 };
 
 // -------------------- BlendData --------------------
-
-class PyBlendData;
-class PyBlendContext;
-class PyFCurveSeq;
 
 class PyBlendData : public PyRef {
 public:
 	PyBlendData(); // Obtain python ref to bpy.data
 	PyBlendDataActions actions() const;
+	PyBlendDataCollections collections() const;
 	PyBlendDataMovieClips movieclips() const;
 	PyBlendDataObjects objects() const;
 };
@@ -317,6 +386,19 @@ public:
 	void header_set_text(const std::string& text = std::string());
 };
 
+class PyLayerObjects : public PyRef {
+public:
+	using PyRef::PyRef;
+	PyBObject get_active() const;
+	void set_active(PyBObject ref);
+};
+
+class PyViewLayer : public PyRef {
+public:
+	using PyRef::PyRef;
+	PyLayerObjects objects() const;
+};
+
 // Context access
 
 class PyBlendContext : public PyRef {
@@ -326,6 +408,7 @@ public:
 	// Global context area access
 	PyBlendArea area() const;
 	PyScene scene() const;
+	PyViewLayer view_layer() const;
 
 	// In clip editor context, this is the active clip. Can be null.
 	PyMovieClip edit_movieclip() const;
@@ -340,4 +423,14 @@ class PyBOperator : public PyRef {
 public:
 	using PyRef::PyRef;
 	void report(const std::string& type, const std::string& message) const;
+};
+
+// Built-in ops
+class PyBlendOps : public PyRef {
+public:
+	PyBlendOps(); // Obtain python ref to bpy.ops
+
+	// Object operators
+	void OP_OBJ_ParentSet(const std::string& type = "OBJECT", bool xmirror = false, bool keep_transform = false);
+
 };

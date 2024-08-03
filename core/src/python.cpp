@@ -54,6 +54,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 // Blender compatibility headers
 #include "modules/blender/bpy_types.hpp"
 #include "modules/blender/bpy_utils.hpp"
+#include "modules/blender/bpy_data.hpp"
+#include "modules/blender/bpy_ops.hpp"
 
 namespace py = pybind11;
 
@@ -69,15 +71,30 @@ T* bpy_ptr(py::object py_obj) {
 
 namespace pybind11::detail {
 
-	template <> struct type_caster<MovieClip> {
+	template <> struct type_caster<PyMovieClip> {
 	public:
-		PYBIND11_TYPE_CASTER(MovieClip, _("MovieClip"));
+		PYBIND11_TYPE_CASTER(PyMovieClip, _("MovieClip"));
 		bool load(handle src, bool) {
 			object py_obj = reinterpret_steal<object>(src);
 			object bpy_types = module::import("bpy.types");
 			object bpy_clip = bpy_types.attr("MovieClip");
 			if (isinstance(py_obj, bpy_clip)) {
-				value = bpy_wrap<MovieClip>(py_obj);
+				value = PyMovieClip(&py_obj);
+				return true;
+			}
+			return false;
+		}
+	};
+
+	template <> struct type_caster<PyBOperator> {
+	public:
+		PYBIND11_TYPE_CASTER(PyBOperator, _("Operator"));
+		bool load(handle src, bool) {
+			object py_obj = reinterpret_steal<object>(src);
+			object bpy_types = module::import("bpy.types");
+			object bpy_clip = bpy_types.attr("Operator");
+			if (isinstance(py_obj, bpy_clip)) {
+				value = PyBOperator(&py_obj);
 				return true;
 			}
 			return false;
@@ -605,6 +622,7 @@ PYBIND11_MODULE(MEPython, m)
 	// Function bindings
 
 	// Base
+
 	m.def("imread", [](std::string filename) {
 		cv::Mat image = cv::imread(filename);
 		auto return_obj = py::cast(image);
@@ -728,4 +746,16 @@ PYBIND11_MODULE(MEPython, m)
 		py::arg("input"), py::arg("kernel_radius") = 1,
 		py::call_guard<py::gil_scoped_release>());
 
+
+	// Blender functionality
+
+	auto m_blend = m.def_submodule("blender");
+
+	m_blend.def("OP_FilterTrackGaussian", &OP_FilterTrackGaussian);
+
+	m_blend.def("OP_FilterFCurvesGaussian", &OP_FilterFCurvesGaussian);
+
+	m_blend.def("OP_TriangulatePoints", [](py::object calling_op, py::object py_anchor_clip) {
+		OP_TriangulatePoints(PyBOperator(&calling_op), PyMovieClip(&py_anchor_clip));
+	}, py::call_guard<py::gil_scoped_release>());
 }

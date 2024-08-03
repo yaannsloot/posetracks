@@ -858,6 +858,37 @@ MovieClip_Runtime MovieClip::runtime() const {
 	MOVIECLIP_RETURN_REF(MovieClip_Runtime, runtime)
 }
 
+// -------------------- Collection --------------------
+
+#define COLL_BASE_RETURN_BODY(A, B, C) \
+	if (blender_ver < BlenderVersion::VER_3_0_0) \
+		return A ( B reinterpret_cast<Collection2_93_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_2_0) \
+		return A ( B reinterpret_cast<Collection3_0_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_3_0) \
+		return A ( B reinterpret_cast<Collection3_2_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_4_0) \
+		return A ( B reinterpret_cast<Collection3_3_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_5_0) \
+		return A ( B reinterpret_cast<Collection3_4_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_6_0) \
+		return A ( B reinterpret_cast<Collection3_5_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_0_0) \
+		return A ( B reinterpret_cast<Collection3_6_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_1_0) \
+		return A(B reinterpret_cast<Collection4_0_0*>(data_ptr)->C); \
+	else if (blender_ver < BlenderVersion::VER_4_2_0) \
+		return A(B reinterpret_cast<Collection4_1_0*>(data_ptr)->C); \
+	return A ( B reinterpret_cast<Collection4_2_0*>(data_ptr)-> C);
+
+#define COLL_RETURN_REF(T, M) COLL_BASE_RETURN_BODY(T, &, M)
+#define COLL_RETURN_AS(T, M) COLL_BASE_RETURN_BODY(T,, M)
+#define COLL_RETURN(M) COLL_BASE_RETURN_BODY(,, M)
+
+ID<Collection> Collection::id() const {
+	COLL_RETURN_REF(ID<Collection>, id);
+}
+
 // -------------------- MaterialSlot --------------------
 
 Material MaterialSlot::material() const {

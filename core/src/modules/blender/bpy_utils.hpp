@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include "bpy_types.hpp"
+#include "bpy_data.hpp"
 #include "../dnn/dnn.hpp"
 #include "../tracking/data.hpp"
 
@@ -27,6 +28,10 @@ const me::tracking::Mat4x4 flip_mtx = {
 	-1, 1, 1, -1,
 	1, 1, 1, 1
 };
+
+std::vector<std::string> split_str(const std::string& str, const char delim = '.');
+
+const std::string join_string(std::vector<std::string>::iterator begin, std::vector<std::string>::iterator end, const char delim = '.');
 
 void set_pose_sources(const std::vector<std::string>& sources);
 
@@ -44,4 +49,8 @@ std::vector<MovieTrackingTrack> get_selected_tracks(MovieTrackingObject object);
 
 me::tracking::Kk get_clip_Kk(MovieClip clip);
 
-me::tracking::Rt get_obj_Rt(Object obj, bool apply_flip = false, bool invert = true);
+me::tracking::Rt get_obj_Rt(PyBObject obj, bool apply_flip = false, bool invert = true);
+
+PyBCollection resolve_collection_path(const std::vector<std::string>& collection_path, bool make_collections = true);
+
+PyBObject get_empty(const std::string& name, const std::vector<std::string>& collection_path);
