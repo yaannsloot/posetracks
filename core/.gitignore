@@ -18,3 +18,4 @@
 !/LICENSE
 !/README.md
 !/build.py
+!/src/modules/*/CMakeLists.txt

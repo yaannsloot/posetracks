@@ -21,6 +21,7 @@ message("done.")
 
 set(SOURCES_MOTIONENGINE_PYBIND
 	${CMAKE_CURRENT_SOURCE_DIR}/python.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/bpy_data_impl.cpp
 )
 
 set(SOURCES_ME_POSE_TEST
