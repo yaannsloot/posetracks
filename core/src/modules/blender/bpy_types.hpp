@@ -89,6 +89,64 @@ enum EmptyDrawtype {
 	OB_EMPTY_IMAGE = 8,
 };
 
+enum CameraTypes {
+	CAM_PERSP = 0,
+	CAM_ORTHO = 1,
+	CAM_PANO = 2,
+};
+
+enum CameraSensorFit {
+	CAMERA_SENSOR_FIT_AUTO = 0,
+	CAMERA_SENSOR_FIT_HOR = 1,
+	CAMERA_SENSOR_FIT_VERT = 2,
+};
+
+enum CameraDOFFlag {
+	CAM_DOF_ENABLED = (1 << 0),
+};
+
+enum CameraFlags {
+	CAM_SHOWLIMITS = (1 << 0),
+	CAM_SHOWMIST = (1 << 1),
+	CAM_SHOWPASSEPARTOUT = (1 << 2),
+	CAM_SHOW_SAFE_MARGINS = (1 << 3),
+	CAM_SHOWNAME = (1 << 4),
+	CAM_ANGLETOGGLE = (1 << 5),
+	CAM_DS_EXPAND = (1 << 6),
+	CAM_SHOWSENSOR = (1 << 8),
+	CAM_SHOW_SAFE_CENTER = (1 << 9),
+	CAM_SHOW_BG_IMAGE = (1 << 10),
+};
+
+enum CameraBGImageFlags {
+	CAM_BGIMG_FLAG_EXPANDED = (1 << 1),
+	CAM_BGIMG_FLAG_CAMERACLIP = (1 << 2),
+	CAM_BGIMG_FLAG_DISABLED = (1 << 3),
+	CAM_BGIMG_FLAG_FOREGROUND = (1 << 4),
+	CAM_BGIMG_FLAG_CAMERA_ASPECT = (1 << 5),
+	CAM_BGIMG_FLAG_CAMERA_CROP = (1 << 6),
+	CAM_BGIMG_FLAG_FLIP_X = (1 << 7),
+	CAM_BGIMG_FLAG_FLIP_Y = (1 << 8),
+};
+
+enum CameraBGImageSources {
+	CAM_BGIMG_SOURCE_IMAGE = 0,
+	CAM_BGIMG_SOURCE_MOVIE = 1,
+};
+
+enum MCUserRenderSize {
+	MCLIP_PROXY_RENDER_SIZE_FULL = 0,
+	MCLIP_PROXY_RENDER_SIZE_25 = 1,
+	MCLIP_PROXY_RENDER_SIZE_50 = 2,
+	MCLIP_PROXY_RENDER_SIZE_75 = 3,
+	MCLIP_PROXY_RENDER_SIZE_100 = 4,
+};
+
+enum MCUserRenderFlags {
+	MCLIP_PROXY_RENDER_UNDISTORT = 1,
+	MCLIP_PROXY_RENDER_USE_FALLBACK_RENDER = 2,
+};
+
 // Blender DNA wrappers
 class Library;
 class AssetMetaData;
@@ -128,6 +186,7 @@ class MovieTrackingMarker;
 class MovieClipProxy;
 class ColorManagedColorspaceSettings;
 class MovieClip_Runtime;
+class MovieClipUser;
 class MovieClip;
 class Material;
 class ModifierData;
@@ -144,7 +203,10 @@ class PreviewImage;
 class ObjectLineArt;
 class Object_Rumtime;
 class Object;
+class CameraBGImage;
 class Camera;
+class RenderData;
+class Scene;
 
 template <typename T>
 class ListBase : public BlenderDataWrapper {
@@ -581,6 +643,14 @@ public:
 	using BlenderDataWrapper::BlenderDataWrapper;
 };
 
+class MovieClipUser : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	int& framenr() const;
+	short& render_size() const;
+	short& render_flag() const;
+};
+
 class MovieClip : public BlenderDataWrapper {
 public:
 	using BlenderDataWrapper::BlenderDataWrapper;
@@ -780,10 +850,8 @@ public:
 	float* drotAxis() const;
 	float& rotAngle() const;
 	float& drotAngle() const;
-	Mat obmat() const;
 	Mat parentinv() const;
 	Mat constinv() const;
-	Mat imat() const;
 	short& flag() const;
 	short& transflag() const;
 	short& protectflag() const;
@@ -823,7 +891,6 @@ public:
 	char& empty_image_flag() const;
 	PreviewImage preview() const;
 	ObjectLineArt lineart() const;
-	Object_Rumtime runtime() const;
 
 	// Keep in mind the enum type of this object when retrieving it's data block (can be null)
 	template <typename T>
@@ -835,6 +902,22 @@ private:
 	char* matbits() const;
 	int totcol() const;
 	int actcol() const;
+};
+
+class CameraBGImage : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	CameraBGImage next() const;
+	CameraBGImage prev() const;
+	// Add ima and iuser later
+	MovieClip clip() const;
+	MovieClipUser cuser() const;
+	float* offset() const;
+	float& scale() const;
+	float& rotation() const;
+	float& alpha() const;
+	short& flag() const;
+	short& source() const;
 };
 
 class Camera : public BlenderDataWrapper {
@@ -857,7 +940,22 @@ public:
 	float& shifty() const;
 	float& dof_distance() const;
 	Ipo ipo() const;
-	// gpu_dof, dof, and bg_images should be added later
+	// gpu_dof and dof should be added later
+	ListBase<CameraBGImage> bg_images() const;
 	char& sensor_fit() const;
 	// stereo and runtime should be added later
+};
+
+class RenderData : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	int& sfra() const;
+	int& efra() const;
+};
+
+class Scene : public BlenderDataWrapper {
+public:
+	using BlenderDataWrapper::BlenderDataWrapper;
+	ID<Scene> id() const;
+	RenderData r() const;
 };

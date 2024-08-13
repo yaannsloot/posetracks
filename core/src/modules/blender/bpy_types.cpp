@@ -774,6 +774,27 @@ MovieTrackingDopesheet MovieTracking::dopesheet() {
 	TRACKING_RETURN_REF(MovieTrackingDopesheet, dopesheet)
 }
 
+// -------------------- MovieClipUser --------------------
+
+#define MC_USER_BASE_RETURN_BODY(A, B, C) \
+	return A ( B reinterpret_cast<MovieClipUser2_93_0*>(data_ptr)-> C);
+
+#define MC_USER_RETURN_REF(T, M) MC_USER_BASE_RETURN_BODY(T, &, M)
+#define MC_USER_RETURN_AS(T, M) MC_USER_BASE_RETURN_BODY(T,, M)
+#define MC_USER_RETURN(M) MC_USER_BASE_RETURN_BODY(,, M)
+
+int& MovieClipUser::framenr() const {
+	MC_USER_RETURN(framenr)
+}
+
+short& MovieClipUser::render_size() const {
+	MC_USER_RETURN(render_size)
+}
+
+short& MovieClipUser::render_flag() const {
+	MC_USER_RETURN(render_flag)
+}
+
 // -------------------- MovieClip --------------------
 
 #define MOVIECLIP_BASE_RETURN_BODY(A, B, C) \
@@ -1075,20 +1096,12 @@ float& Object::drotAngle() const {
 	OBJECT_RETURN(drotAngle)
 }
 
-Mat Object::obmat() const {
-	OBJECT_RETURN_MATS(obmat, object_to_world)
-}
-
 Mat Object::parentinv() const {
 	OBJECT_RETURN(parentinv)
 }
 
 Mat Object::constinv() const {
 	OBJECT_RETURN(constinv)
-}
-
-Mat Object::imat() const {
-	OBJECT_RETURN_MATS(imat, world_to_object)
 }
 
 short& Object::flag() const {
@@ -1243,10 +1256,6 @@ ObjectLineArt Object::lineart() const {
 	OBJECT_RETURN_REF(ObjectLineArt, lineart)
 }
 
-Object_Rumtime Object::runtime() const {
-	OBJECT_RETURN_REF(Object_Rumtime, runtime)
-}
-
 void** Object::mat() const {
 	OBJECT_RETURN_AS((void**), mat)
 }
@@ -1261,6 +1270,59 @@ int Object::totcol() const {
 
 int Object::actcol() const {
 	OBJECT_RETURN(actcol)
+}
+
+// -------------------- CameraBGImage --------------------
+
+#define CAMBGI_BASE_RETURN_BODY(A, B, C) \
+	if (blender_ver < BlenderVersion::VER_3_0_0) \
+		return A ( B reinterpret_cast<CameraBGImage2_93_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<CameraBGImage3_0_0*>(data_ptr)-> C);
+
+#define CAMBGI_RETURN_REF(T, M) CAMBGI_BASE_RETURN_BODY(T, &, M)
+#define CAMBGI_RETURN_AS(T, M) CAMBGI_BASE_RETURN_BODY(T,, M)
+#define CAMBGI_RETURN(M) CAMBGI_BASE_RETURN_BODY(,, M)
+
+CameraBGImage CameraBGImage::next() const {
+	CAMBGI_RETURN_AS(CameraBGImage, next)
+}
+
+CameraBGImage CameraBGImage::prev() const {
+	CAMBGI_RETURN_AS(CameraBGImage, prev)
+}
+
+// Add ima and iuser later
+
+MovieClip CameraBGImage::clip() const {
+	CAMBGI_RETURN_AS(MovieClip, clip)
+}
+
+MovieClipUser CameraBGImage::cuser() const {
+	CAMBGI_RETURN_REF(MovieClipUser, cuser)
+}
+
+float* CameraBGImage::offset() const {
+	CAMBGI_RETURN(offset);
+}
+
+float& CameraBGImage::scale() const {
+	CAMBGI_RETURN(scale);
+}
+
+float& CameraBGImage::rotation() const {
+	CAMBGI_RETURN(rotation);
+}
+
+float& CameraBGImage::alpha() const {
+	CAMBGI_RETURN(alpha);
+}
+
+short& CameraBGImage::flag() const {
+	CAMBGI_RETURN(flag);
+}
+
+short& CameraBGImage::source() const {
+	CAMBGI_RETURN(source);
 }
 
 // -------------------- Camera --------------------
@@ -1354,6 +1416,78 @@ Ipo Camera::ipo() const {
 	CAM_RETURN_AS(Ipo, ipo)
 }
 
+ListBase<CameraBGImage> Camera::bg_images() const {
+	CAM_RETURN_REF(ListBase<CameraBGImage>, bg_images)
+}
+
 char& Camera::sensor_fit() const {
 	CAM_RETURN(sensor_fit)
+}
+
+// -------------------- RenderData --------------------
+
+#define RDAT_BASE_RETURN_BODY(A, B, C) \
+	if (blender_ver < BlenderVersion::VER_3_0_0) \
+		return A ( B reinterpret_cast<RenderData2_93_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_1_0) \
+		return A ( B reinterpret_cast<RenderData3_0_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_2_0) \
+		return A ( B reinterpret_cast<RenderData3_1_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_4_0) \
+		return A ( B reinterpret_cast<RenderData3_2_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_5_0) \
+		return A ( B reinterpret_cast<RenderData3_4_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_6_0) \
+		return A ( B reinterpret_cast<RenderData3_5_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_0_0) \
+		return A ( B reinterpret_cast<RenderData3_6_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_2_0) \
+		return A ( B reinterpret_cast<RenderData4_0_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<RenderData4_2_0*>(data_ptr)-> C);
+
+#define RDAT_RETURN_REF(T, M) RDAT_BASE_RETURN_BODY(T, &, M)
+#define RDAT_RETURN_AS(T, M) RDAT_BASE_RETURN_BODY(T,, M)
+#define RDAT_RETURN(M) RDAT_BASE_RETURN_BODY(,, M)
+
+int& RenderData::sfra() const {
+	RDAT_RETURN(sfra)
+}
+
+int& RenderData::efra() const {
+	RDAT_RETURN(efra)
+}
+
+// -------------------- Scene --------------------
+
+#define SCN_BASE_RETURN_BODY(A, B, C) \
+	if (blender_ver < BlenderVersion::VER_3_0_0) \
+		return A ( B reinterpret_cast<Scene2_93_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_1_0) \
+		return A ( B reinterpret_cast<Scene3_0_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_2_0) \
+		return A ( B reinterpret_cast<Scene3_1_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_4_0) \
+		return A ( B reinterpret_cast<Scene3_2_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_5_0) \
+		return A ( B reinterpret_cast<Scene3_4_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_3_6_0) \
+		return A ( B reinterpret_cast<Scene3_5_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_0_0) \
+		return A ( B reinterpret_cast<Scene3_6_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_1_0) \
+		return A ( B reinterpret_cast<Scene4_0_0*>(data_ptr)-> C); \
+	else if (blender_ver < BlenderVersion::VER_4_2_0) \
+		return A ( B reinterpret_cast<Scene4_1_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<Scene4_2_0*>(data_ptr)-> C);
+
+#define SCN_RETURN_REF(T, M) SCN_BASE_RETURN_BODY(T, &, M)
+#define SCN_RETURN_AS(T, M) SCN_BASE_RETURN_BODY(T,, M)
+#define SCN_RETURN(M) SCN_BASE_RETURN_BODY(,, M)
+
+ID<Scene> Scene::id() const {
+	SCN_RETURN_REF(ID<Scene>, id);
+}
+
+RenderData Scene::r() const {
+	SCN_RETURN_REF(RenderData, r)
 }

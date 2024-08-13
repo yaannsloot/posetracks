@@ -751,11 +751,17 @@ PYBIND11_MODULE(MEPython, m)
 
 	auto m_blend = m.def_submodule("blender");
 
-	m_blend.def("OP_FilterTrackGaussian", &OP_FilterTrackGaussian);
+	m_blend.def("OP_FilterTrackGaussian", &OP_FilterTrackGaussian, py::call_guard<py::gil_scoped_release>());
 
-	m_blend.def("OP_FilterFCurvesGaussian", &OP_FilterFCurvesGaussian);
+	m_blend.def("OP_FilterFCurvesGaussian", &OP_FilterFCurvesGaussian, py::call_guard<py::gil_scoped_release>());
 
-	m_blend.def("OP_TriangulatePoints", [](py::object calling_op, py::object py_anchor_clip) {
-		OP_TriangulatePoints(PyBOperator(&calling_op), PyMovieClip(&py_anchor_clip));
+	m_blend.def("OP_TriangulatePoints", [](py::object calling_op, const std::string anchor_name) {
+		OP_TriangulatePoints(PyBOperator(&calling_op), anchor_name);
+	}, py::call_guard<py::gil_scoped_release>());
+
+	m_blend.def("OP_SolveCameras_Invoke", &OP_SolveCameras_Invoke, py::call_guard<py::gil_scoped_release>());
+
+	m_blend.def("OP_SolveCameras_Execute", [](py::object calling_op, const std::string anchor, float solution_scale) {
+		OP_SolveCameras_Execute(PyBOperator(&calling_op), anchor, solution_scale);
 	}, py::call_guard<py::gil_scoped_release>());
 }

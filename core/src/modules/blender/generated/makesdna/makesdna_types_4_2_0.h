@@ -36,7 +36,6 @@ gen_headers.py, which can be found in the project's root directory.
 #include "makesdna_types_4_1_0.h"
 #include "makesdna_types_3_4_0.h"
 #include "makesdna_types_3_3_0.h"
-#include "../../mat_types.hpp"
 
 struct bMotionPath4_2_0;
 struct bPoseChannel4_2_0;
@@ -1439,13 +1438,6 @@ struct bNodeTree4_2_0 {
     void *runtime;
 };
 
-// Short definition of runtime handle for transformation access
-struct ObjectRuntime4_2_0 { 
-    float4x4 object_to_world = float4x4::identity();
-    float4x4 world_to_object = float4x4::identity();
-    // ... (BKE_object_types.hh)
-};
-
 struct Object4_2_0 {
     ID4_2_0 id;
     AnimData4_2_0 *adt;
@@ -1542,7 +1534,6 @@ struct Object4_2_0 {
     LightgroupMembership3_2_0 *lightgroup;
     LightLinking4_0_0 *light_linking;
     LightProbeObjectCache3_6_0 *lightprobe_cache;
-    ObjectRuntime4_2_0 *runtime;
 };
 
 struct SceneRenderLayer4_2_0 {

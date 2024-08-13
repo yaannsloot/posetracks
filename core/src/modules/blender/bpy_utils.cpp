@@ -178,6 +178,10 @@ me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double
 	me::tracking::TrackingData data;
 	const int* lastsize = clip.last_size();
 	const int start_frame = clip.start_frame();
+	Scene scene = PyBlendContext().scene().intern();
+	RenderData r_data = scene.r();
+	const int scene_start = r_data.sfra();
+	const int scene_end = r_data.efra();
 	const MovieTracking tracking = clip.tracking();
 	const auto tracks = tracking.objects().first().tracks(); // First object will always be for camera tracking
 	for (MovieTrackingTrack track = tracks.first(); !track.is_null(); track = track.next()) {
@@ -189,20 +193,22 @@ me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double
 		int markersnr = track.markersnr();
 		for (int m = 0; m < markersnr; ++m) {
 			MovieTrackingMarker marker = track.marker(m);
-			int framenr = marker.framenr();
+			int framenr = marker.framenr() + start_frame - 1;
+			if (framenr < scene_start || framenr > scene_end)
+				continue;
 			if (pose_info.valid) {
 				auto joint = marker_to_joint(marker, lastsize[0], lastsize[1]);
 				if (joint.prob < joint_conf_thresh)
 					continue;
-				data.set_joint(framenr + start_frame - 1, pose_info.pose, pose_info.id, joint);
+				data.set_joint(framenr, pose_info.pose, pose_info.id, joint);
 			}
 			else if (tag_info.valid) {
 				auto tag = marker_to_tag(marker, lastsize[0], lastsize[1]);
 				tag.id = tag_info.id;
-				data.set_tag(framenr + start_frame - 1, tag_info.source_id, tag);
+				data.set_tag(framenr, tag_info.source_id, tag);
 			}
 			else {
-				data.set_detection(framenr + start_frame - 1, name, marker_to_detection(marker, lastsize[0], lastsize[1]));
+				data.set_detection(framenr, name, marker_to_detection(marker, lastsize[0], lastsize[1]));
 			}
 		}
 	}
@@ -302,4 +308,52 @@ PyBObject get_empty(const std::string& name, const std::vector<std::string>& col
 	PyAnimData py_anim_data = py_empty.animation_data_create();
 	py_anim_data.set_active_action(py_action);
 	return py_empty;
+}
+
+PyBObject prepare_camera_for_clip(const std::string& clip_name) {
+	PyBlendData data;
+	PyBlendDataCameras cameras = data.cameras();
+	PyCamera cam_data = cameras[clip_name];
+	if (cam_data.is_null())
+		cam_data = cameras.new_camera(clip_name);
+	PyBObject cam_obj;
+	PyBlendDataObjects objects = data.objects();
+	for (int i = 0; i < objects.size(); ++i) {
+		PyBObject obj = objects[i];
+		Object obj_intern = obj.intern();
+		if (obj_intern.type() != OB_CAMERA)
+			continue;
+		const std::string obj_cam_name = obj_intern.data<Camera>().id().name().substr(2);
+		if (obj_cam_name == clip_name) {
+			cam_obj = obj;
+			break;
+		}
+	}
+	if (cam_obj.is_null())
+		cam_obj = objects.new_object(clip_name);
+	cam_obj.set_data(cam_data.as_id());
+	PyBlendContext context;
+	PyScene scene = context.scene();
+	PyBCollection scene_root = scene.collection();
+	PyCollectionObjects root_objs = scene_root.objects();
+	if (root_objs[cam_obj.intern().id().name().substr(2)].is_null())
+		root_objs.link(cam_obj);
+	PyCameraBackgroundImages bg_imgs = cam_data.background_images();
+	bg_imgs.clear();
+	PyCameraBackgroundImage bg_img = bg_imgs.new_bg_image();
+	PyMovieClip clip = data.movieclips()[clip_name];
+	bg_img.set_clip(clip);
+	CameraBGImage bg_intern = bg_img.intern();
+	bg_intern.flag() |= CAM_BGIMG_FLAG_FOREGROUND;
+	bg_intern.flag() &= ~CAM_BGIMG_FLAG_EXPANDED;
+	bg_intern.source() = CAM_BGIMG_SOURCE_MOVIE;
+	bg_intern.alpha() = 0.75f;
+	bg_intern.cuser().render_flag() |= MCLIP_PROXY_RENDER_UNDISTORT;
+	Camera c_data_intern = cam_data.intern();
+	c_data_intern.flag() |= CAM_SHOW_BG_IMAGE;
+	c_data_intern.sensor_fit() = CAMERA_SENSOR_FIT_HOR;
+	MovieTrackingCamera tr_cam_dat = clip.intern().tracking().camera();
+	c_data_intern.sensor_x() = tr_cam_dat.sensor_width();
+	c_data_intern.lens() = (tr_cam_dat.focal() * tr_cam_dat.sensor_width()) / clip.intern().last_size()[0];
+	return cam_obj;
 }

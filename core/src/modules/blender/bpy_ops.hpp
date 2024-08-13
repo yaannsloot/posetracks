@@ -23,4 +23,8 @@ void OP_FilterTrackGaussian(int kernel_width);
 
 void OP_FilterFCurvesGaussian(int kernel_width);
 
-void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_active_clip);
+void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor);
+
+void OP_SolveCameras_Invoke(const std::string& anchor);
+
+void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, float solution_scale);

@@ -561,6 +561,14 @@ PyID PyBObject::data() const {
 	return PyID(&ret_obj);
 }
 
+void PyBObject::set_data(PyID data) {
+	REF_FUNC_HEADER;
+	py::object d_obj = py::none();
+	if (!data.is_null())
+		d_obj = *reinterpret_cast<py::object*>(data.py_obj);
+	obj->attr("data") = d_obj;
+}
+
 PyBMat PyBObject::matrix_world() const {
 	REF_FUNC_RET_HEADER(PyBMat());
 	py::object ret_obj = obj->attr("matrix_world");
@@ -570,6 +578,20 @@ PyBMat PyBObject::matrix_world() const {
 void PyBObject::select_set(bool val) {
 	REF_FUNC_HEADER;
 	obj->attr("select_set")(val);
+}
+
+PyBObject PyBObject::parent() const {
+	REF_FUNC_RET_HEADER(PyBObject());
+	py::object ret_obj = obj->attr("parent");
+	return PyBObject(&ret_obj);
+}
+
+void PyBObject::set_parent(PyBObject parent) {
+	REF_FUNC_HEADER;
+	py::object ref_obj = py::none();
+	if (!parent.is_null())
+		ref_obj = *reinterpret_cast<py::object*>(parent.py_obj);
+	obj->attr("parent") = ref_obj;
 }
 
 DEF_INTERN(PyBObject, Object)
@@ -590,10 +612,17 @@ void PyBlendDataObjects::remove(Object object, bool do_unlink, bool do_id_user, 
 	obj->attr("remove")(b_obj, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
 }
 
+const int PyBlendDataObjects::size() {
+	REF_FUNC_RET_HEADER(0);
+	return obj->attr("__len__")().cast<int>();
+}
+
 DEF_ITEMS(PyBlendDataObjects, Object)
 DEF_INDEX_OP_ALL(PyBlendDataObjects, PyBObject)
 
 // -------------------- BlendDataScenes --------------------
+
+// PySceneObjects
 
 const int PySceneObjects::size() {
 	REF_FUNC_RET_HEADER(0);
@@ -601,6 +630,8 @@ const int PySceneObjects::size() {
 }
 
 DEF_INDEX_OP_ALL(PySceneObjects, PyBObject)
+
+// PyScene
 
 PySceneObjects PyScene::objects() const {
 	REF_FUNC_RET_HEADER(PySceneObjects());
@@ -613,6 +644,85 @@ PyBCollection PyScene::collection() const {
 	py::object ret_obj = obj->attr("collection");
 	return PyBCollection(&ret_obj);
 }
+
+DEF_INTERN(PyScene, Scene)
+
+// -------------------- BlendDataCameras --------------------
+
+// PyCameraBackgroundImage
+
+PyMovieClip PyCameraBackgroundImage::get_clip() const {
+	REF_FUNC_RET_HEADER(PyMovieClip());
+	py::object ret_obj = obj->attr("clip");
+	return PyMovieClip(&ret_obj);
+}
+
+void PyCameraBackgroundImage::set_clip(PyMovieClip clip) {
+	REF_FUNC_HEADER;
+	obj->attr("clip") = *reinterpret_cast<py::object*>(clip.py_obj);
+}
+
+DEF_INTERN(PyCameraBackgroundImage, CameraBGImage)
+
+// PyCameraBackgroundImages
+
+PyCameraBackgroundImage PyCameraBackgroundImages::new_bg_image() {
+	REF_FUNC_RET_HEADER(PyCameraBackgroundImage());
+	py::object ret_obj = obj->attr("new")();
+	return PyCameraBackgroundImage(&ret_obj);
+}
+
+void PyCameraBackgroundImages::remove(PyCameraBackgroundImage image) {
+	REF_FUNC_HEADER;
+	obj->attr("remove")(*reinterpret_cast<py::object*>(image.py_obj));
+}
+
+void PyCameraBackgroundImages::clear() {
+	REF_FUNC_HEADER;
+	obj->attr("clear")();
+}
+
+const int PyCameraBackgroundImages::size() {
+	REF_FUNC_RET_HEADER(0);
+	return obj->attr("__len__")().cast<int>();
+}
+
+DEF_ITEMS(PyCameraBackgroundImages, CameraBGImage)
+DEF_INDEX_OP_ALL(PyCameraBackgroundImages, PyCameraBackgroundImage)
+
+// PyCamera
+
+PyID PyCamera::as_id() const {
+	REF_FUNC_RET_HEADER(PyID());
+	return PyID(py_obj);
+}
+
+PyCameraBackgroundImages PyCamera::background_images() const {
+	REF_FUNC_RET_HEADER(PyCameraBackgroundImages());
+	py::object ret_obj = obj->attr("background_images");
+	return PyCameraBackgroundImages(&ret_obj);
+}
+
+DEF_INTERN(PyCamera, Camera)
+
+// PyBlendDataCameras
+
+PyCamera PyBlendDataCameras::new_camera(const std::string& name) {
+	REF_FUNC_RET_HEADER(PyCamera());
+	py::object ret_obj = obj->attr("new")(name);
+	return PyCamera(&ret_obj);
+}
+
+void PyBlendDataCameras::remove(Camera camera, bool do_unlink, bool do_id_user, bool do_ui_user) {
+	REF_FUNC_HEADER;
+	std::string name = camera.id().name();
+	name = name.substr(2);
+	py::object c_obj = obj->attr("__getitem__")(name);
+	obj->attr("remove")(c_obj, py::arg("do_unlink") = do_unlink, py::arg("do_id_user") = do_id_user, py::arg("do_id_user") = do_ui_user);
+}
+
+DEF_ITEMS(PyBlendDataCameras, Camera)
+DEF_INDEX_OP_ALL(PyBlendDataCameras, PyCamera)
 
 // -------------------- BlendData --------------------
 
@@ -628,6 +738,12 @@ PyBlendDataActions PyBlendData::actions() const {
 	REF_FUNC_RET_HEADER(PyBlendDataActions());
 	py::object ret_obj = obj->attr("actions");
 	return PyBlendDataActions(&ret_obj);
+}
+
+PyBlendDataCameras PyBlendData::cameras() const {
+	REF_FUNC_RET_HEADER(PyBlendDataCameras());
+	py::object ret_obj = obj->attr("cameras");
+	return PyBlendDataCameras(&ret_obj);
 }
 
 PyBlendDataCollections PyBlendData::collections() const {
@@ -692,6 +808,11 @@ PyBObject PyLayerObjects::get_active() const {
 void PyLayerObjects::set_active(PyBObject ref) {
 	REF_FUNC_HEADER;
 	obj->attr("active") = *reinterpret_cast<py::object*>(ref.py_obj);
+}
+
+void PyViewLayer::update() const {
+	REF_FUNC_HEADER;
+	obj->attr("update")();
 }
 
 PyLayerObjects PyViewLayer::objects() const {

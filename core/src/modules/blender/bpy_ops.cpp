@@ -25,6 +25,8 @@ Operator invoke and execute functions used within the add-on code
 #include "../tracking/filters.hpp"
 #include "../tracking/data.hpp"
 #include "../tracking/triangulation.hpp"
+#include "../tracking/camera.hpp"
+#include "../crypto/sha1.hpp"
 #include <iostream>
 #include <vector>
 #include <map>
@@ -92,6 +94,7 @@ void OP_FilterTrackGaussian(int kernel_width) {
 	context.area().tag_redraw();
 }
 
+// Be sure to add an option to only filter selected keys later
 void OP_FilterFCurvesGaussian(int kernel_width) {
 	PyBlendContext context;
 	PyFCurveSeq editable_fcurves = context.selected_editable_fcurves();
@@ -145,17 +148,22 @@ void OP_FilterFCurvesGaussian(int kernel_width) {
 	context.area().tag_redraw();
 }
 
-void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
+void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
+
+	if (anchor.empty())
+		return;
 
 	// Prep data and triangulate
 
 	PyBlendData data;
+	PyBlendContext context;
+	context.view_layer().update();
+	PyMovieClip py_anchor_clip = data.movieclips()[anchor];
 	std::unordered_map<std::string, MovieClip> clip_map;
 	auto clips_list = data.movieclips().items();
 	for (MovieClip clip = clips_list.first(); !clip.is_null(); clip = clip.id().next()) {
 		clip_map[clip.id().name().substr(2)] = clip;
 	}
-	PyBlendContext context;
 	PyScene scene = context.scene();
 	std::unordered_map<std::string, PyBObject> scene_object_map;
 	PySceneObjects scene_objects = scene.objects();
@@ -173,14 +181,14 @@ void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
 	const std::string anchor_name = anchor_clip.id().name().substr(2);
 	if (scene_object_map.find(anchor_name) == scene_object_map.end()) {
 		std::cout << "ANCHOR NOT IN SCENE! TRIANGULATION ABORTED!" << std::endl;
-		calling_op.report("ERROR", "Triangulation aborted. Check the console for more information.");
+		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
 	}
 	PyBObject anchor_obj = scene_object_map[anchor_name];
 	const std::string solution_id = anchor_obj.data().get_property_str("solution_id");
 	if (solution_id.empty()) {
 		std::cout << "ANCHOR HAS NO SOLUTION ID! TRIANGULATION ABORTED!" << std::endl;
-		calling_op.report("ERROR", "Triangulation aborted. Check the console for more information.");
+		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
 	}
 	std::vector<MovieClip> clips;
@@ -216,8 +224,8 @@ void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
 		}
 	});
 	if (clips.size() < 2) {
-		std::cout << "SOLUTION CAMERAS NOT FOUND! TRIANGULATION ABORTED!" << std::endl;
-		calling_op.report("ERROR", "Triangulation aborted. Check the console for more information.");
+		std::cout << "NO OTHER CAMERAS BESIDES ANCHOR HAVE A MATCHING SOLUTION ID! TRIANGULATION ABORTED!" << std::endl;
+		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
 	}
 	auto t_data_3d = me::tracking::triangulateStatic(t_data, cam_Kk, cam_Rt);
@@ -254,8 +262,8 @@ void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
 					new_empty.select_set(true); // Select empties that were modified
 					auto split_name = split_str(empty_name);
 					auto id_empty = new_empty.as_id();
-					id_empty.set_property_str("pose_source", split_name.back());
-					id_empty.set_property_str("pose_name", join_string(split_name.begin(), std::prev(split_name.end())));
+					id_empty.set_property_str("pose_source", *std::prev(split_name.end(), 2));
+					id_empty.set_property_str("pose_name", join_string(split_name.begin(), std::prev(split_name.end(), 2)));
 					id_empty.set_property_int("joint_id", joint_id);
 					id_empty.set_property_str("cam_solution_id", solution_id);
 					py_empty = new_empty;
@@ -263,6 +271,30 @@ void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
 				loc_map[empty_name].push_back(joint);
 				f_map[empty_name].push_back(frame);
 			}
+		}
+	}
+
+	// Detections
+
+	std::vector<std::string> base_det_collection_path{ "MotionEngine", "Tracking", "Detections" };
+
+	for (auto& f_data : detections) {
+		int frame = f_data.first;
+		for (auto& det_data : f_data.second) {
+			auto& det_name = det_data.first;
+			auto& det = det_data.second;
+			PyBObject& py_empty = empty_map[det_name];
+			if (py_empty.is_null()) {
+				auto collection_path = base_det_collection_path;
+				collection_path.push_back(det_name);
+				auto new_empty = get_empty(det_name, collection_path);
+				new_empty.select_set(true); // Select empties that were modified
+				auto id_empty = new_empty.as_id();
+				id_empty.set_property_str("cam_solution_id", solution_id);
+				py_empty = new_empty;
+			}
+			loc_map[det_name].push_back(det.second);
+			f_map[det_name].push_back(frame);
 		}
 	}
 
@@ -317,7 +349,7 @@ void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
 		y_keypoints.handles_recalc();
 		z_keypoints.handles_recalc();
 	}
-
+	
 	context.view_layer().objects().set_active(anchor_obj);
 	PyBlendOps ops;
 	ops.OP_OBJ_ParentSet("OBJECT", false, true);
@@ -326,3 +358,142 @@ void OP_TriangulatePoints(PyBOperator calling_op, PyMovieClip py_anchor_clip) {
 
 }
 
+std::string solvecameras_anchor;
+std::vector<std::string> camera_names;
+std::vector<me::tracking::Mat4x4> camera_transforms;
+
+void OP_SolveCameras_Invoke(const std::string& anchor) {
+	solvecameras_anchor = anchor;
+	camera_names.clear();
+	camera_transforms.clear();
+	if (anchor.empty())
+		return;
+	PyBlendData data;
+	PyBlendContext context;
+	context.view_layer().update();
+	std::vector<MovieClip> clips;
+	std::vector<std::string> clip_names;
+	for (MovieClip clip = data.movieclips().items().first(); !clip.is_null(); clip = clip.id().next()) {
+		std::string clip_name = clip.id().name().substr(2);
+		if (clip_name == anchor) {
+			clips.insert(clips.begin(), clip);
+			clip_names.insert(clip_names.begin(), clip_name);
+		} 
+		else {
+			clips.push_back(clip);
+			clip_names.push_back(clip_name);
+		}
+	}
+	const size_t num_clips = clips.size();
+	std::vector<size_t> clip_idxs(num_clips);
+	std::iota(clip_idxs.begin(), clip_idxs.end(), 0);
+	std::vector<me::tracking::TrackingData> t_data(num_clips);
+	std::vector<me::tracking::Kk> cam_Kk(num_clips);
+	std::for_each(std::execution::par_unseq, clip_idxs.begin(), clip_idxs.end(), [&](size_t i) {
+		t_data[i] = clip_tracking_data(clips[i], 0.9, true);
+		cam_Kk[i] = get_clip_Kk(clips[i]);
+	});
+	auto cam_transforms = me::tracking::solveStaticSet(t_data, cam_Kk);
+	for (size_t i = 1; i < num_clips; ++i) {
+		if (cam_transforms[i - 1].is_identity())
+			continue;
+		camera_names.push_back(clip_names[i]);
+		auto& tf = cam_transforms[i - 1];
+		tf.invert();
+		camera_transforms.push_back(tf.to4x4().mul(flip_mtx));
+	}
+}
+
+void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, float solution_scale) {
+	
+	if (anchor.empty())
+		return;
+	
+	// Update solution if anchor was changed
+	if (solvecameras_anchor != anchor)
+		OP_SolveCameras_Invoke(anchor);
+
+	// Abort on empty solution transforms
+	if (camera_transforms.empty()) {
+		calling_op.report("WARNING", "Solver could not find any valid camera transforms");
+		return;
+	}
+
+	PyBlendData data;
+	PyBlendContext context;
+	context.view_layer().update();
+
+	// Get new solution id
+	const std::string solution_id = me::crypto::generateRandomSHA1().to_string();
+
+	PyBObject anchor_obj = prepare_camera_for_clip(anchor);
+	anchor_obj.as_id().set_property_str("solution_id", solution_id);
+	PyBMat anchor_tf = anchor_obj.matrix_world();
+	me::tracking::Mat4x4 base_tf;
+
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			base_tf(i, j) = anchor_tf.get(i, j);
+		}
+	}
+
+	anchor_obj.set_parent(PyBObject());
+
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			anchor_tf.set(i, j, static_cast<float>(base_tf(i, j)));
+		}
+	}
+
+	const size_t num_cams = camera_transforms.size();
+	std::vector<PyBObject> cameras(num_cams);
+	for (size_t i = 0; i < num_cams; ++i) {
+		PyBObject cam_obj = prepare_camera_for_clip(camera_names[i]);
+		cameras[i] = cam_obj;
+		cam_obj.as_id().set_property_str("solution_id", solution_id);
+		cam_obj.set_parent(PyBObject());
+		cam_obj.set_parent(anchor_obj);
+		auto cam_tf = camera_transforms[i];
+		cam_tf(0, 3) *= solution_scale;
+		cam_tf(1, 3) *= solution_scale;
+		cam_tf(2, 3) *= solution_scale;
+		cam_tf = base_tf * cam_tf;
+		PyBMat cam_world = cam_obj.matrix_world();
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				cam_world.set(i, j, static_cast<float>(cam_tf(i, j)));
+			}
+		}
+	}
+
+	if (base_tf == me::tracking::Mat4x4::eye()) {
+		anchor_tf.set(1, 2, -1);
+		anchor_tf.set(2, 1, 1);
+		context.view_layer().update();
+		float min_x = 0;
+		float min_y = 0;
+		float min_z = 0;
+		float max_x = 0;
+		float max_y = 0;
+		float max_z = 0;
+		for (size_t i = 0; i < num_cams; ++i) {
+			PyBObject cam_obj = cameras[i];
+			PyBMat cam_tf = cam_obj.matrix_world();
+			const float cam_x = cam_tf.get(0, 3);
+			const float cam_y = cam_tf.get(1, 3);
+			const float cam_z = cam_tf.get(2, 3);
+			min_x = (cam_x < min_x) ? cam_x : min_x;
+			min_y = (cam_y < min_y) ? cam_y : min_y;
+			min_z = (cam_z < min_z) ? cam_z : min_z;
+			max_x = (cam_x > max_x) ? cam_x : max_x;
+			max_y = (cam_y > max_y) ? cam_y : max_y;
+			max_z = (cam_z > max_z) ? cam_z : max_z;
+		}
+		anchor_tf.set(0, 3, -(min_x + max_x) / 2);
+		anchor_tf.set(1, 3, -(min_y + max_y) / 2);
+		anchor_tf.set(2, 3, -(min_z + max_z) / 2);
+	}
+
+	context.area().tag_redraw();
+
+}

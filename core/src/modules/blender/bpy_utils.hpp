@@ -54,3 +54,5 @@ me::tracking::Rt get_obj_Rt(PyBObject obj, bool apply_flip = false, bool invert 
 PyBCollection resolve_collection_path(const std::vector<std::string>& collection_path, bool make_collections = true);
 
 PyBObject get_empty(const std::string& name, const std::vector<std::string>& collection_path);
+
+PyBObject prepare_camera_for_clip(const std::string& clip_name);

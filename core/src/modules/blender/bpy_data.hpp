@@ -51,6 +51,10 @@ class PyBObject;
 class PyBlendDataObjects;
 class PySceneObjects;
 class PyScene;
+class PyCameraBackgroundImage;
+class PyCameraBackgroundImages;
+class PyCamera;
+class PyBlendDataCameras;
 class PyBlendData;
 class PyFCurveSeq;
 class PyBlendArea;
@@ -86,6 +90,7 @@ protected:
 class PyID : public PyRef {
 public:
 	using PyRef::PyRef;
+	friend PyBObject;
 
 	template <typename T>
 	T as() const {
@@ -250,6 +255,7 @@ public:
 class PyMovieClip : public PyRef {
 public:
 	using PyRef::PyRef;
+	friend PyCameraBackgroundImage;
 	MovieClip intern() const;
 	PyMovieTracking tracking() const;
 };
@@ -325,8 +331,11 @@ public:
 	PyAnimData animation_data_create() const;
 	void animation_data_clear() const;
 	PyID data() const;
+	void set_data(PyID data);
 	PyBMat matrix_world() const;
 	void select_set(bool val);
+	PyBObject parent() const;
+	void set_parent(PyBObject parent);
 };
 
 class PyBlendDataObjects : public PyRef {
@@ -335,6 +344,7 @@ public:
 	ListBaseData<Object> items() const;
 	PyBObject new_object(const std::string& name = std::string()); // This function also accepts existing ID data in the API
 	void remove(Object object, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true);
+	const int size();
 	PyBObject operator[](const int& idx) const;
 	PyBObject operator[](const std::string& name) const;
 };
@@ -352,9 +362,50 @@ public:
 class PyScene : public PyRef {
 public:
 	using PyRef::PyRef;
-	// add intern later
+	Scene intern() const;
 	PySceneObjects objects() const;
 	PyBCollection collection() const;
+};
+
+// -------------------- BlendDataCameras --------------------
+
+class PyCameraBackgroundImage : public PyRef {
+public:
+	using PyRef::PyRef;
+	friend PyCameraBackgroundImages;
+	CameraBGImage intern() const;
+	PyMovieClip get_clip() const;
+	void set_clip(PyMovieClip clip);
+};
+
+class PyCameraBackgroundImages : public PyRef {
+public:
+	using PyRef::PyRef;
+	ListBaseData<CameraBGImage> items() const;
+	PyCameraBackgroundImage new_bg_image();
+	void remove(PyCameraBackgroundImage image);
+	void clear();
+	const int size();
+	PyCameraBackgroundImage operator[](const int& idx) const;
+	PyCameraBackgroundImage operator[](const std::string& name) const;
+};
+
+class PyCamera : public PyRef {
+public:
+	using PyRef::PyRef;
+	PyID as_id() const;
+	Camera intern() const;
+	PyCameraBackgroundImages background_images() const;
+};
+
+class PyBlendDataCameras : public PyRef {
+public:
+	using PyRef::PyRef;
+	ListBaseData<Camera> items() const;
+	PyCamera new_camera(const std::string& name = std::string());
+	void remove(Camera camera, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true);
+	PyCamera operator[](const int& idx) const;
+	PyCamera operator[](const std::string& name) const;
 };
 
 // -------------------- BlendData --------------------
@@ -363,6 +414,7 @@ class PyBlendData : public PyRef {
 public:
 	PyBlendData(); // Obtain python ref to bpy.data
 	PyBlendDataActions actions() const;
+	PyBlendDataCameras cameras() const;
 	PyBlendDataCollections collections() const;
 	PyBlendDataMovieClips movieclips() const;
 	PyBlendDataObjects objects() const;
@@ -396,6 +448,7 @@ public:
 class PyViewLayer : public PyRef {
 public:
 	using PyRef::PyRef;
+	void update() const;
 	PyLayerObjects objects() const;
 };
 
