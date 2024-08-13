@@ -159,7 +159,7 @@ public:
 
 class PyActionFCurves : public PyRef {
 public:
-	PyRef::PyRef;
+	using PyRef::PyRef;
 	ListBaseData<FCurve> items() const;
 	PyFCurve new_fcurve(const std::string& data_path, const int index = 0, const std::string& action_group = std::string());
 	PyFCurve find(const std::string& data_path, const int index = 0) const;

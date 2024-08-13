@@ -1458,7 +1458,7 @@ struct ID4_1_0 {
     unsigned int recalc;
     unsigned int recalc_up_to_undo_push;
     unsigned int recalc_after_undo_push;
-    unsigned int session_uid;
+    unsigned int session_uuid;
     IDProperty3_5_0* properties;
     IDOverrideLibrary3_2_0* override_library;
     ID4_1_0* orig_id;

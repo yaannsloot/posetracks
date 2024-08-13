@@ -326,9 +326,9 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 		std::for_each(std::execution::par_unseq, kf_idxs.begin(), kf_idxs.end(), [&](int i) {
 			int frame = frames[i];
 			auto& pt = locations[i];
-			auto& bezt_x = fc_intern_x.bezt(i);
-			auto& bezt_y = fc_intern_y.bezt(i);
-			auto& bezt_z = fc_intern_z.bezt(i);
+			auto bezt_x = fc_intern_x.bezt(i);
+			auto bezt_y = fc_intern_y.bezt(i);
+			auto bezt_z = fc_intern_z.bezt(i);
 			auto vec_x = bezt_x.vec();
 			auto vec_y = bezt_y.vec();
 			auto vec_z = bezt_z.vec();
