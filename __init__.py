@@ -56,7 +56,7 @@ def register():
 
     # Core lib compatibility mapping
 
-    if not ((2, 93, 0) < bpy.app.version <= (4, 2, 0)):
+    if not ((2, 93, 0) <= bpy.app.version <= (4, 2, 1)):
         print("[MotionEngine] Registration failed.")
         registered = False
         return
@@ -87,8 +87,10 @@ def register():
         compat_ver = MotionEngine.VER_4_0_0
     elif bpy.app.version < (4, 2, 0):
         compat_ver = MotionEngine.VER_4_1_0
-    else:
+    elif bpy.app.version < (4, 2, 1):
         compat_ver = MotionEngine.VER_4_2_0
+    else:
+        compat_ver = MotionEngine.VER_4_2_1
 
     MotionEngine.set_compatibility_mode(compat_ver)
 

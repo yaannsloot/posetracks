@@ -31,7 +31,7 @@ import regex as re
 import git
 
 min_ver = (2, 93, 0)
-max_ver = (4, 2, 0)
+max_ver = (4, 2, 1)
 base_dir = 'blender_generated'
 source_dir = base_dir
 rna_dir = os.path.join(base_dir, 'makesrna')

@@ -131,6 +131,7 @@ PYBIND11_MODULE(MEPython, m)
 		.value("VER_4_1_0", BlenderVersion::VER_4_1_0)
 		.value("VER_4_1_1", BlenderVersion::VER_4_1_1)
 		.value("VER_4_2_0", BlenderVersion::VER_4_2_0)
+		.value("VER_4_2_1", BlenderVersion::VER_4_2_1)
 		.export_values();
 
 	py::enum_<cv::aruco::PredefinedDictionaryType>(m, "TagDictionary")
