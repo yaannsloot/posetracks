@@ -19,6 +19,13 @@ import bpy
 from . import MotionEngine as me
 
 
+def fix_class_ref(in_ref):
+    if isinstance(in_ref, tuple):
+        return in_ref[0]
+    else:
+        return in_ref
+
+
 def prepare_camera_for_clip(movie_clip: bpy.types.MovieClip, context: bpy.types.Context):
     """
     Ensure scene cameras exist for movie clip
@@ -353,6 +360,7 @@ class ClipInfo:
         self.clip_size = clip.size
         self.scene_first_frame = scene.frame_start
         self.scene_last_frame = scene.frame_end
+        self.bpy_name = clip.name
 
     def get_scene_start(self):
         """

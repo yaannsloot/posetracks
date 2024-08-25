@@ -66,13 +66,6 @@ class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
         row = grid.row()
         row.prop(properties, 'pose_keypoints_enum', text='')
 
-        grid = layout.grid_flow(columns=1)
-        row = grid.row()
-        row.label(text='Overwrite')
-        row.prop(properties, 'overwrite_poses', text='')
-        row.alignment = 'CENTER'
-
-
 
 class ModelSettingsPanel(bpy.types.Panel, PoseEstimationPanelSpace):
     bl_parent_id = "MOTIONENGINE_POSE_ESTIMATION_PT_panel"
@@ -119,6 +112,7 @@ class ModelSettingsPanel(bpy.types.Panel, PoseEstimationPanelSpace):
             grid_ele.label(text="Confidence")
             grid_ele.alignment = 'RIGHT'
             grid_ele.prop(properties, "joint_conf", text="")
+
 
 CLASSES = [
     PoseEstimationUIPanel,

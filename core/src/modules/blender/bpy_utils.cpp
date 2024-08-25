@@ -173,7 +173,7 @@ TrackTagInfo get_track_tag_info(const MovieTrackingTrack track) {
 	return info;
 }
 
-me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh, const bool filter_locked)
+me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh, const bool filter_locked, const bool filter_selected)
 {
 	me::tracking::TrackingData data;
 	const int* lastsize = clip.last_size();
@@ -186,7 +186,8 @@ me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double
 	const auto tracks = tracking.objects().first().tracks(); // First object will always be for camera tracking
 	for (MovieTrackingTrack track = tracks.first(); !track.is_null(); track = track.next()) {
 		std::string name = track.name();
-		if (filter_locked && !(track.flag() & TRACK_LOCKED))
+		if (filter_locked && !(track.flag() & TRACK_LOCKED) ||
+			filter_selected && !(track.flag() & TRACK_SELECT))
 			continue;
 		TrackPoseInfo pose_info = get_track_pose_info(track);
 		TrackTagInfo tag_info = get_track_tag_info(track);
