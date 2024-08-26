@@ -131,6 +131,7 @@ PYBIND11_MODULE(MEPython, m)
 		.value("VER_4_1_0", BlenderVersion::VER_4_1_0)
 		.value("VER_4_1_1", BlenderVersion::VER_4_1_1)
 		.value("VER_4_2_0", BlenderVersion::VER_4_2_0)
+		.value("VER_4_2_1", BlenderVersion::VER_4_2_1)
 		.export_values();
 
 	py::enum_<cv::aruco::PredefinedDictionaryType>(m, "TagDictionary")
@@ -660,15 +661,6 @@ PYBIND11_MODULE(MEPython, m)
 
 	m.def("set_pose_sources", &set_pose_sources, py::call_guard<py::gil_scoped_release>());
 	m.def("set_tag_sources", &set_tag_sources, py::call_guard<py::gil_scoped_release>());
-	m.def("clip_tracking_data", [](py::object clip, const double joint_conf_thresh, const bool filter_locked) {
-		py::object bpy_types = py::module::import("bpy.types");
-		py::object bpy_clip = bpy_types.attr("MovieClip");
-		if (!isinstance(clip, bpy_clip))
-			throw py::type_error("arg0: clip must be of type bpy.types.MovieClip");
-		MovieClip blend_clip = bpy_wrap<MovieClip>(clip);
-		py::gil_scoped_release release;
-		return clip_tracking_data(blend_clip, joint_conf_thresh, filter_locked);
-	}, py::arg("clip"), py::arg("joint_conf_thresh") = 0, py::arg("filter_locked") = false);
 
 	// DNN
 	m_dnn.def("letterbox_image", [](const cv::Mat& src, cv::Mat& dst, py::tuple out_size) {
@@ -750,6 +742,16 @@ PYBIND11_MODULE(MEPython, m)
 	// Blender functionality
 
 	auto m_blend = m.def_submodule("blender");
+
+	m.def("clip_tracking_data", [](py::object clip, const double joint_conf_thresh, const bool filter_locked, const bool filter_selected) {
+		py::object bpy_types = py::module::import("bpy.types");
+		py::object bpy_clip = bpy_types.attr("MovieClip");
+		if (!isinstance(clip, bpy_clip))
+			throw py::type_error("arg0: clip must be of type bpy.types.MovieClip");
+		MovieClip blend_clip = bpy_wrap<MovieClip>(clip);
+		py::gil_scoped_release release;
+		return clip_tracking_data(blend_clip, joint_conf_thresh, filter_locked, filter_selected);
+		}, py::arg("clip"), py::arg("joint_conf_thresh") = 0, py::arg("filter_locked") = false, py::arg("filter_selected") = false);
 
 	m_blend.def("OP_FilterTrackGaussian", &OP_FilterTrackGaussian, py::call_guard<py::gil_scoped_release>());
 

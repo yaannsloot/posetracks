@@ -51,6 +51,7 @@ VER_4_0_0: BlenderVersion
 VER_4_1_0: BlenderVersion
 VER_4_1_1: BlenderVersion
 VER_4_2_0: BlenderVersion
+VER_4_2_1: BlenderVersion
 
 models: Dict[str, Dict[str, Dict[str, ...]]]
 """
@@ -73,6 +74,7 @@ class BlenderVersion:
     VER_4_1_0: ClassVar[TagDictionary] = ...
     VER_4_1_1: ClassVar[TagDictionary] = ...
     VER_4_2_0: ClassVar[TagDictionary] = ...
+    VER_4_2_1: ClassVar[TagDictionary] = ...
     __entries: ClassVar[dict] = ...
     def __init__(self, value: int) -> None: ...
     def __eq__(self, other: object) -> bool: ...
@@ -85,11 +87,12 @@ class BlenderVersion:
     @property
     def value(self) -> int: ...
 
-def clip_tracking_data(clip, joint_conf_thresh: float = 0, filter_locked: bool = False) -> tracking.TrackingData:
+def clip_tracking_data(clip, joint_conf_thresh: float = 0, filter_locked: bool = False, filter_selected = False) -> tracking.TrackingData:
     """
     Retrieve tracking data from the provided movie clip
     :param joint_conf_thresh: Minimum joint confidence score
     :param filter_locked: If true, will ignore tracks that are not locked
+    :param filter_selected: If true, will ignore tracks that are not selected
     :return: MotionEngine compatible tracking data object
     """
 

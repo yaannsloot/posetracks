@@ -109,9 +109,7 @@ void OP_FilterFCurvesGaussian(int kernel_width) {
 		const size_t num_points = fcurve.totvert();
 		if (num_points < 1)
 			continue;
-		PyFCurveKeyframePoints py_keys = py_curve.keyframe_points();
-		py_keys.sort();
-		py_keys.deduplicate();
+		py_curve.update();
 		std::vector<float*> points(num_points);
 		std::vector<std::vector<double>> intervals;
 		std::vector<double> inter;
@@ -143,7 +141,7 @@ void OP_FilterFCurvesGaussian(int kernel_width) {
 				++j;
 			}
 		}
-		py_keys.handles_recalc();
+		py_curve.update();
 	}
 	context.area().tag_redraw();
 }
@@ -339,15 +337,9 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 			vec_y[1][1] = static_cast<float>(-pt.y);
 			vec_z[1][1] = static_cast<float>(-pt.z);
 		});
-		x_keypoints.sort();
-		y_keypoints.sort();
-		z_keypoints.sort();
-		x_keypoints.deduplicate();
-		y_keypoints.deduplicate();
-		z_keypoints.deduplicate();
-		x_keypoints.handles_recalc();
-		y_keypoints.handles_recalc();
-		z_keypoints.handles_recalc();
+		f_curve_x.update();
+		f_curve_y.update();
+		f_curve_z.update();
 	}
 	
 	context.view_layer().objects().set_active(anchor_obj);
@@ -427,7 +419,7 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 	const std::string solution_id = me::crypto::generateRandomSHA1().to_string();
 
 	PyBObject anchor_obj = prepare_camera_for_clip(anchor);
-	anchor_obj.as_id().set_property_str("solution_id", solution_id);
+	anchor_obj.data().set_property_str("solution_id", solution_id);
 	PyBMat anchor_tf = anchor_obj.matrix_world();
 	me::tracking::Mat4x4 base_tf;
 
@@ -450,7 +442,7 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 	for (size_t i = 0; i < num_cams; ++i) {
 		PyBObject cam_obj = prepare_camera_for_clip(camera_names[i]);
 		cameras[i] = cam_obj;
-		cam_obj.as_id().set_property_str("solution_id", solution_id);
+		cam_obj.data().set_property_str("solution_id", solution_id);
 		cam_obj.set_parent(PyBObject());
 		cam_obj.set_parent(anchor_obj);
 		auto cam_tf = camera_transforms[i];
@@ -467,6 +459,8 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 	}
 
 	if (base_tf == me::tracking::Mat4x4::eye()) {
+		anchor_tf.set(1, 1, 0);
+		anchor_tf.set(2, 2, 0);
 		anchor_tf.set(1, 2, -1);
 		anchor_tf.set(2, 1, 1);
 		context.view_layer().update();

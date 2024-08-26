@@ -43,7 +43,7 @@ me::dnn::Detection marker_to_detection(const MovieTrackingMarker marker, const i
 
 me::dnn::Joint marker_to_joint(const MovieTrackingMarker marker, const int width, const int height);
 
-me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh = 0, const bool filter_locked = false);
+me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh = 0, const bool filter_locked = false, const bool filter_selected = false);
 
 std::vector<MovieTrackingTrack> get_selected_tracks(MovieTrackingObject object);
 

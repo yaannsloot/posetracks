@@ -1,5 +1,5 @@
 # MotionEngine
 
-MotionEngine is an AI tracking tool for blender
+This is the branch for the first public release of MotionEngine
 
-Documentation and the first official release should be coming out soon
+Docs are being worked on in the [docs-v1.0-beta](https://github.com/YaannSloot/MotionEngine/tree/docs-v1.0-beta) branch

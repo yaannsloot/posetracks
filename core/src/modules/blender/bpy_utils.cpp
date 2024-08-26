@@ -173,7 +173,7 @@ TrackTagInfo get_track_tag_info(const MovieTrackingTrack track) {
 	return info;
 }
 
-me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh, const bool filter_locked)
+me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh, const bool filter_locked, const bool filter_selected)
 {
 	me::tracking::TrackingData data;
 	const int* lastsize = clip.last_size();
@@ -183,10 +183,13 @@ me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double
 	const int scene_start = r_data.sfra();
 	const int scene_end = r_data.efra();
 	const MovieTracking tracking = clip.tracking();
-	const auto tracks = tracking.objects().first().tracks(); // First object will always be for camera tracking
+	auto tracks = tracking.tracks(); // Try this first. May be deprecated in certain versions.
+	if (tracks.first().is_null())
+		tracks = tracking.objects().first().tracks(); // First object will always be for camera tracking
 	for (MovieTrackingTrack track = tracks.first(); !track.is_null(); track = track.next()) {
 		std::string name = track.name();
-		if (filter_locked && !(track.flag() & TRACK_LOCKED))
+		if (filter_locked && !(track.flag() & TRACK_LOCKED) ||
+			filter_selected && !(track.flag() & TRACK_SELECT))
 			continue;
 		TrackPoseInfo pose_info = get_track_pose_info(track);
 		TrackTagInfo tag_info = get_track_tag_info(track);
@@ -330,8 +333,7 @@ PyBObject prepare_camera_for_clip(const std::string& clip_name) {
 		}
 	}
 	if (cam_obj.is_null())
-		cam_obj = objects.new_object(clip_name);
-	cam_obj.set_data(cam_data.as_id());
+		cam_obj = objects.new_object(clip_name, cam_data.as_id());
 	PyBlendContext context;
 	PyScene scene = context.scene();
 	PyBCollection scene_root = scene.collection();

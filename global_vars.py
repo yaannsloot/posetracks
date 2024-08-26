@@ -20,49 +20,6 @@ ui_lock_state = False
 """Disables all ui elements when false"""
 
 
-"""finish this"""
-joint_groups = {
-    'wb17': {
-        'head': {(0, 4)},
-        'arms': {
-            'left': {5, 7, 9},
-            'right': {6, 8, 10}
-        },
-        'legs': {
-            'left': {11, 13, 15},
-            'right': {12, 14, 16}
-        }
-    },
-    'wb26': {
-        'head': {(0, 5), 17},
-        'arms': {
-            'left': {5, 7, 9},
-            'right': {6, 8, 10}
-        },
-        'legs': {
-            'left': {11, 13, 15},
-            'right': {12, 14, 16}
-        },
-        'torso': {18, 19},
-        'feet': {
-            'left': {20, 22, 24},
-            'right': {21, 23, 25}
-        }
-    },
-    'wb133': {
-        'head': {(0, 4)},
-        'arms': {
-            'left': {5, 7, 9},
-            'right': {6, 8, 10}
-        },
-        'legs': {
-            'left': {11, 13, 15},
-            'right': {12, 14, 16}
-        }
-    }
-}
-
-
 def resolve_collection_path(path, context, make_collections=True):
     scene = context.scene
     scene_root = scene.collection
