@@ -51,6 +51,26 @@ bl_info = {
 registered = False
 
 
+def draw_menus_view3d(self, context):
+    layout = self.layout
+    if context.mode == 'OBJECT':
+        layout.menu("VIEW3D_MT_tracking")
+
+
+def draw_menus_graph_key(self, context):
+    layout = self.layout
+    layout.menu("GRAPH_MT_tracking_filters")
+
+def draw_ops_track_panel(self, context):
+    layout = self.layout
+    mute_ops = layout.row(align=True)
+    mute_ops.operator("motionengine.mute_tracks_operator")
+    mute_ops.operator("motionengine.unmute_tracks_operator")
+
+
+keymaps = []
+
+
 def register():
     global registered
 
@@ -124,6 +144,23 @@ def register():
 
     global_vars.executor = concurrent.futures.ThreadPoolExecutor()
 
+    # Menu registration
+
+    bpy.types.VIEW3D_MT_editor_menus.append(draw_menus_view3d)
+    bpy.types.GRAPH_MT_key.append(draw_menus_graph_key)
+    bpy.types.CLIP_PT_track.append(draw_ops_track_panel)
+
+    # Keymaps
+
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc:
+        km = kc.keymaps.new(name='3D View', space_type='VIEW_3D')
+        kmi = km.keymap_items.new("motionengine.triangulate_points_operator", type='T', value='PRESS', ctrl=True)
+        keymaps.append((km, kmi))
+        kmi = km.keymap_items.new("motionengine.solve_cameras_operator", type='T', value='PRESS', ctrl=True,
+                                  shift=True)
+        keymaps.append((km, kmi))
     gc.collect()
 
     print("[MotionEngine] Registration complete.")
@@ -133,6 +170,14 @@ def register():
 
 def unregister():
     if registered:
+
+        bpy.types.GRAPH_MT_key.remove(draw_menus_graph_key)
+        bpy.types.VIEW3D_MT_editor_menus.remove(draw_menus_view3d)
+
+        for km, kmi in keymaps:
+            km.keymap_items.remove(kmi)
+        keymaps.clear()
+
         for CLASS in ui.ALL_CLASSES:
             bpy.utils.unregister_class(CLASS)
 
