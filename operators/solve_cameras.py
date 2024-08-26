@@ -17,11 +17,14 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 import mathutils
-from math import radians
 
 from .. import MotionEngine as me
 from .. import global_vars
 from .. import utils
+
+
+def clip_list(self, context):
+    return [(clip.name, clip.name, f'Set anchor view to {clip.name}') for clip in bpy.data.movieclips]
 
 
 class SolveCamerasOperator(bpy.types.Operator):
@@ -30,99 +33,37 @@ class SolveCamerasOperator(bpy.types.Operator):
     bl_label = "Solve cameras"
     bl_options = {'REGISTER', 'UNDO'}
 
+    views: bpy.props.EnumProperty(
+        items=clip_list,
+        name="Anchor View",
+        description="Clip to use as anchor view"
+    )
+
+    solution_scale: bpy.props.FloatProperty(
+        name="Solution scale",
+        description="Sets solution scale for cameras",
+        default=1,
+        min=0.01,
+    )
+
     @classmethod
     def poll(cls, context):
-        scene = context.scene
-        properties = scene.motion_engine_ui_properties
-        active_clip = properties.anchor_cam_selection
-        return not global_vars.ui_lock_state and active_clip is not None
+        return (not global_vars.ui_lock_state
+                and context.area.type == 'VIEW_3D'
+                and context.mode == 'OBJECT'
+                and len(bpy.data.movieclips) > 1)
 
     def execute(self, context):
-        scene = context.scene
-        properties = scene.motion_engine_ui_properties
-        solution_id = me.crypto.random_sha1()
-
-        active_clip = properties.anchor_cam_selection
-
-        anchor_cam = utils.prepare_camera_for_clip(active_clip, context)
-
-        clips = [active_clip] + [clip for clip in bpy.data.movieclips if clip is not active_clip]
-
-        if len(clips) < 2:
-            return {'FINISHED'}
-
-        t_data = []
-        cam_Kk = []
-
-        for clip in clips:
-            t_data.append(utils.get_clip_tracking_data(clip, filter_locked=True))
-            cam_Kk.append(utils.get_clip_Kk(clip))
-
-        cam_transforms = me.tracking.solve_static_set(t_data, cam_Kk)
-
-        flip_mtx = [
-            [1, -1, -1, 1],
-            [-1, 1, 1, -1],
-            [-1, 1, 1, -1],
-            [1, 1, 1, 1]
-        ]
-
-        if all(tf.is_identity() for tf in cam_transforms):
-            self.report({'ERROR'}, 'Failed to find solution for camera transforms')
-            return {'FINISHED'}
-
-        for child in anchor_cam.children:
-            child_tf = child.matrix_world
-            child.parent = None
-            child.matrix_world = child_tf
-
-        anchor_tf = anchor_cam.matrix_world
-        anchor_cam.parent = None
-        anchor_cam.matrix_world = anchor_tf
-
-        clip_cams = []
-
-        for i in range(len(cam_transforms)):
-            tf = cam_transforms[i]
-            clip = clips[i + 1]
-            if tf.is_identity():
-                print(f"SKIPPED '{clip.name}': CALCULATED TF IS IDENTITY!")
-                continue
-            clip_cam = utils.prepare_camera_for_clip(clip, context)
-            clip_cam.parent = None
-            clip_cam.parent = anchor_cam
-            clip_cam.data['solution_id'] = solution_id
-            tf.invert()
-            tf = tf.to4x4()
-            blend_mtx = mathutils.Matrix()
-            for r in range(4):
-                for c in range(4):
-                    blend_mtx[r][c] = tf[r, c] * flip_mtx[r][c]
-            blend_mtx.translation *= properties.solution_scale
-            clip_cam.matrix_world = anchor_cam.matrix_world @ blend_mtx
-            clip_cams.append(clip_cam)
-
-        anchor_cam.data['solution_id'] = solution_id
-
-        if anchor_cam.matrix_world == mathutils.Matrix.Identity(4):
-            anchor_cam.matrix_world = mathutils.Matrix.Rotation(radians(90), 4, 'X') @ anchor_cam.matrix_world
-            context.view_layer.update()
-            pos_min = anchor_cam.matrix_world.translation
-            pos_max = pos_min.copy()
-            for c in clip_cams:
-                c_pos = c.matrix_world.translation
-                for i in range(3):
-                    pos_min[i] = c_pos[i] if c_pos[i] < pos_min[i] else pos_min[i]
-                    pos_max[i] = c_pos[i] if c_pos[i] > pos_max[i] else pos_max[i]
-            offset = (pos_min + pos_max) / 2
-            anchor_cam.location = -1 * offset
-
-        if any(tf.is_identity() for tf in cam_transforms):
-            self.report({'WARNING'}, 'Some views failed to solve. Check the console for more information.')
-        else:
-            self.report({'INFO'}, 'Solver finished.')
-
+        me.blender.OP_SolveCameras_Execute(self, self.views, self.solution_scale)
         return {'FINISHED'}
+
+    def invoke(self, context, event):
+        active = context.active_object
+        cameras = [item[0] for item in clip_list(self, context)]
+        if active is not None and active.type == 'CAMERA' and active.data.name in cameras:
+            self.views = active.data.name
+        me.blender.OP_SolveCameras_Invoke(self.views)
+        return self.execute(context)
 
 
 def get_xy_plane_pos(origin, proj_point):
@@ -149,20 +90,17 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return not global_vars.ui_lock_state
+        return (not global_vars.ui_lock_state and
+                context.area.type == 'CLIP_EDITOR' and
+                context.edit_movieclip is not None and
+                context.edit_movieclip.tracking.tracks.active is not None and
+                utils.is_valid_tag_name(context.edit_movieclip.tracking.tracks.active.name))
 
     def execute(self, context):
         scene = context.scene
         properties = scene.motion_engine_ui_properties
         current_clip = context.edit_movieclip
-
-        if current_clip is not None:
-            active_track = current_clip.tracking.tracks.active
-        else:
-            active_track = None
-
-        if active_track is None or not utils.is_valid_tag_name(active_track.name):
-            return {'FINISHED'}
+        active_track = current_clip.tracking.tracks.active
 
         scene_cam = utils.prepare_camera_for_clip(current_clip, context)
         clip_info = utils.ClipInfo(current_clip)
@@ -217,7 +155,79 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class TrackCameraFromTagOperator(bpy.types.Operator):
+    """Track view for current clip using selected tag as the origin"""
+    bl_idname = "motionengine.track_camera_from_tag_operator"
+    bl_label = "Track camera"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return (not global_vars.ui_lock_state and
+                context.area.type == 'CLIP_EDITOR' and
+                context.edit_movieclip is not None and
+                context.edit_movieclip.tracking.tracks.active is not None and
+                utils.is_valid_tag_name(context.edit_movieclip.tracking.tracks.active.name))
+
+    def execute(self, context):
+        scene = context.scene
+        properties = scene.motion_engine_ui_properties
+        current_clip = context.edit_movieclip
+        active_track = current_clip.tracking.tracks.active
+
+        scene_cam = utils.prepare_camera_for_clip(current_clip, context)
+        clip_info = utils.ClipInfo(current_clip)
+        cam_Kk = utils.get_clip_Kk(current_clip)
+
+        flip_mtx = [
+            [1, -1, -1, 1],
+            [-1, 1, 1, -1],
+            [-1, 1, 1, -1],
+            [1, 1, 1, 1]
+        ]
+
+        was_keyed = False
+        for marker in active_track.markers:
+            tag = utils.marker_to_tag(marker, clip_info.clip_size, False)
+            cam_T = me.tracking.solve_camera_with_tag(tag, cam_Kk)
+            if cam_T.is_identity():
+                continue
+            if not was_keyed:
+                for constraint in scene_cam.constraints:
+                    if constraint.type == 'CAMERA_SOLVER':
+                        scene_cam.constraints.remove(constraint)
+                scene_cam.animation_data_clear()
+                scene_cam.animation_data_create()
+                scene_cam.rotation_mode = 'QUATERNION'
+                scene_cam.delta_location = (0, 0, 0)
+                scene_cam.delta_rotation_euler = (0, 0, 0)
+                scene_cam.delta_scale = (1, 1, 1)
+                scene_cam.matrix_world = mathutils.Matrix.Identity(4)
+                context.view_layer.update()
+            was_keyed = True
+            cam_T = cam_T.to4x4()
+            blend_mtx = mathutils.Matrix()
+            for r in range(4):
+                for c in range(4):
+                    blend_mtx[r][c] = cam_T[r, c] * flip_mtx[r][c]
+            scene_cam.matrix_world = blend_mtx
+            frame_to_key = clip_info.clip_to_scene(marker.frame)
+            self.report({'INFO'}, str(frame_to_key))
+            scene_cam.keyframe_insert(data_path='location', frame=frame_to_key)
+            scene_cam.keyframe_insert(data_path='rotation_quaternion', frame=frame_to_key)
+
+        if not was_keyed:
+            self.report({'ERROR'}, 'Failed to solve pose for selected tag')
+            return {'FINISHED'}
+
+        properties.anchor_cam_selection = current_clip
+        scene_cam.data['solution_id'] = active_track.name
+
+        return {'FINISHED'}
+
+
 CLASSES = [
     SolveCamerasOperator,
-    SolveCameraFromTagOperator
+    SolveCameraFromTagOperator,
+    TrackCameraFromTagOperator
 ]

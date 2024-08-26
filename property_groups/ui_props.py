@@ -276,16 +276,6 @@ class UIProperties(bpy.types.PropertyGroup):
         default=False,
         update=force_redraw
     )
-    overwrite_poses: bpy.props.BoolProperty(
-        name="Overwrite existing poses",
-        description="If unchecked, will prioritize whichever estimate has the higher confidence score",
-        default=True
-    )
-    mute_results: bpy.props.BoolProperty(
-        name="Mute tracking results",
-        description="If enabled, markers will be muted once the detector has finished",
-        default=True
-    )
     tag_detector_cv_resample_toggle: bpy.props.BoolProperty(
         name=tag_detector_cv_resample_toggle_name,
         description=tag_detector_cv_resample_toggle_desc,

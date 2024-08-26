@@ -96,6 +96,14 @@ def register():
 
     print(f"[MotionEngine] Set compatibility mode to {str(compat_ver)}")
 
+    MotionEngine.set_pose_sources(utils.get_pose_sources())
+    print("[MotionEngine] Updated pose sources")
+
+    tag_sources = [e for e in MotionEngine.TagDictionary.__members__]
+    tag_sources.append('ML')
+    MotionEngine.set_tag_sources(tag_sources)
+    print("[MotionEngine] Updated tag sources")
+
     # Component registration
 
     gc.collect()

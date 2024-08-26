@@ -390,15 +390,21 @@ class BakeAnimationOperator(bpy.types.Operator):
 
         context.view_layer.update()
 
+        args = {
+            'frame_start': scene.frame_start,
+            'frame_end': scene.frame_end,
+            'only_selected': False,
+            'visual_keying': True,
+            'clear_constraints': True,
+            'use_current_action': True,
+            'clean_curves': True
+        }
+
+        if bpy.app.version >= (4, 1, 0):
+            args['channel_types'] = {'LOCATION', 'ROTATION'}
+
         bpy.ops.nla.bake(
-            frame_start=scene.frame_start,
-            frame_end=scene.frame_end,
-            only_selected=False,
-            visual_keying=True,
-            clear_constraints=True,
-            use_current_action=True,
-            clean_curves=True,
-            channel_types={'LOCATION', 'ROTATION'}
+            **args
         )
 
         current_frame = scene.frame_current

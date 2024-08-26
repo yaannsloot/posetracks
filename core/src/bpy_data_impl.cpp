@@ -232,6 +232,11 @@ PyFCurveKeyframePoints PyFCurve::keyframe_points() const {
 	return PyFCurveKeyframePoints(&ret_obj);
 }
 
+void PyFCurve::update() {
+	REF_FUNC_HEADER;
+	obj->attr("update")();
+}
+
 DEF_INTERN(PyFCurve, FCurve)
 
 // PyActionFCurves
@@ -598,9 +603,12 @@ DEF_INTERN(PyBObject, Object)
 
 // PyBlendDataObjects
 
-PyBObject PyBlendDataObjects::new_object(const std::string& name) {
+PyBObject PyBlendDataObjects::new_object(const std::string& name, PyID data) {
 	REF_FUNC_RET_HEADER(PyBObject());
-	py::object ret_obj = obj->attr("new")(name, py::none());
+	py::object d = py::none();
+	if (!data.is_null())
+		d = *reinterpret_cast<py::object*>(data.py_obj);
+	py::object ret_obj = obj->attr("new")(name, d);
 	return PyBObject(&ret_obj);
 }
 

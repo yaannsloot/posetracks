@@ -90,6 +90,7 @@ protected:
 class PyID : public PyRef {
 public:
 	using PyRef::PyRef;
+	friend PyBlendDataObjects;
 	friend PyBObject;
 
 	template <typename T>
@@ -155,6 +156,7 @@ public:
 	PyFCurveKeyframePoints keyframe_points() const;
 	// add modifiers func if necessary
 	// There are more members of FCurve in python
+	void update();
 };
 
 class PyActionFCurves : public PyRef {
@@ -331,6 +333,7 @@ public:
 	PyAnimData animation_data_create() const;
 	void animation_data_clear() const;
 	PyID data() const;
+	// Must be the same datatype as the previous datablock
 	void set_data(PyID data);
 	PyBMat matrix_world() const;
 	void select_set(bool val);
@@ -342,7 +345,7 @@ class PyBlendDataObjects : public PyRef {
 public:
 	using PyRef::PyRef;
 	ListBaseData<Object> items() const;
-	PyBObject new_object(const std::string& name = std::string()); // This function also accepts existing ID data in the API
+	PyBObject new_object(const std::string& name = std::string(), PyID data = PyID()); // This function also accepts existing ID data in the API
 	void remove(Object object, bool do_unlink = true, bool do_id_user = true, bool do_ui_user = true);
 	const int size();
 	PyBObject operator[](const int& idx) const;
