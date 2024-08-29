@@ -1,12 +1,12 @@
-# MotionEngine Core
+# PoseTracks Core
 
-MotionEngine Core is a compiled python module responsible for executing pre-trained models and performing computer vision related tasks. It is required for the add-on to function.
+PoseTracks Core is a compiled python module responsible for executing pre-trained models and performing computer vision related tasks. It is required for the add-on to function.
 
 ## Building
 
 ### Using build.py
 
-The build.py script is the easiest way to build MotionEngine Core. It currently only works for Windows and Linux.
+The build.py script is the easiest way to build PoseTracks Core. It currently only works for Windows and Linux.
 
 The following must be installed and available on the system PATH:
 
