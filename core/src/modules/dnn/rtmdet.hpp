@@ -19,19 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "models.hpp"
 
-namespace me::dnn::models {
+class RTMDetModelImpl : public DetectionModelImpl {
+public:
+	RTMDetModelImpl();
+	virtual cv::Size net_size() override;
+	virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
+	virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
+};
 
-	class RTMDetModelImpl : public DetectionModelImpl {
-	public:
-		RTMDetModelImpl();
-		virtual cv::Size net_size() override;
-		virtual void infer(const cv::Mat& image, std::vector<Detection>& detections, float conf_thresh, float iou_thresh) override;
-		virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Detection>>& detections, float conf_thresh, float iou_thresh) override;
-	};
-
-	class RTMDetModel : public DetectionModel {
-	public:
-		RTMDetModel();
-	};
-
-}
+class RTMDetModel : public DetectionModel {
+public:
+	RTMDetModel();
+};

@@ -21,10 +21,10 @@ from ... import global_vars, utils
 
 class TrackManagerUIPanel(bpy.types.Panel):
     bl_label = "Track Manager"
-    bl_idname = "MOTIONENGINE_TRACK_MANAGER_PT_panel"
+    bl_idname = "POSETRACKS_TRACK_MANAGER_PT_panel"
     bl_space_type = "CLIP_EDITOR"
     bl_region_type = "UI"
-    bl_category = "MotionEngine"
+    bl_category = "PoseTracks"
 
     display_priority = 3
 
@@ -35,7 +35,7 @@ class TrackManagerUIPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         current_clip = context.edit_movieclip
 
         if current_clip is not None:
@@ -63,15 +63,15 @@ class TrackManagerUIPanel(bpy.types.Panel):
         row_ops = row.row(align=True)
 
         if utils.is_valid_joint_name(active_track.name):
-            row_ops.operator("motionengine.select_pose_operator", icon='RESTRICT_SELECT_OFF', text='')
+            row_ops.operator("posetracks.select_pose_operator", icon='RESTRICT_SELECT_OFF', text='')
         if active_track.lock:
-            row_ops.operator("motionengine.unlock_tracks_operator", icon='LOCKED', text='', depress=True)
+            row_ops.operator("posetracks.unlock_tracks_operator", icon='LOCKED', text='', depress=True)
         else:
-            row_ops.operator("motionengine.lock_tracks_operator", icon='UNLOCKED', text='')
+            row_ops.operator("posetracks.lock_tracks_operator", icon='UNLOCKED', text='')
 
         mute_ops = layout.row(align=True)
-        mute_ops.operator("motionengine.mute_tracks_operator")
-        mute_ops.operator("motionengine.unmute_tracks_operator")
+        mute_ops.operator("posetracks.mute_tracks_operator")
+        mute_ops.operator("posetracks.unmute_tracks_operator")
 
         if utils.is_valid_joint_name(active_track.name):
             split_name = active_track.name.split('.')
@@ -96,7 +96,10 @@ class TrackManagerUIPanel(bpy.types.Panel):
 
         if utils.is_valid_tag_name(active_track.name):
             row = layout.row()
-            row.operator("motionengine.solve_camera_from_tag_operator")
+            row.operator("posetracks.solve_camera_from_tag_operator")
+            row.enabled = not ui_lock
+            row = layout.row()
+            row.operator("posetracks.track_camera_from_tag_operator")
             row.enabled = not ui_lock
 
 

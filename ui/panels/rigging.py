@@ -22,21 +22,21 @@ from ...operators.rigging_constraints import (gen_new_types, track_axis_button_l
                                               track_axis_dir_id)
 from ...operators.rigging_constraints import contexts as rigging_op_contexts
 
-idname_base = "MOTIONENGINE_RIGGING_{}_PT_panel"
+idname_base = "POSETRACKS_RIGGING_{}_PT_panel"
 
 
 class RiggingUIPanel(bpy.types.Panel):
     bl_label = "Rigging"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "MotionEngine"
+    bl_category = "PoseTracks"
 
     display_priority = 0
 
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         selected_axis = properties.rigging_avg_locked_axis
         ui_lock = global_vars.ui_lock_state
         selected_objects = context.selected_objects
@@ -64,14 +64,14 @@ class RiggingUIPanel(bpy.types.Panel):
 
         row = grid.split(align=True)
 
-        row.operator(f"motionengine.avgloc_c_s_to_a_{rigging_op_contexts[context.mode]}_operator",
+        row.operator(f"posetracks.avgloc_c_s_to_a_{rigging_op_contexts[context.mode]}_operator",
                      icon="STICKY_UVS_DISABLE", text="")
 
         row.enabled = len(selected_objects) > 1
 
         for item in gen_new_types.items():
             row = grid.split(align=True)
-            row.operator(f"motionengine.avgloc_c_s_to_{item[1]['idname']}_operator",
+            row.operator(f"posetracks.avgloc_c_s_to_{item[1]['idname']}_operator",
                          icon=item[1]["icon"], text="")
             row.enabled = len(selected_objects) > 0
 
@@ -92,7 +92,7 @@ class RiggingUIPanel(bpy.types.Panel):
                 axis = i
                 direction = 0
             row = grid.split(align=True)
-            row.operator("motionengine.avgdamped_c_s_to_a_{}_{}_operator"
+            row.operator("posetracks.avgdamped_c_s_to_a_{}_{}_operator"
                          .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower(),
                                  rigging_op_contexts[context.mode]),
                          text=track_axis_button_lbl[axis].format(track_axis_dir_lbl[direction]))
@@ -114,7 +114,7 @@ class RiggingUIPanel(bpy.types.Panel):
                 axis = i
                 direction = 0
             row = grid.split(align=True)
-            row.operator("motionengine.avglocked_c_s_to_a_{}_{}_operator"
+            row.operator("posetracks.avglocked_c_s_to_a_{}_{}_operator"
                          .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower(),
                                  rigging_op_contexts[context.mode]),
                          text=track_axis_button_lbl[axis].format(track_axis_dir_lbl[direction]))
@@ -125,7 +125,7 @@ class RiggingUIPanel(bpy.types.Panel):
 
         for i in range(3):
             row = grid.split(align=True)
-            row.operator(f"motionengine.avglocked_axis_{track_axis_button_lbl[i].format('').lower()}_operator",
+            row.operator(f"posetracks.avglocked_axis_{track_axis_button_lbl[i].format('').lower()}_operator",
                          text=track_axis_button_lbl[i].format(''), depress=(i == selected_axis))
 
         box.separator()
@@ -133,7 +133,7 @@ class RiggingUIPanel(bpy.types.Panel):
         row.label(text="Ngon test:")
         grid = box.row(align=True)
         row = grid.split(align=True)
-        row.operator("motionengine.gen_ngon_s_to_a_operator", text="NGon gen test")
+        row.operator("posetracks.gen_ngon_s_to_a_operator", text="NGon gen test")
         row.enabled = len(selected_objects) > 1
 
 

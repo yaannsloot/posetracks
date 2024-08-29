@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import bpy
 import mathutils
 
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import global_vars
 from .. import utils
 
@@ -29,7 +29,7 @@ def clip_list(self, context):
 
 class SolveCamerasOperator(bpy.types.Operator):
     """Solve cameras"""
-    bl_idname = "motionengine.solve_cameras_operator"
+    bl_idname = "posetracks.solve_cameras_operator"
     bl_label = "Solve cameras"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -54,7 +54,7 @@ class SolveCamerasOperator(bpy.types.Operator):
                 and len(bpy.data.movieclips) > 1)
 
     def execute(self, context):
-        me.blender.OP_SolveCameras_Execute(self, self.views, self.solution_scale)
+        pt_core.blender.OP_SolveCameras_Execute(self, self.views, self.solution_scale)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -62,7 +62,7 @@ class SolveCamerasOperator(bpy.types.Operator):
         cameras = [item[0] for item in clip_list(self, context)]
         if active is not None and active.type == 'CAMERA' and active.data.name in cameras:
             self.views = active.data.name
-        me.blender.OP_SolveCameras_Invoke(self.views)
+        pt_core.blender.OP_SolveCameras_Invoke(self.views)
         return self.execute(context)
 
 
@@ -84,7 +84,7 @@ def get_xy_plane_pos(origin, proj_point):
 
 class SolveCameraFromTagOperator(bpy.types.Operator):
     """Solve view for current clip using selected tag as the origin"""
-    bl_idname = "motionengine.solve_camera_from_tag_operator"
+    bl_idname = "posetracks.solve_camera_from_tag_operator"
     bl_label = "Solve camera"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -98,7 +98,7 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         current_clip = context.edit_movieclip
         active_track = current_clip.tracking.tracks.active
 
@@ -107,7 +107,7 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
         marker = active_track.markers.find_frame(clip_info.scene_to_clip(scene.frame_current), exact=False)
         tag = utils.marker_to_tag(marker, clip_info.clip_size, False)
         cam_Kk = utils.get_clip_Kk(current_clip)
-        cam_T = me.tracking.solve_camera_with_tag(tag, cam_Kk)
+        cam_T = pt_core.tracking.solve_camera_with_tag(tag, cam_Kk)
 
         if cam_T.is_identity():
             self.report({'ERROR'}, 'Failed to solve pose for selected tag')
@@ -157,7 +157,7 @@ class SolveCameraFromTagOperator(bpy.types.Operator):
 
 class TrackCameraFromTagOperator(bpy.types.Operator):
     """Track view for current clip using selected tag as the origin"""
-    bl_idname = "motionengine.track_camera_from_tag_operator"
+    bl_idname = "posetracks.track_camera_from_tag_operator"
     bl_label = "Track camera"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -171,7 +171,7 @@ class TrackCameraFromTagOperator(bpy.types.Operator):
 
     def execute(self, context):
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         current_clip = context.edit_movieclip
         active_track = current_clip.tracking.tracks.active
 
@@ -189,7 +189,7 @@ class TrackCameraFromTagOperator(bpy.types.Operator):
         was_keyed = False
         for marker in active_track.markers:
             tag = utils.marker_to_tag(marker, clip_info.clip_size, False)
-            cam_T = me.tracking.solve_camera_with_tag(tag, cam_Kk)
+            cam_T = pt_core.tracking.solve_camera_with_tag(tag, cam_Kk)
             if cam_T.is_identity():
                 continue
             if not was_keyed:

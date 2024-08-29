@@ -30,9 +30,9 @@ void set_tag_sources(const std::vector<std::string>& sources)
 	tag_sources = sources;
 }
 
-me::dnn::Tag marker_to_tag(const MovieTrackingMarker marker, const int width, const int height)
+Tag marker_to_tag(const MovieTrackingMarker marker, const int width, const int height)
 {
-	me::dnn::Tag output;
+	Tag output;
 	const Corners corners = marker.pattern_corners();
 	const float* pos = marker.pos();
 	for (size_t i = 0; i < 4; ++i) {
@@ -69,7 +69,7 @@ MarkerCorners get_corners(const MovieTrackingMarker marker, const int width, con
 	return ret;
 }
 
-me::dnn::Detection marker_to_detection(const MovieTrackingMarker marker, const int width, const int height)
+Detection marker_to_detection(const MovieTrackingMarker marker, const int width, const int height)
 {
 	MarkerCorners corners = get_corners(marker, width, height);
 	float bbox_width = corners.max[0] - corners.min[0];
@@ -78,10 +78,10 @@ me::dnn::Detection marker_to_detection(const MovieTrackingMarker marker, const i
 	float bbox_center_y = height - (corners.min[1] + bbox_height / 2);
 	float bbox_tl_x = bbox_center_x - bbox_width / 2;
 	float bbox_tl_y = bbox_center_y - bbox_height / 2;
-	return me::dnn::Detection(0, cv::Rect2d(bbox_tl_x, bbox_tl_y, bbox_width, bbox_height), 1);
+	return Detection(0, cv::Rect2d(bbox_tl_x, bbox_tl_y, bbox_width, bbox_height), 1);
 }
 
-me::dnn::Joint marker_to_joint(const MovieTrackingMarker marker, const int width, const int height)
+Joint marker_to_joint(const MovieTrackingMarker marker, const int width, const int height)
 {
 	MarkerCorners c = get_corners(marker, width, height);
 	float area = 0;
@@ -96,7 +96,7 @@ me::dnn::Joint marker_to_joint(const MovieTrackingMarker marker, const int width
 	const float* pos = marker.pos();
 	float x = pos[0] * width;
 	float y = height - pos[1] * height;
-	return me::dnn::Joint(x, y, area);
+	return Joint(x, y, area);
 }
 
 std::vector<std::string> split_str(const std::string& str, const char delim) {
@@ -173,9 +173,9 @@ TrackTagInfo get_track_tag_info(const MovieTrackingTrack track) {
 	return info;
 }
 
-me::tracking::TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh, const bool filter_locked, const bool filter_selected)
+TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_thresh, const bool filter_locked, const bool filter_selected)
 {
-	me::tracking::TrackingData data;
+	TrackingData data;
 	const int* lastsize = clip.last_size();
 	const int start_frame = clip.start_frame();
 	Scene scene = PyBlendContext().scene().intern();
@@ -228,8 +228,8 @@ std::vector<MovieTrackingTrack> get_selected_tracks(MovieTrackingObject object) 
 	return out;
 }
 
-me::tracking::Kk get_clip_Kk(MovieClip clip) {
-	me::tracking::Kk result;
+Kk get_clip_Kk(MovieClip clip) {
+	Kk result;
 	MovieTrackingCamera settings = clip.tracking().camera();
 	const int* size = clip.last_size();
 	result.k(0) = static_cast<double>(settings.k1());
@@ -245,8 +245,8 @@ me::tracking::Kk get_clip_Kk(MovieClip clip) {
 	return result;
 }
 
-me::tracking::Rt get_obj_Rt(PyBObject obj, bool apply_flip, bool invert) {
-	me::tracking::Mat4x4 obj_mat;
+Rt get_obj_Rt(PyBObject obj, bool apply_flip, bool invert) {
+	Mat4x4 obj_mat;
 	PyBMat obj_world = obj.matrix_world();
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
@@ -255,7 +255,7 @@ me::tracking::Rt get_obj_Rt(PyBObject obj, bool apply_flip, bool invert) {
 	}
 	if (apply_flip)
 		obj_mat = obj_mat.mul(flip_mtx);
-	me::tracking::Rt result;
+	Rt result;
 	result.from4x4(obj_mat);
 	if (invert)
 		result.invert();

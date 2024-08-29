@@ -18,9 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import bpy
 import mathutils
 
-from .. import MotionEngine as me
 from .. import global_vars
-from .. import utils
 from .. import pose_autogen_defs
 
 track_axis = ['TRACK_X', 'TRACK_Y', 'TRACK_Z', 'TRACK_NEGATIVE_X', 'TRACK_NEGATIVE_Y', 'TRACK_NEGATIVE_Z']
@@ -67,7 +65,7 @@ def apply_copy_loc(src, target):
         if isinstance(c, bpy.types.CopyLocationConstraint):
             num_prev += 1
     constraint = src.constraints.new(type="COPY_LOCATION")
-    constraint.name = "ME_Gen_CopyLoc"
+    constraint.name = "PT_Gen_CopyLoc"
     constraint.show_expanded = False
     constraint.target = target
     constraint.influence = 1 / (num_prev + 1)
@@ -79,7 +77,7 @@ def apply_damped_track(src, target, t_axis):
         if isinstance(c, bpy.types.DampedTrackConstraint):
             num_prev += 1
     constraint = src.constraints.new(type="DAMPED_TRACK")
-    constraint.name = "ME_Gen_Damped"
+    constraint.name = "PT_Gen_Damped"
     constraint.show_expanded = False
     constraint.track_axis = track_axis[pose_autogen_defs.AXIS_DIRECTIONS.index(t_axis)]
     constraint.target = target
@@ -92,7 +90,7 @@ def apply_locked_track(src, target, l_axis, t_axis):
         if isinstance(c, bpy.types.LockedTrackConstraint):
             num_prev += 1
     constraint = src.constraints.new(type="LOCKED_TRACK")
-    constraint.name = "ME_Gen_Locked"
+    constraint.name = "PT_Gen_Locked"
     constraint.show_expanded = False
     constraint.lock_axis = lock_axis[pose_autogen_defs.AXIS_LIST.index(l_axis)]
     constraint.track_axis = track_axis[pose_autogen_defs.AXIS_DIRECTIONS.index(t_axis)]
@@ -102,7 +100,7 @@ def apply_locked_track(src, target, l_axis, t_axis):
 
 def apply_copy_rot(src, target):
     constraint = src.constraints.new(type="COPY_ROTATION")
-    constraint.name = "ME_Gen_CopyRot"
+    constraint.name = "PT_Gen_CopyRot"
     constraint.show_expanded = False
     constraint.target = target
 
@@ -167,7 +165,7 @@ def get_rot_src_obj(armature, bone):
     obj.empty_display_size = bone_length * 0.3
     if obj.name in scene.objects:
         return obj
-    collection = global_vars.resolve_collection_path(['MotionEngine', 'Armatures', armature.name], context)
+    collection = global_vars.resolve_collection_path(['PoseTracks', 'Armatures', armature.name], context)
     collection.objects.link(obj)
     return obj
 
@@ -200,7 +198,7 @@ def get_armature_obj(armature):
         obj = bpy.data.objects.new(armature.name, armature)
     if obj.name in scene.objects:
         return obj
-    collection = global_vars.resolve_collection_path(['MotionEngine', 'Armatures', armature.name], context)
+    collection = global_vars.resolve_collection_path(['PoseTracks', 'Armatures', armature.name], context)
     collection.objects.link(obj)
     return obj
 
@@ -250,7 +248,7 @@ def clear_armature_constraints(armature):
 
 class GenerateArmatureOperator(bpy.types.Operator):
     """Generate armature for this pose"""
-    bl_idname = "motionengine.generate_armature_operator"
+    bl_idname = "posetracks.generate_armature_operator"
     bl_label = "Generate Armature"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -365,7 +363,7 @@ class GenerateArmatureOperator(bpy.types.Operator):
 
 class BakeAnimationOperator(bpy.types.Operator):
     """Bake animation for this armature"""
-    bl_idname = "motionengine.bake_animation_operator"
+    bl_idname = "posetracks.bake_animation_operator"
     bl_label = "Bake Animation"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -381,9 +379,6 @@ class BakeAnimationOperator(bpy.types.Operator):
     def execute(self, context):
         scene = context.scene
         active_obj = context.active_object
-        pose_source = active_obj['pose_source']
-        pose_name = active_obj['pose_name']
-        cam_solution_id = active_obj['cam_solution_id']
 
         armature = active_obj.data
         armature_mode_set(armature, 'POSE')

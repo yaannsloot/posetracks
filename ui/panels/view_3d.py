@@ -20,7 +20,7 @@ import bpy
 
 class PoseSelectedView3DUIPanel(bpy.types.Panel):
     bl_label = "Selected Pose"
-    bl_idname = "MOTIONENGINE_POSE_SELECTED_VIEW3D_PT_panel"
+    bl_idname = "POSETRACKS_POSE_SELECTED_VIEW3D_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Item"
@@ -55,12 +55,12 @@ class PoseSelectedView3DUIPanel(bpy.types.Panel):
         row.label(text=f'Active ID: {joint_id}')
 
         row = layout.row()
-        row.operator("motionengine.generate_armature_operator")
+        row.operator("posetracks.generate_armature_operator")
 
 
 class ArmatureSelectedView3DUIPanel(bpy.types.Panel):
     bl_label = "Selected Armature"
-    bl_idname = "MOTIONENGINE_ARMATURE_SELECTED_VIEW3D_PT_panel"
+    bl_idname = "POSETRACKS_ARMATURE_SELECTED_VIEW3D_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Item"
@@ -93,7 +93,7 @@ class ArmatureSelectedView3DUIPanel(bpy.types.Panel):
         row.label(text=f'Source: {pose_source.capitalize()}')
 
         row = layout.row()
-        row.operator("motionengine.bake_animation_operator")
+        row.operator("posetracks.bake_animation_operator")
 
 
 CLASSES = [

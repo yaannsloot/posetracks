@@ -22,12 +22,12 @@ from ... import global_vars
 class ObjectDetectionPanelSpace:
     bl_space_type = "CLIP_EDITOR"
     bl_region_type = "UI"
-    bl_category = "MotionEngine"
+    bl_category = "PoseTracks"
 
 
 class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     bl_label = "Object Detection"
-    bl_idname = "MOTIONENGINE_OBJECT_DETECTION_PT_panel"
+    bl_idname = "POSETRACKS_OBJECT_DETECTION_PT_panel"
 
     display_priority = 1
 
@@ -38,7 +38,7 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock
@@ -47,7 +47,7 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
 
         row.scale_y = 1.6
 
-        row.operator("motionengine.detect_objects_operator")
+        row.operator("posetracks.detect_objects_operator")
 
         row.enabled = context.edit_movieclip is not None
 
@@ -60,8 +60,8 @@ class ObjectDetectionUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
 
 
 class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
-    bl_parent_id = 'MOTIONENGINE_OBJECT_DETECTION_PT_panel'
-    bl_idname = "MOTIONENGINE_DETECTOR_SETTINGS_PT_panel"
+    bl_parent_id = 'POSETRACKS_OBJECT_DETECTION_PT_panel'
+    bl_idname = "POSETRACKS_DETECTOR_SETTINGS_PT_panel"
     bl_label = 'Detector Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -70,7 +70,7 @@ class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock
@@ -113,8 +113,8 @@ class DetectorSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
 
 
 class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
-    bl_parent_id = 'MOTIONENGINE_OBJECT_DETECTION_PT_panel'
-    bl_idname = "MOTIONENGINE_TRACKER_SETTINGS_PT_panel"
+    bl_parent_id = 'POSETRACKS_OBJECT_DETECTION_PT_panel'
+    bl_idname = "POSETRACKS_TRACKER_SETTINGS_PT_panel"
     bl_label = 'Tracker Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -123,7 +123,7 @@ class TrackerSettingsUIPanel(bpy.types.Panel, ObjectDetectionPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock

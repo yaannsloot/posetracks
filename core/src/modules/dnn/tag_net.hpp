@@ -19,19 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "models.hpp"
 
-namespace me::dnn::models {
+class TagNetModelImpl : public TagModelImpl {
+public:
+	TagNetModelImpl();
+	virtual cv::Size net_size() override;
+	virtual void infer(const cv::Mat& image, std::vector<Tag>& tags) override;
+	virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) override;
+};
 
-	class TagNetModelImpl : public TagModelImpl {
-	public:
-		TagNetModelImpl();
-		virtual cv::Size net_size() override;
-		virtual void infer(const cv::Mat& image, std::vector<Tag>& tags) override;
-		virtual void infer(const std::vector<cv::Mat>& images, std::vector<std::vector<Tag>>& tags) override;
-	};
-
-	class TagNetModel : public TagModel {
-	public:
-		TagNetModel();
-	};
-
-}
+class TagNetModel : public TagModel {
+public:
+	TagNetModel();
+};

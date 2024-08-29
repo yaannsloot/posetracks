@@ -16,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 import bpy
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import global_vars
 
 
@@ -44,7 +44,7 @@ def clip_list(self, context):
 
 class TriangulatePointsOperator(bpy.types.Operator):
     """Triangulate tracked points and place them in the current scene"""
-    bl_idname = "motionengine.triangulate_points_operator"
+    bl_idname = "posetracks.triangulate_points_operator"
     bl_label = "Triangulate Points"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -63,7 +63,7 @@ class TriangulatePointsOperator(bpy.types.Operator):
                 and len(clip_list(cls, context)) > 1)
 
     def execute(self, context):
-        me.blender.OP_TriangulatePoints(self, self.views)
+        pt_core.blender.OP_TriangulatePoints(self, self.views)
         return {"FINISHED"}
 
     def invoke(self, context, event):

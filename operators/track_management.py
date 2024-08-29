@@ -22,7 +22,7 @@ from .. import utils
 
 class SelectPoseOperator(bpy.types.Operator):
     """Select all tracks associated with this pose"""
-    bl_idname = "motionengine.select_pose_operator"
+    bl_idname = "posetracks.select_pose_operator"
     bl_label = "Select All"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -115,7 +115,7 @@ def set_mute(clip, track, value):
 
 class LockTracksOperator(bpy.types.Operator):
     """Locked tracks are used for camera calibration and triangulation"""
-    bl_idname = "motionengine.lock_tracks_operator"
+    bl_idname = "posetracks.lock_tracks_operator"
     bl_label = "Lock this track and all associated tracks."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -137,7 +137,7 @@ class LockTracksOperator(bpy.types.Operator):
 
 class UnlockTracksOperator(bpy.types.Operator):
     """Locked tracks are used for camera calibration and triangulation"""
-    bl_idname = "motionengine.unlock_tracks_operator"
+    bl_idname = "posetracks.unlock_tracks_operator"
     bl_label = "Unlock this track and all associated tracks."
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -159,7 +159,7 @@ class UnlockTracksOperator(bpy.types.Operator):
 
 class MuteTracksOperator(bpy.types.Operator):
     """Mute this track and all associated tracks.\nMuted tracks are ignored by blender's camera motion solver"""
-    bl_idname = "motionengine.mute_tracks_operator"
+    bl_idname = "posetracks.mute_tracks_operator"
     bl_label = "Mute"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -181,7 +181,7 @@ class MuteTracksOperator(bpy.types.Operator):
 
 class UnmuteTracksOperator(bpy.types.Operator):
     """Unmute this track and all associated tracks.\nMuted tracks are ignored by blender's camera motion solver"""
-    bl_idname = "motionengine.unmute_tracks_operator"
+    bl_idname = "posetracks.unmute_tracks_operator"
     bl_label = "Unmute"
     bl_options = {'REGISTER', 'UNDO'}
 

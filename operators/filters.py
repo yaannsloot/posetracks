@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 import bpy
 
 
@@ -26,7 +26,7 @@ def get_selected_tracks():
 
 class FilterTrackGaussian(bpy.types.Operator):
     """Apply a gaussian filter to selected tracks"""
-    bl_idname = "motionengine.filter_tracks_gaussian_operator"
+    bl_idname = "posetracks.filter_tracks_gaussian_operator"
     bl_label = "Apply Gaussian Filter"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -44,13 +44,13 @@ class FilterTrackGaussian(bpy.types.Operator):
                 get_selected_tracks())
 
     def execute(self, context):
-        me.blender.OP_FilterTrackGaussian(self.kernel_width)
+        pt_core.blender.OP_FilterTrackGaussian(self.kernel_width)
         return {'FINISHED'}
 
 
 class FilterFCurvesGaussian(bpy.types.Operator):
     """Apply a gaussian filter to selected f-curves"""
-    bl_idname = "motionengine.filter_curves_gaussian_operator"
+    bl_idname = "posetracks.filter_curves_gaussian_operator"
     bl_label = "Apply Gaussian Filter"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -67,7 +67,7 @@ class FilterFCurvesGaussian(bpy.types.Operator):
                 context.selected_editable_fcurves)
 
     def execute(self, context):
-        me.blender.OP_FilterFCurvesGaussian(self.kernel_width)
+        pt_core.blender.OP_FilterFCurvesGaussian(self.kernel_width)
         return {'FINISHED'}
 
 

@@ -18,19 +18,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include "curve.hpp"
-
-namespace me::data {
 		
-	// Implements bezier curves
-	// Sources: https://en.wikipedia.org/wiki/B%C3%A9zier_curve, https://www.desmos.com/calculator/ebdtbxgbq0
+// Implements bezier curves
+// Sources: https://en.wikipedia.org/wiki/B%C3%A9zier_curve, https://www.desmos.com/calculator/ebdtbxgbq0
 
-	class BezierCurve : public Curve {
-	public:
-		using Curve::Curve;
-		// BEWARE: Beziers are driven by t and x means t in this context. t must be within the interval of [0, 1]
-		cv::Point2d solve(double x);
-	};
+class BezierCurve : public Curve {
+public:
+	using Curve::Curve;
+	// BEWARE: Beziers are driven by t and x means t in this context. t must be within the interval of [0, 1]
+	cv::Point2d solve(double x);
+};
 
-	double estimateT(BezierCurve& c, double x, size_t iterations = 10);
+double estimateT(BezierCurve& c, double x, size_t iterations = 10);
 	
-}

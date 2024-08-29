@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import global_vars
 from .. import utils
 from ..events import (InfoEvent,
@@ -64,7 +64,7 @@ def tag_task(bpy_data: event_ops.BpyData):
             tag_model, _ = load_model_by_name('tag_detection', 'basic_reg_v1',
                                               bpy_data.ui_props['exe_tag_detector_ml_enum'])
         else:
-            tag_model = me.dnn.CVTagDetector()
+            tag_model = pt_core.dnn.CVTagDetector()
             tag_model.set_dict_type(bpy_data.ui_props['tag_detector_cv_dict_list_enum'])
             if bpy_data.ui_props['tag_detector_cv_resample_toggle']:
                 tag_model.set_preprocess_size((224, 224))
@@ -97,21 +97,21 @@ def tag_task(bpy_data: event_ops.BpyData):
             if not detections:
                 f_num += len(frames)
                 continue
-            detections = me.dnn.fix_detection_coordinates(detections, det_model.net_size(), clip.frame_size(),
-                                                          me.dnn.AUTO)
+            detections = pt_core.dnn.fix_detection_coordinates(detections, det_model.net_size(), clip.frame_size(),
+                                                          pt_core.dnn.AUTO)
             samples = []
             sample_frames = []
             sample_regions = []
             for f, frame_dets in enumerate(detections):
                 for det in frame_dets:
                     det.scale_detection(1.2)
-                    if (me.dnn.is_roi_outside_image(clip.frame_size(), det.bbox)
+                    if (pt_core.dnn.is_roi_outside_image(clip.frame_size(), det.bbox)
                             or det.class_id != target_cid):
                         continue
-                    samples.append(me.dnn.get_roi_no_padding(frames[f], det.bbox))
+                    samples.append(pt_core.dnn.get_roi_no_padding(frames[f], det.bbox))
                     sample_frames.append(f)
                     sample_regions.append(det)
-            if isinstance(tag_model, me.dnn.CVTagDetector):
+            if isinstance(tag_model, pt_core.dnn.CVTagDetector):
                 tags = tag_model.infer(samples)
             else:
                 tags, tag_batch_size = batch_infer(tag_batch_size, tag_model, samples)
@@ -122,7 +122,7 @@ def tag_task(bpy_data: event_ops.BpyData):
                 if tag.conf < 0.85:
                     continue
                 box = sample_regions[i]
-                out_tag = me.dnn.Tag()
+                out_tag = pt_core.dnn.Tag()
                 out_tag.id = tag.id
                 for c in range(4):
                     out_tag[c] = (tag[c].x * box.bbox.width + box.bbox.x,
@@ -149,7 +149,7 @@ def tag_task(bpy_data: event_ops.BpyData):
 
 class DetectTagsOperator(EventOperator):
     """Scan playback range for tags"""
-    bl_idname = "motionengine.detect_tags_operator"
+    bl_idname = "posetracks.detect_tags_operator"
     bl_label = "Detect Tags"
 
     def __init__(self):

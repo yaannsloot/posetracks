@@ -24,7 +24,7 @@ class GRAPH_MT_tracking_filters(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("motionengine.filter_curves_gaussian_operator")
+        layout.operator("posetracks.filter_curves_gaussian_operator")
 
 
 CLASSES = [

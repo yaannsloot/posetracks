@@ -29,8 +29,8 @@ def main():
     print('Packaging...')
     base_dir = os.path.dirname(os.path.abspath(__file__))
     build_dir = 'build'
-    package_root = os.path.join(build_dir, 'motion_engine')
-    package_core_root = os.path.join(package_root, 'MotionEngine')
+    package_root = os.path.join(build_dir, 'posetracks')
+    package_core_root = os.path.join(package_root, 'posetracks_core')
     redis_path = os.path.join('core', 'build', 'redis')
     build_dir = os.path.abspath(build_dir)
     package_root = os.path.abspath(package_root)

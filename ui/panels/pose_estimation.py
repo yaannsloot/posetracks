@@ -23,12 +23,12 @@ from ... import utils
 class PoseEstimationPanelSpace:
     bl_space_type = "CLIP_EDITOR"
     bl_region_type = "UI"
-    bl_category = "MotionEngine"
+    bl_category = "PoseTracks"
 
 
 class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
     bl_label = "Pose Estimation"
-    bl_idname = "MOTIONENGINE_POSE_ESTIMATION_PT_panel"
+    bl_idname = "POSETRACKS_POSE_ESTIMATION_PT_panel"
 
     display_priority = 2
 
@@ -39,7 +39,7 @@ class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock
@@ -48,7 +48,7 @@ class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
 
         row.scale_y = 1.6
 
-        row.operator("motionengine.detect_poses_operator")
+        row.operator("posetracks.detect_poses_operator")
 
         row.enabled = context.edit_movieclip is not None and utils.get_active_track_count(context.edit_movieclip) > 0
 
@@ -68,8 +68,8 @@ class PoseEstimationUIPanel(bpy.types.Panel, PoseEstimationPanelSpace):
 
 
 class ModelSettingsPanel(bpy.types.Panel, PoseEstimationPanelSpace):
-    bl_parent_id = "MOTIONENGINE_POSE_ESTIMATION_PT_panel"
-    bl_idname = "MOTIONENGINE_POSE_MODEL_SETTINGS_PT_panel"
+    bl_parent_id = "POSETRACKS_POSE_ESTIMATION_PT_panel"
+    bl_idname = "POSETRACKS_POSE_MODEL_SETTINGS_PT_panel"
     bl_label = 'Model Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -78,7 +78,7 @@ class ModelSettingsPanel(bpy.types.Panel, PoseEstimationPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock

@@ -81,8 +81,8 @@ void OP_FilterTrackGaussian(int kernel_width) {
 			auto& x_inter = track_x[i];
 			auto& y_inter = track_y[i];
 			int k_width = std::min(kernel_width, static_cast<int>(m_inter.size()));
-			auto x_filtered = me::tracking::g_conv_1d(x_inter, k_width);
-			auto y_filtered = me::tracking::g_conv_1d(y_inter, k_width);
+			auto x_filtered = g_conv_1d(x_inter, k_width);
+			auto y_filtered = g_conv_1d(y_inter, k_width);
 			for (size_t j = 0; j < m_inter.size(); ++j) {
 				auto& marker = m_inter[j];
 				float* pos = marker.pos();
@@ -135,7 +135,7 @@ void OP_FilterFCurvesGaussian(int kernel_width) {
 		size_t j = 0;
 		for (auto& iv : intervals) {
 			int k_width = std::min(kernel_width, static_cast<int>(iv.size()));
-			auto filtered = me::tracking::g_conv_1d(iv, k_width);
+			auto filtered = g_conv_1d(iv, k_width);
 			for (double& y : filtered) {
 				*points[j] = static_cast<float>(y);
 				++j;
@@ -191,9 +191,9 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 	}
 	std::vector<MovieClip> clips;
 	std::vector<Object> cams;
-	std::vector<me::tracking::TrackingData> t_data;
-	std::vector<me::tracking::Kk> cam_Kk;
-	std::vector<me::tracking::Rt> cam_Rt;
+	std::vector<TrackingData> t_data;
+	std::vector<Kk> cam_Kk;
+	std::vector<Rt> cam_Rt;
 	std::mutex lock;
 	std::for_each(std::execution::par_unseq, clip_map.begin(), clip_map.end(), [&](auto& c_map_pair) {
 		if (scene_object_map.find(c_map_pair.first) == scene_object_map.end())
@@ -226,7 +226,7 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
 	}
-	auto t_data_3d = me::tracking::triangulateStatic(t_data, cam_Kk, cam_Rt);
+	auto t_data_3d = triangulateStatic(t_data, cam_Kk, cam_Rt);
 
 	// Prepare empties and collect location data
 
@@ -242,7 +242,7 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 	// Poses
 
-	std::vector<std::string> base_pose_collection_path{ "MotionEngine", "Tracking", "Poses" };
+	std::vector<std::string> base_pose_collection_path{ "PoseTracks", "Tracking", "Poses" };
 
 	for (auto& f_data : poses) {
 		int frame = f_data.first;
@@ -274,7 +274,7 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 	// Detections
 
-	std::vector<std::string> base_det_collection_path{ "MotionEngine", "Tracking", "Detections" };
+	std::vector<std::string> base_det_collection_path{ "PoseTracks", "Tracking", "Detections" };
 
 	for (auto& f_data : detections) {
 		int frame = f_data.first;
@@ -352,7 +352,7 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 std::string solvecameras_anchor;
 std::vector<std::string> camera_names;
-std::vector<me::tracking::Mat4x4> camera_transforms;
+std::vector<Mat4x4> camera_transforms;
 
 void OP_SolveCameras_Invoke(const std::string& anchor) {
 	solvecameras_anchor = anchor;
@@ -379,13 +379,13 @@ void OP_SolveCameras_Invoke(const std::string& anchor) {
 	const size_t num_clips = clips.size();
 	std::vector<size_t> clip_idxs(num_clips);
 	std::iota(clip_idxs.begin(), clip_idxs.end(), 0);
-	std::vector<me::tracking::TrackingData> t_data(num_clips);
-	std::vector<me::tracking::Kk> cam_Kk(num_clips);
+	std::vector<TrackingData> t_data(num_clips);
+	std::vector<Kk> cam_Kk(num_clips);
 	std::for_each(std::execution::par_unseq, clip_idxs.begin(), clip_idxs.end(), [&](size_t i) {
 		t_data[i] = clip_tracking_data(clips[i], 0.9, true);
 		cam_Kk[i] = get_clip_Kk(clips[i]);
 	});
-	auto cam_transforms = me::tracking::solveStaticSet(t_data, cam_Kk);
+	auto cam_transforms = solveStaticSet(t_data, cam_Kk);
 	for (size_t i = 1; i < num_clips; ++i) {
 		if (cam_transforms[i - 1].is_identity())
 			continue;
@@ -416,12 +416,12 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 	context.view_layer().update();
 
 	// Get new solution id
-	const std::string solution_id = me::crypto::generateRandomSHA1().to_string();
+	const std::string solution_id = generateRandomSHA1().to_string();
 
 	PyBObject anchor_obj = prepare_camera_for_clip(anchor);
 	anchor_obj.data().set_property_str("solution_id", solution_id);
 	PyBMat anchor_tf = anchor_obj.matrix_world();
-	me::tracking::Mat4x4 base_tf;
+	Mat4x4 base_tf;
 
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
@@ -458,7 +458,7 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 		}
 	}
 
-	if (base_tf == me::tracking::Mat4x4::eye()) {
+	if (base_tf == Mat4x4::eye()) {
 		anchor_tf.set(1, 1, 0);
 		anchor_tf.set(2, 2, 0);
 		anchor_tf.set(1, 2, -1);

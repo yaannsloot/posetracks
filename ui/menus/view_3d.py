@@ -24,8 +24,8 @@ class VIEW3D_MT_tracking(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator("motionengine.solve_cameras_operator")
-        layout.operator("motionengine.triangulate_points_operator")
+        layout.operator("posetracks.solve_cameras_operator")
+        layout.operator("posetracks.triangulate_points_operator")
 
 
 CLASSES = [

@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
-from . import MotionEngine as me
+from . import posetracks_core as pt_core
 
 
 class Event:
@@ -58,7 +58,7 @@ class DetectionFinishedEvent(Event):
     Indicates that a task involving detection operations with the MEPython dnn module have finished.
     """
 
-    def __init__(self, detections: dict[int, dict[int, me.dnn.Detection]], msg=''):
+    def __init__(self, detections: dict[int, dict[int, pt_core.dnn.Detection]], msg=''):
         super().__init__(msg)
         self.detections = detections
 
@@ -68,7 +68,7 @@ class TagFinishedEvent(Event):
     Indicates that a task involving tag operations with the MEPython dnn module have finished.
     """
 
-    def __init__(self, tags: dict[int, dict[int, me.dnn.Tag]], msg=''):
+    def __init__(self, tags: dict[int, dict[int, pt_core.dnn.Tag]], msg=''):
         super().__init__(msg)
         self.tags = tags
 
@@ -78,7 +78,7 @@ class PoseFinishedEvent(Event):
     Indicates that a task involving pose operations with the MEPython dnn module have finished.
     """
 
-    def __init__(self, poses: dict[int, dict[str, me.dnn.Pose]], msg=''):
+    def __init__(self, poses: dict[int, dict[str, pt_core.dnn.Pose]], msg=''):
         super().__init__(msg)
         self.poses = poses
 
@@ -187,21 +187,3 @@ class EventDispatcher:
             if isinstance(listener, EventListener) and type(event) is listener.expected_type:
                 return listener.notify(event, *args)
 
-
-if __name__ == "__main__":
-    event_a = Event('HELP')
-    event_b = InfoEvent('REEEE', '>:)')
-
-    listener_a = EventListener()
-    listener_b = InfoEventListener()
-
-    listener_b.notify_response = lambda event: print(event.msg, event.info_msg)
-
-    dispatch = EventDispatcher()
-
-    dispatch.register_listener(listener_a)
-    dispatch.register_listener(listener_b)
-
-    dispatch.broadcast(event_a)
-
-    dispatch.broadcast(event_b)

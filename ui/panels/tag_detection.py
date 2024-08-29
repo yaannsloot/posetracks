@@ -22,12 +22,12 @@ from ... import global_vars
 class TagDetectionPanelSpace:
     bl_space_type = "CLIP_EDITOR"
     bl_region_type = "UI"
-    bl_category = "MotionEngine"
+    bl_category = "PoseTracks"
 
 
 class TagDetectionUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
     bl_label = "Tag Detection"
-    bl_idname = "MOTIONENGINE_TAG_DETECTION_PT_panel"
+    bl_idname = "POSETRACKS_TAG_DETECTION_PT_panel"
 
     display_priority = 0
 
@@ -38,7 +38,6 @@ class TagDetectionUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock
@@ -47,14 +46,14 @@ class TagDetectionUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
 
         row.scale_y = 1.6
 
-        row.operator("motionengine.detect_tags_operator")
+        row.operator("posetracks.detect_tags_operator")
 
         row.enabled = context.edit_movieclip is not None
 
 
 class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
-    bl_parent_id = "MOTIONENGINE_TAG_DETECTION_PT_panel"
-    bl_idname = "MOTIONENGINE_DETECTOR_TAG_SETTINGS_PT_panel"
+    bl_parent_id = "POSETRACKS_TAG_DETECTION_PT_panel"
+    bl_idname = "POSETRACKS_DETECTOR_TAG_SETTINGS_PT_panel"
     bl_label = 'Detector Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -63,7 +62,7 @@ class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock
@@ -106,8 +105,8 @@ class DetectorSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
 
 
 class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
-    bl_parent_id = "MOTIONENGINE_TAG_DETECTION_PT_panel"
-    bl_idname = "MOTIONENGINE_TAG_SETTINGS_PT_panel"
+    bl_parent_id = "POSETRACKS_TAG_DETECTION_PT_panel"
+    bl_idname = "POSETRACKS_TAG_SETTINGS_PT_panel"
     bl_label = 'Tag Settings'
     bl_options = {'DEFAULT_CLOSED'}
 
@@ -116,7 +115,7 @@ class TagSettingsUIPanel(bpy.types.Panel, TagDetectionPanelSpace):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_lock = global_vars.ui_lock_state
 
         layout.enabled = not ui_lock

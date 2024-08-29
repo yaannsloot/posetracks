@@ -313,29 +313,28 @@ def main():
         zlib_shared_path = os.path.join(zlib_path[0], 'dll_x64', 'zlibwapi.dll')
 
     # Build
-    print('Building MotionEngine Core...')
-    me_path = fullpath(os.path.dirname(os.path.realpath(__file__)))
-    me_build_path = os.path.join(me_path, 'build')
-    prepare_directory(me_build_path)
-    me_prefix_path = ';'.join([opencv_cmake, ceres_cmake, pybind_cmake])
-    print(me_prefix_path)
-    invoke_command('cmake', '-S', me_path, '-B', me_build_path, '-G', generator,
-                   f'-DCMAKE_PREFIX_PATH={me_prefix_path}', f'-DONNXRUNTIME_ROOT_DIR={onnx_vars[0]}',
+    print('Building posetracks_core...')
+    pt_path = fullpath(os.path.dirname(os.path.realpath(__file__)))
+    pt_build_path = os.path.join(pt_path, 'build')
+    prepare_directory(pt_build_path)
+    pt_prefix_path = ';'.join([opencv_cmake, ceres_cmake, pybind_cmake])
+    print(pt_prefix_path)
+    invoke_command('cmake', '-S', pt_path, '-B', pt_build_path, '-G', generator,
+                   f'-DCMAKE_PREFIX_PATH={pt_prefix_path}', f'-DONNXRUNTIME_ROOT_DIR={onnx_vars[0]}',
                    f'-DONNXRUNTIME_INCLUDE_DIR={onnx_vars[1]}', '-DUSING_CUDA=ON')
-    invoke_command('cmake', '--build', me_build_path, '--config', 'Release')
-    invoke_command('cmake', '--install', me_build_path)
-    me_redis_path = os.path.join(me_build_path, 'redis')
+    invoke_command('cmake', '--build', pt_build_path, '--config', 'RelWithDebInfo', '--target', 'install')
+    pt_redis_path = os.path.join(pt_build_path, 'redis')
     if build_platform == 'windows':
-        me_redis_bin_path = os.path.join(me_redis_path, 'bin')
+        pt_redis_bin_path = os.path.join(pt_redis_path, 'bin')
     else:
-        me_redis_bin_path = os.path.join(me_redis_path, 'lib')
-    prepare_directory(me_redis_bin_path)
-    shutil.copy(onnx_vars[2], me_redis_bin_path)
-    shutil.copy(onnx_vars[4], me_redis_bin_path)
-    shutil.copy(onnx_vars[6], me_redis_bin_path)
-    shutil.copy(onnx_vars[8], me_redis_bin_path)
+        pt_redis_bin_path = os.path.join(pt_redis_path, 'lib')
+    prepare_directory(pt_redis_bin_path)
+    shutil.copy(onnx_vars[2], pt_redis_bin_path)
+    shutil.copy(onnx_vars[4], pt_redis_bin_path)
+    shutil.copy(onnx_vars[6], pt_redis_bin_path)
+    shutil.copy(onnx_vars[8], pt_redis_bin_path)
     if build_platform == 'windows':
-        shutil.copy(zlib_shared_path, me_redis_bin_path)
+        shutil.copy(zlib_shared_path, pt_redis_bin_path)
     print('Build complete!')
 
 

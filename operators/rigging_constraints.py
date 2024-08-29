@@ -42,12 +42,12 @@ def avg_loc_s_to_a(self, context):
 
         prev_gen = 0
         for c in active_object.constraints:
-            if c.name.startswith("ME_Gen_CopyLoc"):
+            if c.name.startswith("PT_Gen_CopyLoc"):
                 prev_gen += 1
 
         for i, obj in enumerate(selected_objects):
             constraint = active_object.constraints.new(type="COPY_LOCATION")
-            constraint.name = "ME_Gen_CopyLoc"
+            constraint.name = "PT_Gen_CopyLoc"
             constraint.show_expanded = False
             constraint.target = obj
             constraint.influence = 1 / (i + 1 + prev_gen)
@@ -61,7 +61,7 @@ for c in contexts.values():
         (bpy.types.Operator,),
         {
             '__doc__': f"Generate constraints for the active {'bone' if c == 'posemode' else 'object'}",
-            'bl_idname': f"motionengine.avgloc_c_s_to_a_{c.lower()}_operator",
+            'bl_idname': f"posetracks.avgloc_c_s_to_a_{c.lower()}_operator",
             'bl_label': 'Selected to active',
             'bl_options': {'REGISTER', 'UNDO'},
             'poll': classmethod(poll_method),
@@ -84,7 +84,7 @@ def avgloc_gen_new(self, context):
     selected_objects = context.selected_objects
 
     if len(selected_objects) > 0:
-        new_empty = bpy.data.objects.new("ME_Gen_Empty", None)
+        new_empty = bpy.data.objects.new("PT_Gen_Empty", None)
         new_empty.empty_display_type = self.display_type
 
         sum_scales = 0
@@ -101,12 +101,12 @@ def avgloc_gen_new(self, context):
 
         for i, obj in enumerate(selected_objects):
             constraint = new_empty.constraints.new(type="COPY_LOCATION")
-            constraint.name = "ME_Gen_CopyLoc"
+            constraint.name = "PT_Gen_CopyLoc"
             constraint.show_expanded = False
             constraint.target = obj
             constraint.influence = 1 / (i + 1)
 
-        dest_path = global_vars.resolve_collection_path(["MotionEngine", "Rigging"], context)
+        dest_path = global_vars.resolve_collection_path(["PoseTracks", "Rigging"], context)
         dest_path.objects.link(new_empty)
 
     return {"FINISHED"}
@@ -118,7 +118,7 @@ for item in gen_new_types.items():
         (bpy.types.Operator,),
         {
             '__doc__': "Generate constraints for a new empty object",
-            'bl_idname': f"motionengine.avgloc_c_s_to_{item[1]['idname']}_operator",
+            'bl_idname': f"posetracks.avgloc_c_s_to_{item[1]['idname']}_operator",
             'bl_label': f"Create new {item[1]['desc']} empty",
             'bl_options': {'REGISTER', 'UNDO'},
             'display_type': item[0],
@@ -143,12 +143,12 @@ def avgdamped_gen_new(self, context):
 
         prev_gen = 0
         for c in active_object.constraints:
-            if c.name.startswith("ME_Gen_Damped"):
+            if c.name.startswith("PT_Gen_Damped"):
                 prev_gen += 1
 
         for i, obj in enumerate(selected_objects):
             constraint = active_object.constraints.new(type="DAMPED_TRACK")
-            constraint.name = "ME_Gen_Damped"
+            constraint.name = "PT_Gen_Damped"
             constraint.show_expanded = False
             constraint.track_axis = self.track_axis
             constraint.target = obj
@@ -161,7 +161,7 @@ def avgdamped_gen_new(self, context):
 def avglocked_gen_new(self, context):
     if not global_vars.ui_lock_state:
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         ui_locked_axis = properties.rigging_avg_locked_axis
         lock_axis = track_axis_button_lbl[ui_locked_axis].format('LOCK_')
 
@@ -171,12 +171,12 @@ def avglocked_gen_new(self, context):
 
         prev_gen = 0
         for c in active_object.constraints:
-            if c.name.startswith("ME_Gen_Locked"):
+            if c.name.startswith("PT_Gen_Locked"):
                 prev_gen += 1
 
         for i, obj in enumerate(selected_objects):
             constraint = active_object.constraints.new(type="LOCKED_TRACK")
-            constraint.name = "ME_Gen_Locked"
+            constraint.name = "PT_Gen_Locked"
             constraint.show_expanded = False
             constraint.track_axis = self.track_axis
             constraint.lock_axis = lock_axis
@@ -190,7 +190,7 @@ def avglocked_gen_new(self, context):
 def set_lock_axis(self, context):
     if not global_vars.ui_lock_state:
         scene = context.scene
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
         properties.rigging_avg_locked_axis = self.lock_axis
     return {'FINISHED'}
 
@@ -203,7 +203,7 @@ for i_ in range(6):
         axis = i_
         direction = 0
     for c in contexts.values():
-        idname = ("motionengine.avgdamped_c_s_to_a_{}_{}_operator"
+        idname = ("posetracks.avgdamped_c_s_to_a_{}_{}_operator"
                   .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower(),
                           c.lower()))
         label = f"Selected to active: {track_axis_button_lbl[axis].format(track_axis_dir_lbl[direction])}"
@@ -221,7 +221,7 @@ for i_ in range(6):
                 'execute': lambda self, context: avgdamped_gen_new(self, context)
             }
         )
-        idname = ("motionengine.avglocked_c_s_to_a_{}_{}_operator"
+        idname = ("posetracks.avglocked_c_s_to_a_{}_{}_operator"
                   .format(track_axis_button_lbl[axis].format(track_axis_dir_id[direction]).lower(),
                           c.lower()))
         new_op_b = type(
@@ -241,7 +241,7 @@ for i_ in range(6):
         gen_ops.append(new_op_a)
         gen_ops.append(new_op_b)
     if i_ < 3:
-        idname = f"motionengine.avglocked_axis_{track_axis_button_lbl[axis].format('').lower()}_operator"
+        idname = f"posetracks.avglocked_axis_{track_axis_button_lbl[axis].format('').lower()}_operator"
         label = f"Axis that points upward: {track_axis_button_lbl[axis].format('')}"
         new_op_c = type(
             f"AvgLockedAxisOperator{track_axis_button_lbl[axis].format('')}",
@@ -283,7 +283,7 @@ def normalize(min_value, max_value, value):
 
 class GenNgonSelectedToActiveOperator(bpy.types.Operator):
     """Generate n-gon using the active object as a starting vert"""
-    bl_idname = "motionengine.gen_ngon_s_to_a_operator"
+    bl_idname = "posetracks.gen_ngon_s_to_a_operator"
     bl_label = "Selected to active"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -318,10 +318,10 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
 
             all_objs = [active_object, *selected_objects]
 
-            mesh_data = bpy.data.meshes.new("ME_Gen_Mesh")
+            mesh_data = bpy.data.meshes.new("PT_Gen_Mesh")
 
-            obj = bpy.data.objects.new("ME_Gen_Loop", mesh_data)
-            norm_obj = bpy.data.objects.new("ME_Gen_Norm", None)
+            obj = bpy.data.objects.new("PT_Gen_Loop", mesh_data)
+            norm_obj = bpy.data.objects.new("PT_Gen_Norm", None)
             norm_obj.empty_display_type = 'SINGLE_ARROW'
 
             centroid = mathutils.Vector()
@@ -336,33 +336,33 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
 
             norm_obj.empty_display_size = norm_display_scale
 
-            anchor_obj = bpy.data.objects.new("ME_Gen_Anchor", None)
+            anchor_obj = bpy.data.objects.new("PT_Gen_Anchor", None)
             anchor_obj.empty_display_type = 'PLAIN_AXES'
             anchor_obj.empty_display_size = norm_display_scale / 10
 
             for i, o in enumerate(all_objs):
                 constraint = anchor_obj.constraints.new(type="COPY_LOCATION")
-                constraint.name = "ME_Gen_CopyLoc"
+                constraint.name = "PT_Gen_CopyLoc"
                 constraint.show_expanded = False
                 constraint.target = o
                 constraint.influence = 1 / (i + 1)
 
             constraint = norm_obj.constraints.new(type="COPY_LOCATION")
-            constraint.name = "ME_Gen_CopyLoc"
+            constraint.name = "PT_Gen_CopyLoc"
             constraint.show_expanded = False
             constraint.target = anchor_obj
             constraint = norm_obj.constraints.new(type="SHRINKWRAP")
-            constraint.name = "ME_Gen_Shrinkwrap"
+            constraint.name = "PT_Gen_Shrinkwrap"
             constraint.show_expanded = False
             constraint.target = obj
             constraint.use_track_normal = True
             constraint.track_axis = 'TRACK_Z'
             constraint = norm_obj.constraints.new(type="COPY_LOCATION")
-            constraint.name = "ME_Gen_CopyLoc"
+            constraint.name = "PT_Gen_CopyLoc"
             constraint.show_expanded = False
             constraint.target = anchor_obj
 
-            collection_path = ["MotionEngine", "Rigging", norm_obj.name]
+            collection_path = ["PoseTracks", "Rigging", norm_obj.name]
             dest_collection = global_vars.resolve_collection_path(collection_path, context)
             dest_collection.objects.link(norm_obj)
             dest_collection.objects.link(anchor_obj)
@@ -473,9 +473,9 @@ class GenNgonSelectedToActiveOperator(bpy.types.Operator):
             mesh_data.update()
 
             for v in range(len(all_objs)):
-                v_group = obj.vertex_groups.new(name="ME_Gen_Hook")
+                v_group = obj.vertex_groups.new(name="PT_Gen_Hook")
                 v_group.add([v], 1, 'REPLACE')
-                mod = obj.modifiers.new(name="ME_Gen_Hook", type="HOOK")
+                mod = obj.modifiers.new(name="PT_Gen_Hook", type="HOOK")
                 mod.object = all_objs[v]
                 mod.vertex_group = v_group.name
                 mod.falloff_type = 'CONSTANT'

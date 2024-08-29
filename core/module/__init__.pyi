@@ -93,7 +93,7 @@ def clip_tracking_data(clip, joint_conf_thresh: float = 0, filter_locked: bool =
     :param joint_conf_thresh: Minimum joint confidence score
     :param filter_locked: If true, will ignore tracks that are not locked
     :param filter_selected: If true, will ignore tracks that are not selected
-    :return: MotionEngine compatible tracking data object
+    :return: PoseTracks compatible tracking data object
     """
 
 class Mat:
@@ -295,7 +295,7 @@ def get_models(model_category: str, attributes: Union[str, List[str], None] = No
                values: Union[Dict[str, ...], None] = None,
                sorting_criteria: Union[List[str], None] = None) -> Union[List[Tuple[str, Dict[str, ...]]], None]:
     """
-    Function used to access the standard model collection included with MotionEngine
+    Function used to access the standard model collection included with PoseTracks
 
     Attributes filter:
     Searches for all models that contain the attribute or attributes specified.
@@ -347,7 +347,7 @@ def waitKey(msec: int) -> int:
     """
 def model_path(model_file: str) -> str:
     """
-    Path shortcut to model directory located within MotionEngine package
+    Path shortcut to model directory located within PoseTracks package
     :param model_file: Path to model relative to model directory root
     """
 

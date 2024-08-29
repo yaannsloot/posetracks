@@ -16,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import os
 import bpy
-from . import MotionEngine as me
+from . import posetracks_core as pt_core
 
 
 def fix_class_ref(in_ref):
@@ -74,7 +74,7 @@ _pose_sources = None
 
 def update_pose_sources():
     global _pose_sources
-    models = me.get_models('pose_estimation', ['target_class', 'keypoints'])
+    models = pt_core.get_models('pose_estimation', ['target_class', 'keypoints'])
     classes = list({m_attr['target_class'] for (m_name, m_attr) in models})
     kp_nums = list({m_attr['keypoints'] for (m_name, m_attr) in models})
     _pose_sources = []
@@ -200,7 +200,7 @@ def get_marker_area(marker: bpy.types.MovieTrackingMarker, parent_clip_size: tup
 def get_clip_poses(movie_clip: bpy.types.MovieClip, joint_conf_thresh=0.9, filter_locked=False):
     """
     Get all named poses on the provided clip, converting them to a format compatible with
-    MotionEngine.tracking.TrackData
+    pt_core.tracking.TrackData
     :param movie_clip: Clip to extract data from
     :param joint_conf_thresh: Joint confidence threshold
     :param filter_locked: If true, only use locked tracks for tracking data
@@ -224,7 +224,7 @@ def get_clip_poses(movie_clip: bpy.types.MovieClip, joint_conf_thresh=0.9, filte
                     if scene_frame not in output:
                         output[scene_frame] = {}
                     if actual_pose_name not in output[scene_frame]:
-                        output[scene_frame][actual_pose_name] = me.dnn.Pose()
+                        output[scene_frame][actual_pose_name] = pt_core.dnn.Pose()
                     output[scene_frame][actual_pose_name].set_joint(joint, x, y, conf)
 
     return output
@@ -233,7 +233,7 @@ def get_clip_poses(movie_clip: bpy.types.MovieClip, joint_conf_thresh=0.9, filte
 def get_clip_detections(movie_clip: bpy.types.MovieClip, filter_locked=False):
     """
     Get all named object detections on the provided clip, converting them to a format compatible with
-    MotionEngine.tracking.TrackData
+    pt_core.tracking.TrackData
     :param movie_clip: Clip to extract data from
     :param filter_locked: If true, only use locked tracks for tracking data
     :return: Nested dictionary with mappings to frames and named detections
@@ -253,7 +253,7 @@ def get_clip_detections(movie_clip: bpy.types.MovieClip, filter_locked=False):
             tl_y = clip_size[1] - tr[1]
             if scene_frame not in output:
                 output[scene_frame] = {}
-            output[scene_frame][track.name] = me.dnn.Detection(0, me.Rect(tl_x, tl_y, width, height), 1)
+            output[scene_frame][track.name] = pt_core.dnn.Detection(0, pt_core.Rect(tl_x, tl_y, width, height), 1)
     return output
 
 
@@ -261,7 +261,7 @@ def is_valid_tag_name(name: str):
     split_name = name.split('.')
     if len(split_name) < 3:
         return False
-    valid_sources = [e for e in me.TagDictionary.__members__]
+    valid_sources = [e for e in pt_core.TagDictionary.__members__]
     valid_sources.append('ML')
     valid_id = True
     try:
@@ -280,7 +280,7 @@ def marker_to_tag(marker: bpy.types.MovieTrackingMarker, clip_size=(1, 1), fix_c
         corners.reverse()
     corners = [(x + norm_center_x, y + norm_center_y) for (x, y) in corners]
     corners = [(x * clip_size[0], clip_size[1] - (y * clip_size[1])) for (x, y) in corners]
-    new_tag = me.dnn.Tag()
+    new_tag = pt_core.dnn.Tag()
     for c in range(4):
         new_tag[c] = corners[c]
     return new_tag
@@ -308,7 +308,7 @@ def get_clip_tracking_data(movie_clip: bpy.types.MovieClip, pose_joint_conf=0.9,
     :param filter_locked: If true, only use locked tracks for tracking data
     :return: MEPython TrackingData object
     """
-    result = me.tracking.TrackingData()
+    result = pt_core.tracking.TrackingData()
     if include_poses:
         result.poses = get_clip_poses(movie_clip, pose_joint_conf, filter_locked)
     if include_detections:
@@ -324,7 +324,7 @@ def get_clip_Kk(movie_clip: bpy.types.MovieClip):
     :param movie_clip: Clip to retrieve camera information from
     :return: MEPython Kk camera intrinsics object
     """
-    cam_Kk = me.tracking.Kk()
+    cam_Kk = pt_core.tracking.Kk()
     clip_cam_settings = movie_clip.tracking.camera
     clip_size = movie_clip.size
 
@@ -451,14 +451,14 @@ class ClipTrackingData(ClipInfo):
                 height = abs(y_bl - y_tr)
                 x_tl = true_center[0] - width / 2
                 y_tl = true_center[1] + height / 2
-                me_rect = me.Rect(x_tl, self.clip_size[1] - y_tl, width, height)
+                me_rect = pt_core.Rect(x_tl, self.clip_size[1] - y_tl, width, height)
                 if frame not in self.track_data:
                     self.track_data[frame] = {}
-                self.track_data[frame][track.name] = me.dnn.Detection(0, me_rect, 1)
+                self.track_data[frame][track.name] = pt_core.dnn.Detection(0, me_rect, 1)
 
 
 def force_ui_draw():
-    properties = bpy.context.scene.motion_engine_ui_properties
+    properties = bpy.context.scene.pt_ui_properties
     if properties.redraw_prop:
         properties.redraw_prop = False
     else:

@@ -15,12 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 import bpy
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import utils
 
 object_detection_classes = set()
 
-for model in me.get_models('object_detection'):
+for model in pt_core.get_models('object_detection'):
     if 'classes' not in model[1]:
         continue
     classes = model[1]['classes']
@@ -42,7 +42,7 @@ try:
 except ValueError:
     obj_det_class_default = 1
 
-tag_dictionary_members = list(me.TagDictionary.__members__)
+tag_dictionary_members = list(pt_core.TagDictionary.__members__)
 
 tag_detector_cv_dict_list_items = []
 for m in tag_dictionary_members:
@@ -50,7 +50,7 @@ for m in tag_dictionary_members:
 
 pose_estimation_targets = set()
 
-for model in me.get_models('pose_estimation'):
+for model in pt_core.get_models('pose_estimation'):
     if 'target_class' not in model[1]:
         continue
     pose_estimation_targets.add(model[1]['target_class'])
@@ -77,7 +77,7 @@ pose_estimation_kp_items = []
 
 def update_pose_keypoints_items():
     global pose_estimation_kp_items
-    models = me.get_models('pose_estimation', 'keypoints',
+    models = pt_core.get_models('pose_estimation', 'keypoints',
                            {'target_class': pose_estimation_target})
     choices = {m_def['keypoints'] for (m_name, m_def) in models}
     choices = list(choices)
@@ -96,7 +96,7 @@ def get_keypoint_items(self, context):
 def update_pose_keypoints(self, context):
     global pose_estimation_target
     scene = context.scene
-    properties = scene.motion_engine_ui_properties
+    properties = scene.pt_ui_properties
     pose_estimation_target = properties.pose_target_enum
     update_pose_keypoints_items()
     properties.pose_keypoints_enum = pose_estimation_kp_items[0][0]
@@ -112,7 +112,7 @@ def force_redraw(self, context):
 
 def det_thresh_mode_update(self, context):
     scene = context.scene
-    properties = scene.motion_engine_ui_properties
+    properties = scene.pt_ui_properties
     if properties.det_thresholding_enum == "AUTO":
         properties.det_conf = 0.5
         properties.det_iou = 0.5
@@ -121,7 +121,7 @@ def det_thresh_mode_update(self, context):
 
 def pose_thresh_mode_update(self, context):
     scene = context.scene
-    properties = scene.motion_engine_ui_properties
+    properties = scene.pt_ui_properties
     if properties.pose_thresholding_enum == "AUTO":
         properties.joint_conf = 0.5
     return None
@@ -129,7 +129,7 @@ def pose_thresh_mode_update(self, context):
 
 def det_tag_thresh_mode_update(self, context):
     scene = context.scene
-    properties = scene.motion_engine_ui_properties
+    properties = scene.pt_ui_properties
     if properties.det_tag_thresholding_enum == "AUTO":
         properties.det_tag_conf = 0.5
         properties.det_tag_iou = 0.5
@@ -138,7 +138,7 @@ def det_tag_thresh_mode_update(self, context):
 
 def track_thresh_mode_update(self, context):
     scene = context.scene
-    properties = scene.motion_engine_ui_properties
+    properties = scene.pt_ui_properties
     if properties.track_thresholding_enum == "AUTO":
         properties.track_score = 1.4
         properties.track_reid_score = 1.0

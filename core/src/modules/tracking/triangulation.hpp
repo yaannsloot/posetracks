@@ -19,16 +19,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "data.hpp"
 
-namespace me::tracking {
-
-	/// <summary>
-	/// Triangulate points for a set of cameras. 
-	/// The transformations of these cameras must be calculated ahead of time for the solver to work properly.
-	/// </summary>
-	/// <param name="t_data">Vector of tracking data for each camera</param>
-	/// <param name="cam_Kk">Vector of camera intrinsic information. Must be the same size as t_data</param>
-	/// <param name="cam_Rt">Vector of camera transformations. Must be the same size</param>
-	/// <returns></returns>
-	TrackingData3D triangulateStatic(const std::vector<TrackingData>& t_data, const std::vector<Kk>& cam_Kk, const std::vector<Rt>& cam_Rt);
-
-}
+/// <summary>
+/// Triangulate points for a set of cameras. 
+/// The transformations of these cameras must be calculated ahead of time for the solver to work properly.
+/// </summary>
+/// <param name="t_data">Vector of tracking data for each camera</param>
+/// <param name="cam_Kk">Vector of camera intrinsic information. Must be the same size as t_data</param>
+/// <param name="cam_Rt">Vector of camera transformations. Must be the same size</param>
+/// <returns></returns>
+TrackingData3D triangulateStatic(const std::vector<TrackingData>& t_data, const std::vector<Kk>& cam_Kk, const std::vector<Rt>& cam_Rt);

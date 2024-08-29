@@ -103,7 +103,7 @@ namespace pybind11::detail {
 
 }
 
-PYBIND11_MODULE(MEPython, m)
+PYBIND11_MODULE(posetracks_core, m)
 {
 	// Submodules
 	auto m_data = m.def_submodule("data");
@@ -149,34 +149,34 @@ PYBIND11_MODULE(MEPython, m)
 	// Core
 
 	// DNN
-	py::enum_<me::dnn::Precision>(m_dnn, "Precision")
-		.value("FLOAT64", me::dnn::Precision::FLOAT64)
-		.value("FLOAT32", me::dnn::Precision::FLOAT32)
-		.value("FLOAT16", me::dnn::Precision::FLOAT16)
-		.value("INT64", me::dnn::Precision::INT64)
-		.value("INT32", me::dnn::Precision::INT32)
-		.value("INT16", me::dnn::Precision::INT16)
-		.value("INT8", me::dnn::Precision::INT8)
-		.value("UNKNOWN", me::dnn::Precision::UNKNOWN)
-		.value("NONE", me::dnn::Precision::NONE)
+	py::enum_<Precision>(m_dnn, "Precision")
+		.value("FLOAT64", Precision::FLOAT64)
+		.value("FLOAT32", Precision::FLOAT32)
+		.value("FLOAT16", Precision::FLOAT16)
+		.value("INT64", Precision::INT64)
+		.value("INT32", Precision::INT32)
+		.value("INT16", Precision::INT16)
+		.value("INT8", Precision::INT8)
+		.value("UNKNOWN", Precision::UNKNOWN)
+		.value("NONE", Precision::NONE)
 		.export_values();
 
-	py::enum_<me::dnn::Executor>(m_dnn, "Executor")
-		.value("TENSORRT", me::dnn::Executor::TENSORRT)
-		.value("CUDA", me::dnn::Executor::CUDA)
-		.value("CPU", me::dnn::Executor::CPU)
-		.value("NONE", me::dnn::Executor::NONE)
+	py::enum_<Executor>(m_dnn, "Executor")
+		.value("TENSORRT", Executor::TENSORRT)
+		.value("CUDA", Executor::CUDA)
+		.value("CPU", Executor::CPU)
+		.value("NONE", Executor::NONE)
 		.export_values();
 
-	py::enum_<me::dnn::FeatureDistanceType>(m_dnn, "FeatureDistanceType")
-		.value("EUCLIDEAN", me::dnn::FeatureDistanceType::EUCLIDEAN)
-		.value("NORM_EUCLIDEAN", me::dnn::FeatureDistanceType::NORM_EUCLIDEAN)
+	py::enum_<FeatureDistanceType>(m_dnn, "FeatureDistanceType")
+		.value("EUCLIDEAN", FeatureDistanceType::EUCLIDEAN)
+		.value("NORM_EUCLIDEAN", FeatureDistanceType::NORM_EUCLIDEAN)
 		.export_values();
 
-	py::enum_<me::dnn::ScalingMode>(m_dnn, "ScalingMode")
-		.value("AUTO", me::dnn::ScalingMode::AUTO)
-		.value("NORMALIZE_INPUT", me::dnn::ScalingMode::NORMALIZE_INPUT)
-		.value("DIRECT", me::dnn::ScalingMode::DIRECT)
+	py::enum_<ScalingMode>(m_dnn, "ScalingMode")
+		.value("AUTO", ScalingMode::AUTO)
+		.value("NORMALIZE_INPUT", ScalingMode::NORMALIZE_INPUT)
+		.value("DIRECT", ScalingMode::DIRECT)
 		.export_values();
 
 	// Class bindings
@@ -295,69 +295,69 @@ PYBIND11_MODULE(MEPython, m)
 
 
 	// IO
-	py::class_<me::io::FrameProvider>(m_io, "FrameProvider")
+	py::class_<FrameProvider>(m_io, "FrameProvider")
 		.def(py::init<>())
-		.def("load", &me::io::FrameProvider::load, py::call_guard<py::gil_scoped_release>(), py::arg("path"), py::arg("use_hw_accel") = false)
-		.def("next_frame", &me::io::FrameProvider::next_frame, py::call_guard<py::gil_scoped_release>(), py::arg("frame"), py::arg("retry_count") = 100)
-		.def("grab_frame", &me::io::FrameProvider::grab_frame, py::call_guard<py::gil_scoped_release>(), py::arg("frame"), py::arg("frame_id"), py::arg("retry_count") = 100)
-		.def("set_frame", &me::io::FrameProvider::set_frame, py::call_guard<py::gil_scoped_release>(), py::arg("frame_id"))
-		.def("current_frame", &me::io::FrameProvider::current_frame)
-		.def("frame_count", &me::io::FrameProvider::frame_count)
-		.def("frame_size", [](me::io::FrameProvider& self) {
+		.def("load", &FrameProvider::load, py::call_guard<py::gil_scoped_release>(), py::arg("path"), py::arg("use_hw_accel") = false)
+		.def("next_frame", &FrameProvider::next_frame, py::call_guard<py::gil_scoped_release>(), py::arg("frame"), py::arg("retry_count") = 100)
+		.def("grab_frame", &FrameProvider::grab_frame, py::call_guard<py::gil_scoped_release>(), py::arg("frame"), py::arg("frame_id"), py::arg("retry_count") = 100)
+		.def("set_frame", &FrameProvider::set_frame, py::call_guard<py::gil_scoped_release>(), py::arg("frame_id"))
+		.def("current_frame", &FrameProvider::current_frame)
+		.def("frame_count", &FrameProvider::frame_count)
+		.def("frame_size", [](FrameProvider& self) {
 			cv::Size size = self.frame_size();
 			return py::make_tuple(size.width, size.height);
 		})
-		.def("fps", &me::io::FrameProvider::fps)
-		.def("close", &me::io::FrameProvider::close)
-		.def("is_open", &me::io::FrameProvider::is_open)
-		.def("get_fourcc_str", &me::io::FrameProvider::get_fourcc_str)
-		.def("get_fourcc", &me::io::FrameProvider::get_fourcc);
-	py::class_<me::io::ImageList, me::io::FrameProvider>(m_io, "ImageList")
+		.def("fps", &FrameProvider::fps)
+		.def("close", &FrameProvider::close)
+		.def("is_open", &FrameProvider::is_open)
+		.def("get_fourcc_str", &FrameProvider::get_fourcc_str)
+		.def("get_fourcc", &FrameProvider::get_fourcc);
+	py::class_<ImageList, FrameProvider>(m_io, "ImageList")
 		.def(py::init<>());
-	py::class_<me::io::Transcoder, me::io::FrameProvider>(m_io, "Transcoder")
+	py::class_<Transcoder, FrameProvider>(m_io, "Transcoder")
 		.def(py::init<>());
 
 
 	// DNN
-	py::class_<me::dnn::Detection>(m_dnn, "Detection")
+	py::class_<Detection>(m_dnn, "Detection")
 		.def(py::init<>())
 		.def(py::init<int, cv::Rect2d, float>(), py::arg("class_id"), py::arg("bbox"), py::arg("score"))
-		.def_readwrite("class_id", &me::dnn::Detection::class_id)
-		.def_readwrite("bbox", &me::dnn::Detection::bbox)
-		.def_readwrite("score", &me::dnn::Detection::score)
-		.def("scale_detection", &me::dnn::Detection::scale_detection);
-	py::class_<me::dnn::Joint>(m_dnn, "Joint")
+		.def_readwrite("class_id", &Detection::class_id)
+		.def_readwrite("bbox", &Detection::bbox)
+		.def_readwrite("score", &Detection::score)
+		.def("scale_detection", &Detection::scale_detection);
+	py::class_<Joint>(m_dnn, "Joint")
 		.def(py::init<>())
 		.def(py::init<double, double, double>())
 		.def(py::init<cv::Point2d, double>())
-		.def_readwrite("prob", &me::dnn::Joint::prob)
-		.def_readwrite("pt", &me::dnn::Joint::pt);
-	py::class_<me::dnn::Pose>(m_dnn, "Pose")
+		.def_readwrite("prob", &Joint::prob)
+		.def_readwrite("pt", &Joint::pt);
+	py::class_<Pose>(m_dnn, "Pose")
 		.def(py::init<>())
-		.def("set_joint", (void (me::dnn::Pose::*)(int, me::dnn::Joint&)) & me::dnn::Pose::set_joint)
-		.def("set_joint", (void (me::dnn::Pose::*)(int, cv::Point2d&, double)) & me::dnn::Pose::set_joint)
-		.def("set_joint", (void (me::dnn::Pose::*)(int, double, double, double)) & me::dnn::Pose::set_joint)
-		.def("get_joint", &me::dnn::Pose::get_joint, py::return_value_policy::reference)
-		.def("has_joint", &me::dnn::Pose::has_joint)
-		.def("get_joint_ids", &me::dnn::Pose::get_joint_ids)
-		.def("num_joints", &me::dnn::Pose::num_joints)
-		.def("__getitem__", &me::dnn::Pose::operator[], py::return_value_policy::reference);
-	py::class_<me::dnn::Feature>(m_dnn, "Feature")
+		.def("set_joint", (void (Pose::*)(int, Joint&)) & Pose::set_joint)
+		.def("set_joint", (void (Pose::*)(int, cv::Point2d&, double)) & Pose::set_joint)
+		.def("set_joint", (void (Pose::*)(int, double, double, double)) & Pose::set_joint)
+		.def("get_joint", &Pose::get_joint, py::return_value_policy::reference)
+		.def("has_joint", &Pose::has_joint)
+		.def("get_joint_ids", &Pose::get_joint_ids)
+		.def("num_joints", &Pose::num_joints)
+		.def("__getitem__", &Pose::operator[], py::return_value_policy::reference);
+	py::class_<Feature>(m_dnn, "Feature")
 		.def(py::init<>())
 		.def(py::init<std::vector<double>&>())
-		.def("norm", &me::dnn::Feature::norm, py::call_guard<py::gil_scoped_release>())
-		.def("__truediv__", &me::dnn::Feature::operator/, py::call_guard<py::gil_scoped_release>())
-		.def("__sub__", &me::dnn::Feature::operator-, py::call_guard<py::gil_scoped_release>())
-		.def("__assign__", &me::dnn::Feature::operator=)
-		.def("dist", &me::dnn::Feature::dist, py::call_guard<py::gil_scoped_release>(), py::arg("other"), py::arg("d_type") = me::dnn::FeatureDistanceType::NORM_EUCLIDEAN)
-		.def("__len__", &me::dnn::Feature::size)
-		.def("__getitem__", [](me::dnn::Feature& self, size_t index) {
+		.def("norm", &Feature::norm, py::call_guard<py::gil_scoped_release>())
+		.def("__truediv__", &Feature::operator/, py::call_guard<py::gil_scoped_release>())
+		.def("__sub__", &Feature::operator-, py::call_guard<py::gil_scoped_release>())
+		.def("__assign__", &Feature::operator=)
+		.def("dist", &Feature::dist, py::call_guard<py::gil_scoped_release>(), py::arg("other"), py::arg("d_type") = FeatureDistanceType::NORM_EUCLIDEAN)
+		.def("__len__", &Feature::size)
+		.def("__getitem__", [](Feature& self, size_t index) {
 			return self.data[index];
 		})
-		.def("__setitem__", [](me::dnn::Feature& self, size_t index, double val) {
+		.def("__setitem__", [](Feature& self, size_t index, double val) {
 			self.data[index] = val;
 		})
-		.def("__str__", [](me::dnn::Feature& self) {
+		.def("__str__", [](Feature& self) {
 			std::stringstream ss;
 			ss << "[";
 			for (size_t i = 0; i < self.data.size(); ++i) {
@@ -369,7 +369,7 @@ PYBIND11_MODULE(MEPython, m)
 			ss << "]";
 			return ss.str();
 		}, py::call_guard<py::gil_scoped_release>());
-	py::class_<me::dnn::Tag>(m_dnn, "Tag")
+	py::class_<Tag>(m_dnn, "Tag")
 		.def(py::init<>())
 		.def(py::init<int>())
 		.def(py::init<cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
@@ -377,247 +377,247 @@ PYBIND11_MODULE(MEPython, m)
 		.def(py::init<int, double>())
 		.def(py::init<double, cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
 		.def(py::init<int, double, cv::Point2d&, cv::Point2d&, cv::Point2d&, cv::Point2d&>())
-		.def("__getitem__", [](me::dnn::Tag& self, size_t index) {
+		.def("__getitem__", [](Tag& self, size_t index) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			return self.corners[index];
 			})
-		.def("__setitem__", [](me::dnn::Tag& self, size_t index, cv::Point2d& value) {
+		.def("__setitem__", [](Tag& self, size_t index, cv::Point2d& value) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			self[index] = value;
 		})
-		.def_readwrite("id", &me::dnn::Tag::id)
-		.def_readwrite("conf", &me::dnn::Tag::conf);
-	py::class_<me::dnn::FeatureSet>(m_dnn, "FeatureSet")
+		.def_readwrite("id", &Tag::id)
+		.def_readwrite("conf", &Tag::conf);
+	py::class_<FeatureSet>(m_dnn, "FeatureSet")
 		.def(py::init<size_t>())
-		.def("add", &me::dnn::FeatureSet::add, py::call_guard<py::gil_scoped_release>())
-		.def("at", &me::dnn::FeatureSet::at)
-		.def("remove", &me::dnn::FeatureSet::remove, py::call_guard<py::gil_scoped_release>())
-		.def("mean", &me::dnn::FeatureSet::mean)
-		.def("size", &me::dnn::FeatureSet::size)
-		.def("length", &me::dnn::FeatureSet::length)
-		.def("__getitem__", [](me::dnn::FeatureSet& self, size_t index) {
+		.def("add", &FeatureSet::add, py::call_guard<py::gil_scoped_release>())
+		.def("at", &FeatureSet::at)
+		.def("remove", &FeatureSet::remove, py::call_guard<py::gil_scoped_release>())
+		.def("mean", &FeatureSet::mean)
+		.def("size", &FeatureSet::size)
+		.def("length", &FeatureSet::length)
+		.def("__getitem__", [](FeatureSet& self, size_t index) {
 			return self[index];
 		});
-	py::class_<me::dnn::FeatureSpace>(m_dnn, "FeatureSapce")
+	py::class_<FeatureSpace>(m_dnn, "FeatureSapce")
 		.def(py::init<size_t>())
-		.def("assign", py::overload_cast<me::dnn::Feature&, double, me::dnn::FeatureDistanceType>(&me::dnn::FeatureSpace::assign),
+		.def("assign", py::overload_cast<Feature&, double, FeatureDistanceType>(&FeatureSpace::assign),
 			py::call_guard<py::gil_scoped_release>(),
-			py::arg("input"), py::arg("threshold") = 0.4, py::arg("dist_type") = me::dnn::FeatureDistanceType::NORM_EUCLIDEAN)
-		.def("assign", py::overload_cast<std::vector<me::dnn::Feature>&, double, me::dnn::FeatureDistanceType, std::vector<int>>(&me::dnn::FeatureSpace::assign),
+			py::arg("input"), py::arg("threshold") = 0.4, py::arg("dist_type") = FeatureDistanceType::NORM_EUCLIDEAN)
+		.def("assign", py::overload_cast<std::vector<Feature>&, double, FeatureDistanceType, std::vector<int>>(&FeatureSpace::assign),
 			py::call_guard<py::gil_scoped_release>(),
-			py::arg("input"), py::arg("threshold") = 0.4, py::arg("dist_type") = me::dnn::FeatureDistanceType::NORM_EUCLIDEAN, py::arg("mask") = std::vector<int>())
-		.def("size", &me::dnn::FeatureSpace::size)
-		.def("length", &me::dnn::FeatureSpace::length)
-		.def("clear", &me::dnn::FeatureSpace::clear)
-		.def("at", &me::dnn::FeatureSpace::at, py::return_value_policy::reference)
-		.def("__getitem__", [](me::dnn::FeatureSpace& self, size_t index) {
+			py::arg("input"), py::arg("threshold") = 0.4, py::arg("dist_type") = FeatureDistanceType::NORM_EUCLIDEAN, py::arg("mask") = std::vector<int>())
+		.def("size", &FeatureSpace::size)
+		.def("length", &FeatureSpace::length)
+		.def("clear", &FeatureSpace::clear)
+		.def("at", &FeatureSpace::at, py::return_value_policy::reference)
+		.def("__getitem__", [](FeatureSpace& self, size_t index) {
 			return self[index];
 		}, py::return_value_policy::reference);
-	py::class_<me::dnn::FeatureTracker>(m_dnn, "FeatureTracker")
+	py::class_<FeatureTracker>(m_dnn, "FeatureTracker")
 		.def(py::init<size_t>())
-		.def("assign", &me::dnn::FeatureTracker::assign,
+		.def("assign", &FeatureTracker::assign,
 			py::call_guard<py::gil_scoped_release>(),
 			py::arg("input_boxes"), py::arg("input_features"), py::arg("score_threshold") = 0.7, py::arg("f_space_threshold") = 0.4,
-			py::arg("dist_type") = me::dnn::FeatureDistanceType::NORM_EUCLIDEAN, py::arg("mask") = std::vector<int>());
+			py::arg("dist_type") = FeatureDistanceType::NORM_EUCLIDEAN, py::arg("mask") = std::vector<int>());
 
 	
 	// DNN Model class bindings
 
 	// Proxy classes
-	py::class_<me::dnn::models::Model>(m_dnn, "Model")
+	py::class_<Model>(m_dnn, "Model")
 		.def(py::init<>())
-		.def("load", &me::dnn::models::Model::load, py::call_guard<py::gil_scoped_release>(), py::arg("model_path"), py::arg("target_executor") = me::dnn::Executor::CPU)
-		.def("unload", &me::dnn::models::Model::unload)
-		.def("is_loaded", &me::dnn::models::Model::is_loaded)
-		.def("get_precision", &me::dnn::models::Model::get_precision)
-		.def("get_executor", &me::dnn::models::Model::get_executor);
-	py::class_<me::dnn::models::ImageModel, me::dnn::models::Model>(m_dnn, "ImageModel")
+		.def("load", &Model::load, py::call_guard<py::gil_scoped_release>(), py::arg("model_path"), py::arg("target_executor") = Executor::CPU)
+		.def("unload", &Model::unload)
+		.def("is_loaded", &Model::is_loaded)
+		.def("get_precision", &Model::get_precision)
+		.def("get_executor", &Model::get_executor);
+	py::class_<ImageModel, Model>(m_dnn, "ImageModel")
 		.def(py::init<>())
-		.def("net_size", [](me::dnn::models::ImageModel& self) {
+		.def("net_size", [](ImageModel& self) {
 			cv::Size size = self.net_size();
 			return py::make_tuple(size.width, size.height);
 		});
-	py::class_<me::dnn::models::DetectionModel, me::dnn::models::ImageModel>(m_dnn, "DetectionModel")
+	py::class_<DetectionModel, ImageModel>(m_dnn, "DetectionModel")
 		.def(py::init<>())
-		.def("infer", [](me::dnn::models::DetectionModel& self, const cv::Mat& image, float conf_thresh, float iou_thresh) {
-			std::vector<me::dnn::Detection> result;
+		.def("infer", [](DetectionModel& self, const cv::Mat& image, float conf_thresh, float iou_thresh) {
+			std::vector<Detection> result;
 			self.infer(image, result, conf_thresh, iou_thresh);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>(), py::arg("image"), py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5)
-		.def("infer", [](me::dnn::models::DetectionModel& self, const std::vector<cv::Mat>& images, float conf_thresh, float iou_thresh) {
-			std::vector<std::vector<me::dnn::Detection>> result;
+		.def("infer", [](DetectionModel& self, const std::vector<cv::Mat>& images, float conf_thresh, float iou_thresh) {
+			std::vector<std::vector<Detection>> result;
 			self.infer(images, result, conf_thresh, iou_thresh);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>(), py::arg("images"), py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5);
-	py::class_<me::dnn::models::PoseModel, me::dnn::models::ImageModel>(m_dnn, "PoseModel")
+	py::class_<PoseModel, ImageModel>(m_dnn, "PoseModel")
 		.def(py::init<>())
-		.def("infer", [](me::dnn::models::PoseModel& self, const cv::Mat& image) {
-			me::dnn::Pose result;
+		.def("infer", [](PoseModel& self, const cv::Mat& image) {
+			Pose result;
 			self.infer(image, result);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>())
-		.def("infer", [](me::dnn::models::PoseModel& self, const std::vector<cv::Mat>& images) {
-			std::vector<me::dnn::Pose> result;
+		.def("infer", [](PoseModel& self, const std::vector<cv::Mat>& images) {
+			std::vector<Pose> result;
 			self.infer(images, result);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>());
-	py::class_<me::dnn::models::FeatureModel, me::dnn::models::ImageModel>(m_dnn, "FeatureModel")
+	py::class_<FeatureModel, ImageModel>(m_dnn, "FeatureModel")
 		.def(py::init<>())
-		.def("infer", [](me::dnn::models::FeatureModel& self, const cv::Mat& image) {
-			me::dnn::Feature result;
+		.def("infer", [](FeatureModel& self, const cv::Mat& image) {
+			Feature result;
 			self.infer(image, result);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>())
-		.def("infer", [](me::dnn::models::FeatureModel& self, const std::vector<cv::Mat>& images) {
-			std::vector<me::dnn::Feature> result;
+		.def("infer", [](FeatureModel& self, const std::vector<cv::Mat>& images) {
+			std::vector<Feature> result;
 			self.infer(images, result);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>());
-	py::class_<me::dnn::models::TagModel, me::dnn::models::ImageModel>(m_dnn, "TagModel")
+	py::class_<TagModel, ImageModel>(m_dnn, "TagModel")
 		.def(py::init<>())
-		.def("infer", [](me::dnn::models::TagModel& self, const cv::Mat& image) {
-			std::vector<me::dnn::Tag> result;
+		.def("infer", [](TagModel& self, const cv::Mat& image) {
+			std::vector<Tag> result;
 			self.infer(image, result);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>())
-		.def("infer", [](me::dnn::models::TagModel& self, const std::vector<cv::Mat>& images) {
-			std::vector<std::vector<me::dnn::Tag>> result;
+		.def("infer", [](TagModel& self, const std::vector<cv::Mat>& images) {
+			std::vector<std::vector<Tag>> result;
 			self.infer(images, result);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>());
 
 
 	// Driver classes
-	py::class_<me::dnn::models::RTMDetModel, me::dnn::models::DetectionModel>(m_dnn, "RTMDetModel")
+	py::class_<RTMDetModel, DetectionModel>(m_dnn, "RTMDetModel")
 		.def(py::init<>());
-	py::class_<me::dnn::models::YOLOXModel, me::dnn::models::DetectionModel>(m_dnn, "YOLOXModel")
+	py::class_<YOLOXModel, DetectionModel>(m_dnn, "YOLOXModel")
 		.def(py::init<>());
-	py::class_<me::dnn::models::RTMPoseModel, me::dnn::models::PoseModel>(m_dnn, "RTMPoseModel")
+	py::class_<RTMPoseModel, PoseModel>(m_dnn, "RTMPoseModel")
 		.def(py::init<>());
-	py::class_<me::dnn::models::GenericFeatureModel, me::dnn::models::FeatureModel>(m_dnn, "GenericFeatureModel")
+	py::class_<GenericFeatureModel, FeatureModel>(m_dnn, "GenericFeatureModel")
 		.def(py::init<>());
-	py::class_<me::dnn::models::TagNetModel, me::dnn::models::TagModel>(m_dnn, "TagNetModel")
+	py::class_<TagNetModel, TagModel>(m_dnn, "TagNetModel")
 		.def(py::init<>());
-	py::class_<me::dnn::models::CVTagDetector, me::dnn::models::TagModel>(m_dnn, "CVTagDetector")
+	py::class_<CVTagDetector, TagModel>(m_dnn, "CVTagDetector")
 		.def(py::init<>())
-		.def("set_dict_type", &me::dnn::models::CVTagDetector::set_dict_type)
-		.def("set_preprocess_size", [](me::dnn::models::CVTagDetector& self, std::pair<int, int> new_size) {
+		.def("set_dict_type", &CVTagDetector::set_dict_type)
+		.def("set_preprocess_size", [](CVTagDetector& self, std::pair<int, int> new_size) {
 			self.set_preprocess_size(cv::Size(new_size.first, new_size.second));
 		});
 
-	py::class_<me::dnn::models::TopDownPoseDetector>(m_dnn, "TopDownPoseDetector")
+	py::class_<TopDownPoseDetector>(m_dnn, "TopDownPoseDetector")
 		.def(py::init<>())
-		.def("unload_all", &me::dnn::models::TopDownPoseDetector::unload_all)
-		.def("infer", [](me::dnn::models::TopDownPoseDetector& self, const cv::Mat& image, int max_pose_batches, float conf_thresh, float iou_thresh) {
-		std::vector<me::dnn::Pose> result;
+		.def("unload_all", &TopDownPoseDetector::unload_all)
+		.def("infer", [](TopDownPoseDetector& self, const cv::Mat& image, int max_pose_batches, float conf_thresh, float iou_thresh) {
+		std::vector<Pose> result;
 			self.infer(image, result, max_pose_batches, conf_thresh, iou_thresh);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>(), py::arg("image"), py::arg("max_pose_batches") = 1, py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5)
-		.def("infer", [](me::dnn::models::TopDownPoseDetector& self, const std::vector<cv::Mat>& images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
-			std::vector<std::vector<me::dnn::Pose>> result;
+		.def("infer", [](TopDownPoseDetector& self, const std::vector<cv::Mat>& images, int max_detection_batches, int max_pose_batches, float conf_thresh, float iou_thresh) {
+			std::vector<std::vector<Pose>> result;
 			self.infer(images, result, max_detection_batches, max_pose_batches, conf_thresh, iou_thresh);
 			return result;
 		}, py::call_guard<py::gil_scoped_release>(), py::arg("images"), py::arg("max_detection_batches") = 1, py::arg("max_pose_batches") = 1, py::arg("conf_thresh") = 0.5, py::arg("iou_thresh") = 0.5)
-		.def("is_ready", &me::dnn::models::TopDownPoseDetector::is_ready)
-		.def_readwrite("detection_model", &me::dnn::models::TopDownPoseDetector::detection_model)
-		.def_readwrite("pose_model", &me::dnn::models::TopDownPoseDetector::pose_model);
+		.def("is_ready", &TopDownPoseDetector::is_ready)
+		.def_readwrite("detection_model", &TopDownPoseDetector::detection_model)
+		.def_readwrite("pose_model", &TopDownPoseDetector::pose_model);
 
 	// Tracking
-	py::class_<me::tracking::Mat3x1>(m_tracking, "Mat3x1")
+	py::class_<Mat3x1>(m_tracking, "Mat3x1")
 		.def(py::init<>())
-		.def("__getitem__", [](me::tracking::Mat3x1& self, int row) {
+		.def("__getitem__", [](Mat3x1& self, int row) {
 			return self(row);
 		})
-		.def("__setitem__", [](me::tracking::Mat3x1& self, int row, double val) {
+		.def("__setitem__", [](Mat3x1& self, int row, double val) {
 			self(row) = val;
 		})
-		.def("__str__", [](me::tracking::Mat3x1& self) {
+		.def("__str__", [](Mat3x1& self) {
 			std::stringstream ss;
 			ss << cv::format(self, cv::Formatter::FMT_PYTHON);
 			return ss.str();
 		});
-	py::class_<me::tracking::Mat1x3>(m_tracking, "Mat1x3")
+	py::class_<Mat1x3>(m_tracking, "Mat1x3")
 		.def(py::init<>())
-		.def("__getitem__", [](me::tracking::Mat1x3& self, int col) {
+		.def("__getitem__", [](Mat1x3& self, int col) {
 			return self(col);
 		})
-		.def("__setitem__", [](me::tracking::Mat1x3& self, int col, double val) {
+		.def("__setitem__", [](Mat1x3& self, int col, double val) {
 			self(col) = val;
 		})
-		.def("__str__", [](me::tracking::Mat1x3& self) {
+		.def("__str__", [](Mat1x3& self) {
 			std::stringstream ss;
 			ss << cv::format(self, cv::Formatter::FMT_PYTHON);
 			return ss.str();
 		});
-	py::class_<me::tracking::Mat3x3>(m_tracking, "Mat3x3")
+	py::class_<Mat3x3>(m_tracking, "Mat3x3")
 		.def(py::init<>())
-		.def("__getitem__", [](me::tracking::Mat3x3& self, std::pair<int, int> pos) {
+		.def("__getitem__", [](Mat3x3& self, std::pair<int, int> pos) {
 			return self(pos.first, pos.second);
 		})
-		.def("__setitem__", [](me::tracking::Mat3x3& self, std::pair<int, int> pos, double val) {
+		.def("__setitem__", [](Mat3x3& self, std::pair<int, int> pos, double val) {
 			self(pos.first, pos.second) = val;
 		})
-		.def("__str__", [](me::tracking::Mat3x3& self) {
+		.def("__str__", [](Mat3x3& self) {
 			std::stringstream ss;
 			ss << cv::format(self, cv::Formatter::FMT_PYTHON);
 			return ss.str();
 		});
-	py::class_<me::tracking::Mat4x4>(m_tracking, "Mat4x4")
+	py::class_<Mat4x4>(m_tracking, "Mat4x4")
 		.def(py::init<>())
-		.def("__getitem__", [](me::tracking::Mat4x4& self, std::pair<int, int> pos) {
+		.def("__getitem__", [](Mat4x4& self, std::pair<int, int> pos) {
 			return self(pos.first, pos.second);
 		})
-		.def("__setitem__", [](me::tracking::Mat4x4& self, std::pair<int, int> pos, double val) {
+		.def("__setitem__", [](Mat4x4& self, std::pair<int, int> pos, double val) {
 			self(pos.first, pos.second) = val;
 		})
-		.def("__str__", [](me::tracking::Mat4x4& self) {
+		.def("__str__", [](Mat4x4& self) {
 			std::stringstream ss;
 			ss << cv::format(self, cv::Formatter::FMT_PYTHON);
 			return ss.str();
 		});
-	py::class_<me::tracking::Rt>(m_tracking, "Rt")
+	py::class_<Rt>(m_tracking, "Rt")
 		.def(py::init<>())
-		.def_readwrite("R", &me::tracking::Rt::R)
-		.def_readwrite("t", &me::tracking::Rt::t)
-		.def("invert", &me::tracking::Rt::invert)
-		.def("to4x4", &me::tracking::Rt::to4x4)
-		.def("from4x4", &me::tracking::Rt::from4x4)
-		.def("is_identity", &me::tracking::Rt::is_identity);
-	py::class_<me::tracking::Kk>(m_tracking, "Kk")
+		.def_readwrite("R", &Rt::R)
+		.def_readwrite("t", &Rt::t)
+		.def("invert", &Rt::invert)
+		.def("to4x4", &Rt::to4x4)
+		.def("from4x4", &Rt::from4x4)
+		.def("is_identity", &Rt::is_identity);
+	py::class_<Kk>(m_tracking, "Kk")
 		.def(py::init<>())
-		.def_readwrite("K", &me::tracking::Kk::K)
-		.def_readwrite("k", &me::tracking::Kk::k);
-	py::class_<me::tracking::Tag3D>(m_tracking, "Tag3D")
+		.def_readwrite("K", &Kk::K)
+		.def_readwrite("k", &Kk::k);
+	py::class_<Tag3D>(m_tracking, "Tag3D")
 		.def(py::init<>())
 		.def(py::init<int>())
 		.def(py::init<cv::Point3d&, cv::Point3d&, cv::Point3d&, cv::Point3d&>())
 		.def(py::init<int, cv::Point3d&, cv::Point3d&, cv::Point3d&, cv::Point3d&>())
-		.def("__getitem__", [](me::tracking::Tag3D& self, size_t index) {
+		.def("__getitem__", [](Tag3D& self, size_t index) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			return self.corners[index];
 			})
-		.def("__setitem__", [](me::tracking::Tag3D& self, size_t index, cv::Point3d& value) {
+		.def("__setitem__", [](Tag3D& self, size_t index, cv::Point3d& value) {
 			if (index >= 4 || index < 0) throw py::index_error();
 			self[index] = value;
 			})
-		.def_readwrite("id", &me::tracking::Tag3D::id);
-	py::class_<me::tracking::TrackingData>(m_tracking, "TrackingData")
+		.def_readwrite("id", &Tag3D::id);
+	py::class_<TrackingData>(m_tracking, "TrackingData")
 		.def(py::init<>())
-		.def_readwrite("poses", &me::tracking::TrackingData::poses)
-		.def_readwrite("detections", &me::tracking::TrackingData::detections)
-		.def_readwrite("tags", &me::tracking::TrackingData::tags)
-		.def("to_points", &me::tracking::TrackingData::to_points, py::call_guard<py::gil_scoped_release>(), py::arg("reduce_tags") = false)
-		.def("set_pose", &me::tracking::TrackingData::set_pose)
-		.def("set_joint", py::overload_cast<const int, const std::string, const int, const me::dnn::Joint&>(&me::tracking::TrackingData::set_joint))
-		.def("set_joint", py::overload_cast<const int, const std::string, const int, const cv::Point2d&, const double>(&me::tracking::TrackingData::set_joint))
-		.def("set_joint", py::overload_cast<const int, const std::string, const int, const double, const double, const double>(&me::tracking::TrackingData::set_joint))
-		.def("set_detection", &me::tracking::TrackingData::set_detection)
-		.def("set_tag", &me::tracking::TrackingData::set_tag);
-	py::class_<me::tracking::TrackingData3D>(m_tracking, "TrackingData3D")
+		.def_readwrite("poses", &TrackingData::poses)
+		.def_readwrite("detections", &TrackingData::detections)
+		.def_readwrite("tags", &TrackingData::tags)
+		.def("to_points", &TrackingData::to_points, py::call_guard<py::gil_scoped_release>(), py::arg("reduce_tags") = false)
+		.def("set_pose", &TrackingData::set_pose)
+		.def("set_joint", py::overload_cast<const int, const std::string, const int, const Joint&>(&TrackingData::set_joint))
+		.def("set_joint", py::overload_cast<const int, const std::string, const int, const cv::Point2d&, const double>(&TrackingData::set_joint))
+		.def("set_joint", py::overload_cast<const int, const std::string, const int, const double, const double, const double>(&TrackingData::set_joint))
+		.def("set_detection", &TrackingData::set_detection)
+		.def("set_tag", &TrackingData::set_tag);
+	py::class_<TrackingData3D>(m_tracking, "TrackingData3D")
 		.def(py::init<>())
-		.def_readwrite("poses", &me::tracking::TrackingData3D::poses)
-		.def_readwrite("detections", &me::tracking::TrackingData3D::detections)
-		.def_readwrite("tags", &me::tracking::TrackingData3D::tags);
+		.def_readwrite("poses", &TrackingData3D::poses)
+		.def_readwrite("detections", &TrackingData3D::detections)
+		.def_readwrite("tags", &TrackingData3D::tags);
 
 
 	// Function bindings
@@ -664,77 +664,77 @@ PYBIND11_MODULE(MEPython, m)
 
 	// DNN
 	m_dnn.def("letterbox_image", [](const cv::Mat& src, cv::Mat& dst, py::tuple out_size) {
-		return me::dnn::LetterboxImage(src, dst, cv::Size(out_size[0].cast<int>(), out_size[1].cast<int>()));
+		return LetterboxImage(src, dst, cv::Size(out_size[0].cast<int>(), out_size[1].cast<int>()));
 	}, py::call_guard<py::gil_scoped_release>(), py::arg("src"), py::arg("dst"), py::arg("out_size"));
-	m_dnn.def("fix_detection_coordinates", [](std::vector<me::dnn::Detection>& detections, std::pair<int, int> src_net_size, std::pair<int, int> target_frame_size, me::dnn::ScalingMode scaling_mode) {
-		me::dnn::fixDetectionCoordinates(detections, cv::Size(src_net_size.first, src_net_size.second), cv::Size(target_frame_size.first, target_frame_size.second), scaling_mode);
+	m_dnn.def("fix_detection_coordinates", [](std::vector<Detection>& detections, std::pair<int, int> src_net_size, std::pair<int, int> target_frame_size, ScalingMode scaling_mode) {
+		fixDetectionCoordinates(detections, cv::Size(src_net_size.first, src_net_size.second), cv::Size(target_frame_size.first, target_frame_size.second), scaling_mode);
 		return detections;
-		}, py::call_guard<py::gil_scoped_release>(), py::arg("detections"), py::arg("src_net_size"), py::arg("target_frame_size"), py::arg("scaling_mode") = me::dnn::ScalingMode::NORMALIZE_INPUT);
-	m_dnn.def("fix_detection_coordinates", [](std::vector<std::vector<me::dnn::Detection>>& detections, std::pair<int, int> src_net_size, std::pair<int, int> target_frame_size, me::dnn::ScalingMode scaling_mode) {
-		me::dnn::fixDetectionCoordinates(detections, cv::Size(src_net_size.first, src_net_size.second), cv::Size(target_frame_size.first, target_frame_size.second), scaling_mode);
+		}, py::call_guard<py::gil_scoped_release>(), py::arg("detections"), py::arg("src_net_size"), py::arg("target_frame_size"), py::arg("scaling_mode") = ScalingMode::NORMALIZE_INPUT);
+	m_dnn.def("fix_detection_coordinates", [](std::vector<std::vector<Detection>>& detections, std::pair<int, int> src_net_size, std::pair<int, int> target_frame_size, ScalingMode scaling_mode) {
+		fixDetectionCoordinates(detections, cv::Size(src_net_size.first, src_net_size.second), cv::Size(target_frame_size.first, target_frame_size.second), scaling_mode);
 		return detections;
-		}, py::call_guard<py::gil_scoped_release>(), py::arg("detections"), py::arg("src_net_size"), py::arg("target_frame_size"), py::arg("scaling_mode") = me::dnn::ScalingMode::NORMALIZE_INPUT);
+		}, py::call_guard<py::gil_scoped_release>(), py::arg("detections"), py::arg("src_net_size"), py::arg("target_frame_size"), py::arg("scaling_mode") = ScalingMode::NORMALIZE_INPUT);
 	m_dnn.def("get_roi_with_padding", [](const cv::Mat& image, cv::Rect2d roi) {
-		return me::dnn::getRoiWithPadding(image, roi);
+		return getRoiWithPadding(image, roi);
 	}, py::call_guard<py::gil_scoped_release>());
 	m_dnn.def("get_roi_no_padding", [](const cv::Mat& image, cv::Rect2d roi) {
-		return me::dnn::getRoiNoPadding(image, roi);
+		return getRoiNoPadding(image, roi);
 	}, py::call_guard<py::gil_scoped_release>());
 	m_dnn.def("is_roi_outside_image", [](std::pair<int, int> imageSize, cv::Rect2d roi) {
-		return me::dnn::isRoiOutsideImage(cv::Size(imageSize.first, imageSize.second), roi);
+		return isRoiOutsideImage(cv::Size(imageSize.first, imageSize.second), roi);
 	});
-	m_dnn.def("draw_tags", [](cv::Mat& out_image, std::vector<me::dnn::Tag>& tags) {
-		me::dnn::drawTags(out_image, tags);
+	m_dnn.def("draw_tags", [](cv::Mat& out_image, std::vector<Tag>& tags) {
+		drawTags(out_image, tags);
 		return out_image;
 	}, py::call_guard<py::gil_scoped_release>());
-	m_dnn.def("strict_batch_infer", [](size_t batch_size, me::dnn::models::DetectionModel& model, const std::vector<cv::Mat>& images, float conf_thresh, float iou_thresh) {
-		std::vector<std::vector<me::dnn::Detection>> detections;
-		me::dnn::models::strict_batch_infer(batch_size, model, images, detections, conf_thresh, iou_thresh);
+	m_dnn.def("strict_batch_infer", [](size_t batch_size, DetectionModel& model, const std::vector<cv::Mat>& images, float conf_thresh, float iou_thresh) {
+		std::vector<std::vector<Detection>> detections;
+		strict_batch_infer(batch_size, model, images, detections, conf_thresh, iou_thresh);
 		return detections;
 	}, py::call_guard<py::gil_scoped_release>());
-	m_dnn.def("strict_batch_infer", [](size_t batch_size, me::dnn::models::PoseModel& model, const std::vector<cv::Mat>& images) {
-		std::vector<me::dnn::Pose> poses;
-		me::dnn::models::strict_batch_infer(batch_size, model, images, poses);
+	m_dnn.def("strict_batch_infer", [](size_t batch_size, PoseModel& model, const std::vector<cv::Mat>& images) {
+		std::vector<Pose> poses;
+		strict_batch_infer(batch_size, model, images, poses);
 		return poses;
 	}, py::call_guard<py::gil_scoped_release>());
-	m_dnn.def("strict_batch_infer", [](size_t batch_size, me::dnn::models::FeatureModel& model, const std::vector<cv::Mat>& images) {
-		std::vector<me::dnn::Feature> features;
-		me::dnn::models::strict_batch_infer(batch_size, model, images, features);
+	m_dnn.def("strict_batch_infer", [](size_t batch_size, FeatureModel& model, const std::vector<cv::Mat>& images) {
+		std::vector<Feature> features;
+		strict_batch_infer(batch_size, model, images, features);
 		return features;
 	}, py::call_guard<py::gil_scoped_release>());
-	m_dnn.def("strict_batch_infer", [](size_t batch_size, me::dnn::models::TagModel& model, const std::vector<cv::Mat>& images) {
-		std::vector<std::vector<me::dnn::Tag>> tags;
-		me::dnn::models::strict_batch_infer(batch_size, model, images, tags);
+	m_dnn.def("strict_batch_infer", [](size_t batch_size, TagModel& model, const std::vector<cv::Mat>& images) {
+		std::vector<std::vector<Tag>> tags;
+		strict_batch_infer(batch_size, model, images, tags);
 		return tags;
 	}, py::call_guard<py::gil_scoped_release>());
 
 	// Crypto
-	m_crypto.def("random_sha1", []() { return me::crypto::generateRandomSHA1().to_string(); });
+	m_crypto.def("random_sha1", []() { return generateRandomSHA1().to_string(); });
 
 	// Tracking
-	m_tracking.def("find_common_data", &me::tracking::find_common_data, py::call_guard<py::gil_scoped_release>());
+	m_tracking.def("find_common_data", &find_common_data, py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("solve_static_pair", py::overload_cast<const me::tracking::TrackingData&, const me::tracking::TrackingData&,
-		const me::tracking::Kk&, const me::tracking::Kk&>(&me::tracking::solveStaticPair), py::call_guard<py::gil_scoped_release>());
+	m_tracking.def("solve_static_pair", py::overload_cast<const TrackingData&, const TrackingData&,
+		const Kk&, const Kk&>(&solveStaticPair), py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("solve_static_pair", py::overload_cast<const me::tracking::TrackedPoints&, const me::tracking::TrackedPoints&,
-		const me::tracking::Kk&, const me::tracking::Kk&>(&me::tracking::solveStaticPair), py::call_guard<py::gil_scoped_release>());
+	m_tracking.def("solve_static_pair", py::overload_cast<const TrackedPoints&, const TrackedPoints&,
+		const Kk&, const Kk&>(&solveStaticPair), py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("solve_static_set", &me::tracking::solveStaticSet, py::call_guard<py::gil_scoped_release>());
+	m_tracking.def("solve_static_set", &solveStaticSet, py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("solve_camera_with_tag", &me::tracking::solveCameraWithTag,
+	m_tracking.def("solve_camera_with_tag", &solveCameraWithTag,
 		py::arg("observed_tag"), py::arg("cam_Kk"), py::arg("square_length") = 1.0,
 		py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("triangulate_static", &me::tracking::triangulateStatic, py::call_guard<py::gil_scoped_release>());
+	m_tracking.def("triangulate_static", &triangulateStatic, py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("g_kernel_1d", &me::tracking::g_kernel_1d,
+	m_tracking.def("g_kernel_1d", &g_kernel_1d,
 		py::arg("width") = 3,
 		py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("mirror_idx", &me::tracking::mirror_idx, py::call_guard<py::gil_scoped_release>());
+	m_tracking.def("mirror_idx", &mirror_idx, py::call_guard<py::gil_scoped_release>());
 
-	m_tracking.def("g_conv_1d", &me::tracking::g_conv_1d,
+	m_tracking.def("g_conv_1d", &g_conv_1d,
 		py::arg("input"), py::arg("kernel_radius") = 1,
 		py::call_guard<py::gil_scoped_release>());
 

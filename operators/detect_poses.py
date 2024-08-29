@@ -19,7 +19,7 @@ import math
 
 import bpy
 
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import global_vars
 from .. import events
 from ..events import (InfoEvent,
@@ -50,7 +50,7 @@ def adjust_det_aspect(det, net_size):
     elif width < (aspect_ratio * height):
         width = height * aspect_ratio
     new_tl = (center[0] - width / 2, center[1] - height / 2)
-    det.bbox = me.Rect(new_tl[0], new_tl[1], width, height)
+    det.bbox = pt_core.Rect(new_tl[0], new_tl[1], width, height)
 
 
 def pose_task(bpy_data: event_ops.BpyData):
@@ -101,11 +101,11 @@ def pose_task(bpy_data: event_ops.BpyData):
                 frame_data = bpy_data.clip_tracks.detections[scene_frame]
                 for track in frame_data:
                     det = frame_data[track]
-                    if me.dnn.is_roi_outside_image(clip.frame_size(), det.bbox):
+                    if pt_core.dnn.is_roi_outside_image(clip.frame_size(), det.bbox):
                         continue
                     adjust_det_aspect(det, pose_model.net_size())
                     det.scale_detection(1.2)
-                    sample = me.dnn.get_roi_with_padding(frames[i], det.bbox)
+                    sample = pt_core.dnn.get_roi_with_padding(frames[i], det.bbox)
                     samples.append(sample)
                     sample_boxes.append(det)
                     sample_ids.append(track)
@@ -148,7 +148,7 @@ def pose_task(bpy_data: event_ops.BpyData):
 
 class DetectPosesOperator(EventOperator):
     """Convert tracks to poses"""
-    bl_idname = "motionengine.detect_poses_operator"
+    bl_idname = "posetracks.detect_poses_operator"
     bl_label = "Estimate Poses"
 
     overwrite: bpy.props.BoolProperty(

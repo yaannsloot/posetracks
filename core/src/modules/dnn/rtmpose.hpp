@@ -18,20 +18,16 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include "models.hpp"
-
-namespace me::dnn::models {
 			
-	class RTMPoseModelImpl : public PoseModelImpl {
-	public:
-		RTMPoseModelImpl();
-		cv::Size net_size() override;
-		void infer(const cv::Mat& image, Pose& pose) override;
-		void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) override;
-	};
+class RTMPoseModelImpl : public PoseModelImpl {
+public:
+	RTMPoseModelImpl();
+	cv::Size net_size() override;
+	void infer(const cv::Mat& image, Pose& pose) override;
+	void infer(const std::vector<cv::Mat>& images, std::vector<Pose>& poses) override;
+};
 
-	class RTMPoseModel : public PoseModel {
-	public:
-		RTMPoseModel();
-	};
-
-}
+class RTMPoseModel : public PoseModel {
+public:
+	RTMPoseModel();
+};

@@ -6,7 +6,7 @@ if(POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("MotionEngine" LANGUAGES CXX)
+project ("posetracks_core" LANGUAGES CXX)
 
 message(STATUS "Using ${CMAKE_CXX_COMPILER_ID}")
 
@@ -85,31 +85,23 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
 
 # Python
-set(SOURCES_MOTIONENGINE_PYBIND)
-
-# Source files for testing
-set(SOURCES_ME_POSE_TEST)
+set(SOURCES_POSETRACKS_PYBIND)
 
 set(MODULE_LIST)
 
-add_library(me_objects INTERFACE)
+add_library(pcore_objects INTERFACE)
 add_subdirectory(src)
 
 foreach(module ${MODULE_LIST})
-    add_dependencies(me_objects ${module})
-    target_link_libraries(me_objects INTERFACE $<TARGET_OBJECTS:${module}>)
+    add_dependencies(pcore_objects ${module})
+    target_link_libraries(pcore_objects INTERFACE $<TARGET_OBJECTS:${module}>)
     set_target_properties(${module} PROPERTIES FOLDER "modules")
 endforeach()
-
-# Target definitions
-
-# Testing targets
-# add_executable(MEPoseTest ${SOURCES_ME_POSE_TEST}) // Test executable disabled for now
 
 set(LINK_LIST_BASE
     ${OpenCV_LIBS}
     ${ONNXRUNTIME_LIBRARIES}
-    me_objects
+    pcore_objects
 )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
@@ -117,12 +109,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
 )
     set(LINK_LIST_BASE tbb ${LINK_LIST_BASE})
 endif()
-
-# Test linking
-# target_link_libraries(MEPoseTest PRIVATE ${LINK_LIST_BASE})
-
-# Test compile flags
-# target_compile_features(MEPoseTest PRIVATE cxx_std_17)
 
 # Pybind Subdirectories
 add_subdirectory(module/cp39)
@@ -136,9 +122,3 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/module/
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION ${CMAKE_BINARY_DIR}/redis)
-
-#install(TARGETS MotionEngine RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/redis)
-
-# Testing
-# install(TARGETS MEPoseTest RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/tests)
-

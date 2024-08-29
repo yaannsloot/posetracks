@@ -18,97 +18,93 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include "simplepool.hpp"
 #include <memory>
 
-namespace me::threading {
-
-    void SimplePool::Start(const uint32_t numthreads) {
-        threads.resize(numthreads);
-        for (uint32_t i = 0; i < numthreads; i++) {
-            threads.at(i) = std::thread([this] { this->ThreadLoop(); });
-        }
+void SimplePool::Start(const uint32_t numthreads) {
+    threads.resize(numthreads);
+    for (uint32_t i = 0; i < numthreads; i++) {
+        threads.at(i) = std::thread([this] { this->ThreadLoop(); });
     }
+}
 
-    void SimplePool::ThreadLoop() {
-        while (true) {
-            std::function<void()> job;
-            {
-                std::unique_lock<std::mutex> lock(queue_mutex);
-                mutex_condition.wait(lock, [this] {
-                    return !jobs.empty() || should_terminate;
-                    });
-                if (should_terminate) {
-                    return;
-                }
-                job = jobs.front();
-                jobs.pop();
+void SimplePool::ThreadLoop() {
+    while (true) {
+        std::function<void()> job;
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            mutex_condition.wait(lock, [this] {
+                return !jobs.empty() || should_terminate;
+                });
+            if (should_terminate) {
+                return;
             }
-            job();
+            job = jobs.front();
+            jobs.pop();
         }
+        job();
     }
+}
 
-    bool SimplePool::Busy() {
-        bool poolbusy;
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            poolbusy = !jobs.empty();
-        }
-        return poolbusy;
+bool SimplePool::Busy() {
+    bool poolbusy;
+    {
+        std::unique_lock<std::mutex> lock(queue_mutex);
+        poolbusy = !jobs.empty();
     }
+    return poolbusy;
+}
 
-    bool SimplePool::Running() {
-        bool poolrunning;
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            poolrunning = !threads.empty();
-        }
-        return poolrunning;
+bool SimplePool::Running() {
+    bool poolrunning;
+    {
+        std::unique_lock<std::mutex> lock(queue_mutex);
+        poolrunning = !threads.empty();
     }
+    return poolrunning;
+}
 
-    void SimplePool::Stop() {
-        {
-            std::unique_lock<std::mutex> lock(queue_mutex);
-            should_terminate = true;
-        }
-        mutex_condition.notify_all();
-        for (std::thread& active_thread : threads) {
-            active_thread.join();
-        }
-        threads.clear();
+void SimplePool::Stop() {
+    {
+        std::unique_lock<std::mutex> lock(queue_mutex);
+        should_terminate = true;
     }
-
-    size_t SimplePool::NumThreads() {
-        return threads.size();
+    mutex_condition.notify_all();
+    for (std::thread& active_thread : threads) {
+        active_thread.join();
     }
+    threads.clear();
+}
 
-    SimplePool::~SimplePool() {
-        if (Running())
-            Stop();
-    }
+size_t SimplePool::NumThreads() {
+    return threads.size();
+}
 
-    std::vector<std::pair<size_t, size_t>> calculateSegments(size_t total_size, size_t num_threads) {
-        std::vector<std::pair<size_t, size_t>> segments;
+SimplePool::~SimplePool() {
+    if (Running())
+        Stop();
+}
 
-        // Guard
-        if (total_size < 1 || num_threads < 1)
-            return segments;
+std::vector<std::pair<size_t, size_t>> calculateSegments(size_t total_size, size_t num_threads) {
+    std::vector<std::pair<size_t, size_t>> segments;
 
-        // Calculate the size of each segment
-        size_t segment_size = total_size / num_threads;
-        if (total_size % num_threads != 0) {
-            segment_size++;
-        }
-
-        // Calculate the segments
-        size_t start = 0;
-        while (start < total_size) {
-            size_t end = start + segment_size;
-            if (end > total_size) {
-                end = total_size;
-            }
-            segments.push_back(std::make_pair(start, end));
-            start = end;
-        }
-
+    // Guard
+    if (total_size < 1 || num_threads < 1)
         return segments;
+
+    // Calculate the size of each segment
+    size_t segment_size = total_size / num_threads;
+    if (total_size % num_threads != 0) {
+        segment_size++;
     }
 
+    // Calculate the segments
+    size_t start = 0;
+    while (start < total_size) {
+        size_t end = start + segment_size;
+        if (end > total_size) {
+            end = total_size;
+        }
+        segments.push_back(std::make_pair(start, end));
+        start = end;
+    }
+
+    return segments;
 }

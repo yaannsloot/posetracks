@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
 
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import global_vars
 from ..events import (InfoEvent,
                       CancelledEvent,
@@ -70,8 +70,8 @@ def detection_task(bpy_data):
                                            bpy_data.ui_props['exe_track_enum'])
         clip = setup_frame_provider(bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
         event_queue.put(InfoEvent('Initializing tracker...', 'Obtaining feature length from model...'))
-        init_result = feat_model.infer(me.rand_img_rgb(feat_model.net_size()))
-        tracker = me.dnn.FeatureTracker(len(init_result))
+        init_result = feat_model.infer(pt_core.rand_img_rgb(feat_model.net_size()))
+        tracker = pt_core.dnn.FeatureTracker(len(init_result))
         det_batch_size = 32
         feat_batch_size = 32
         first_frame = max(bpy_data.clip_info.scene_to_true(bpy_data.scene_first_frame), 0)
@@ -91,18 +91,18 @@ def detection_task(bpy_data):
             if not detections:
                 f_num += len(frames)
                 continue
-            detections = me.dnn.fix_detection_coordinates(detections, det_model.net_size(), clip.frame_size(),
-                                                          me.dnn.AUTO)
+            detections = pt_core.dnn.fix_detection_coordinates(detections, det_model.net_size(), clip.frame_size(),
+                                                          pt_core.dnn.AUTO)
             roi_detections = []
             roi_samples = []
             splits = []
             split_frames = []
             for i in range(len(detections)):
                 for det in detections[i]:
-                    if (not me.dnn.is_roi_outside_image(clip.frame_size(), det.bbox)
+                    if (not pt_core.dnn.is_roi_outside_image(clip.frame_size(), det.bbox)
                             and det.class_id == target_cid):
                         roi_detections.append(det)
-                        roi_samples.append(me.dnn.get_roi_with_padding(frames[i], det.bbox))
+                        roi_samples.append(pt_core.dnn.get_roi_with_padding(frames[i], det.bbox))
                 if detections[i]:
                     splits.append(len(roi_detections))
                     split_frames.append(i)
@@ -143,7 +143,7 @@ def detection_task(bpy_data):
 
 class DetectObjectsOperator(EventOperator):
     """Scan playback range for target objects"""
-    bl_idname = "motionengine.detect_objects_operator"
+    bl_idname = "posetracks.detect_objects_operator"
     bl_label = "Detect Objects"
 
     mute_results: bpy.props.BoolProperty(

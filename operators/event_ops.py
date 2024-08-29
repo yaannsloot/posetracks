@@ -19,7 +19,7 @@ import os.path
 import traceback
 
 import bpy
-from .. import MotionEngine as me
+from .. import posetracks_core as pt_core
 from .. import global_vars
 from .. import events
 from .. import utils
@@ -41,7 +41,7 @@ def _str_to_enum(string, enum_class):
 def _convert_if_enum(enum):
     if not isinstance(enum, str):
         return enum
-    enum_classes = [me.TagDictionary, me.dnn.Executor, me.dnn.FeatureDistanceType]
+    enum_classes = [pt_core.TagDictionary, pt_core.dnn.Executor, pt_core.dnn.FeatureDistanceType]
     for enum_class in enum_classes:
         converted = _str_to_enum(enum, enum_class)
         if converted is not None:
@@ -51,11 +51,11 @@ def _convert_if_enum(enum):
 
 def setup_model(model_dict, executor):
     driver = utils.fix_class_ref(model_dict['driver'])()
-    if isinstance(driver, me.dnn.PoseModel):
+    if isinstance(driver, pt_core.dnn.PoseModel):
         model_type = 'pose'
-    elif isinstance(driver, me.dnn.TagModel):
+    elif isinstance(driver, pt_core.dnn.TagModel):
         model_type = 'tag'
-    elif isinstance(driver, me.dnn.FeatureModel):
+    elif isinstance(driver, pt_core.dnn.FeatureModel):
         model_type = 'feature'
     else:
         model_type = 'detection'
@@ -82,7 +82,7 @@ def setup_model(model_dict, executor):
 
 
 def load_model_by_name(category, name, executor):
-    models = me.get_models(category)
+    models = pt_core.get_models(category)
     sel = None
     for m in models:
         if m[0] == name:
@@ -95,7 +95,7 @@ def load_model_by_name(category, name, executor):
 
 
 def load_model_by_criteria(category, executor, attributes=None, values=None, sorting_criteria=None):
-    models = me.get_models(category, attributes, values, sorting_criteria)
+    models = pt_core.get_models(category, attributes, values, sorting_criteria)
     if not models:
         raise LoadException('Could not find suitable model based on provided settings',
                             'Model search returned no results')
@@ -105,9 +105,9 @@ def load_model_by_criteria(category, executor, attributes=None, values=None, sor
 
 def setup_frame_provider(path, source_type):
     if source_type == 'MOVIE':
-        fp = me.io.Transcoder()
+        fp = pt_core.io.Transcoder()
     else:
-        fp = me.io.ImageList()
+        fp = pt_core.io.ImageList()
     fp.load(path)
     if not fp.is_open():
         raise LoadException('Failed to load movie clip',
@@ -129,7 +129,7 @@ class CancelledException(Exception):
 def batch_infer(batch_size, model, images, *args):
     while True:
         try:
-            output = me.dnn.strict_batch_infer(batch_size, model, images, *args)
+            output = pt_core.dnn.strict_batch_infer(batch_size, model, images, *args)
             break
         except RuntimeError as e:
             tb = traceback.format_exc()
@@ -145,7 +145,7 @@ def batch_infer(batch_size, model, images, *args):
 def get_frames(frame_provider, num_frames, last_frame):
     result = []
     for i in range(0, num_frames):
-        f = me.Mat()
+        f = pt_core.Mat()
         f_num = frame_provider.current_frame()
         if f_num > last_frame:
             break
@@ -164,7 +164,7 @@ class BpyData:
         self.scene_first_frame = scene.frame_start
         self.scene_last_frame = scene.frame_end
 
-        properties = scene.motion_engine_ui_properties
+        properties = scene.pt_ui_properties
 
         self.clip_info = None
         if (context.area.type == 'CLIP_EDITOR' and
@@ -189,9 +189,9 @@ class BpyData:
             # Bounding box conversions
             if self.clip_info is not None:
                 # function returns data in scene time
-                self.clip_tracks = me.clip_tracking_data(context.edit_movieclip, filter_selected=selected_tracks_only)
+                self.clip_tracks = pt_core.clip_tracking_data(context.edit_movieclip, filter_selected=selected_tracks_only)
             if self.anchor_clip_info is not None:
-                self.anchor_tracks = me.clip_tracking_data(properties.anchor_cam_selection,
+                self.anchor_tracks = pt_core.clip_tracking_data(properties.anchor_cam_selection,
                                                            filter_selected=selected_tracks_only)
             # Additional info
             """

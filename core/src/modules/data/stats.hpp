@@ -20,19 +20,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 
 using std::size_t;
-
-namespace me::data {
 		
-	double calculateMean(const std::vector<double>& data);
+double calculateMean(const std::vector<double>& data);
 
-	double calculateMedian(const std::vector<double>& data);
+double calculateMedian(const std::vector<double>& data);
 
-	double calculateStdDev(const std::vector<double>& data, double mean);
+double calculateStdDev(const std::vector<double>& data, double mean);
 
-	std::vector<size_t> findOutliers(const std::vector<double>& data, double threshold);
+std::vector<size_t> findOutliers(const std::vector<double>& data, double threshold);
 
-	void calculateQuartiles(const std::vector<double>& data, double& Q1, double& Q3);
+void calculateQuartiles(const std::vector<double>& data, double& Q1, double& Q3);
 
-	std::vector<size_t> findOutliersIQR(const std::vector<double>& data);
-	
-}
+std::vector<size_t> findOutliersIQR(const std::vector<double>& data);

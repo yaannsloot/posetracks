@@ -1,12 +1,12 @@
 schema_version = "1.0.0"
 
-id = "motion_engine"
+id = "posetracks"
 version = "1.0.0"
-name = "MotionEngine"
+name = "PoseTracks"
 tagline = "Provides various computer vision and AI tracking tools in the clip editor"
 maintainer = "Ian Sloat"
 type = "add-on"
-website = "https://github.com/YaannSloot/MotionEngine"
+website = "https://github.com/YaannSloot/posetracks"
 tags = ["Animation", "Tracking"]
 blender_version_min = "4.2.0"
 

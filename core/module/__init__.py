@@ -43,7 +43,7 @@ _module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), _python_v
 sys.path.insert(0, _module_dir)
 
 # Compiled modules
-_pyc = importlib.import_module("MEPython")
+_pyc = importlib.import_module("posetracks_core")
 
 # Remove the module directory from sys.path
 sys.path.remove(_module_dir)
