@@ -103,7 +103,7 @@ namespace pybind11::detail {
 
 }
 
-PYBIND11_MODULE(posetracks_core, m)
+PYBIND11_MODULE(ptcore, m)
 {
 	// Submodules
 	auto m_data = m.def_submodule("data");
@@ -132,6 +132,8 @@ PYBIND11_MODULE(posetracks_core, m)
 		.value("VER_4_1_1", BlenderVersion::VER_4_1_1)
 		.value("VER_4_2_0", BlenderVersion::VER_4_2_0)
 		.value("VER_4_2_1", BlenderVersion::VER_4_2_1)
+		.value("VER_4_2_4", BlenderVersion::VER_4_2_4)
+		.value("VER_4_3_0", BlenderVersion::VER_4_3_0)
 		.export_values();
 
 	py::enum_<cv::aruco::PredefinedDictionaryType>(m, "TagDictionary")

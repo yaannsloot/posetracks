@@ -5,32 +5,32 @@ find_package(Python 3.9 EXACT COMPONENTS Interpreter Development)
 if(Python_FOUND)
 
 find_package(pybind11 REQUIRED)
-add_library(posetracks_core.cp39 SHARED ${SOURCES_POSETRACKS_PYBIND})
+add_library(ptcore.cp39 SHARED ${SOURCES_POSETRACKS_PYBIND})
 
-target_link_libraries(posetracks_core.cp39 PRIVATE
+target_link_libraries(ptcore.cp39 PRIVATE
     ${LINK_LIST_BASE}
     Python::Python
     pybind11::module
 )
 
-target_compile_features(posetracks_core.cp39 PRIVATE cxx_std_17)
+target_compile_features(ptcore.cp39 PRIVATE cxx_std_17)
 
-set_target_properties(posetracks_core.cp39 PROPERTIES
-    OUTPUT_NAME "posetracks_core"
+set_target_properties(ptcore.cp39 PROPERTIES
+    OUTPUT_NAME "ptcore"
     PREFIX ""
 )
 
 if(UNIX AND NOT APPLE)
-    set_target_properties(posetracks_core.cp39 PROPERTIES
+    set_target_properties(ptcore.cp39 PROPERTIES
         SUFFIX ".so"
         INSTALL_RPATH "$ORIGIN/../lib"
     )
-    install(TARGETS posetracks_core.cp39 LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/redis/cp39)
+    install(TARGETS ptcore.cp39 LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/redis/cp39)
 else()
-    set_target_properties(posetracks_core.cp39 PROPERTIES
+    set_target_properties(ptcore.cp39 PROPERTIES
         SUFFIX ".pyd"
     )
-    install(TARGETS posetracks_core.cp39 RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/redis/cp39)
+    install(TARGETS ptcore.cp39 RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/redis/cp39)
 endif()
 
 else()

@@ -38,6 +38,8 @@ in the project's root directory.
 #include "makesdna/makesdna_types_4_1_1.h"
 #include "makesdna/makesdna_types_4_2_0.h"
 #include "makesdna/makesdna_types_4_2_1.h"
+#include "makesdna/makesdna_types_4_2_4.h"
+#include "makesdna/makesdna_types_4_3_0.h"
 #include "makesrna/makesrna_types_2_93_0.h"
 #include "makesrna/makesrna_types_3_0_0.h"
 #include "makesrna/makesrna_types_3_3_0.h"
@@ -59,6 +61,9 @@ enum class BlenderVersion {
     VER_4_1_1,
     VER_4_2_0,
     VER_4_2_1,
+    VER_4_2_4,
+    VER_4_3_0,
 };
 
 #endif
+

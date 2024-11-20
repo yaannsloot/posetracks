@@ -110,8 +110,12 @@ def register():
         compat_ver = posetracks_core.VER_4_1_0
     elif bpy.app.version < (4, 2, 1):
         compat_ver = posetracks_core.VER_4_2_0
-    else:
+    elif bpy.app.version < (4, 2, 4):
         compat_ver = posetracks_core.VER_4_2_1
+    elif bpy.app.version < (4, 3, 0):
+        compat_ver = posetracks_core.VER_4_2_4
+    else:
+        compat_ver = posetracks_core.VER_4_3_0
 
     posetracks_core.set_compatibility_mode(compat_ver)
 

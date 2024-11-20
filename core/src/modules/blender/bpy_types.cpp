@@ -312,7 +312,9 @@ ThemeWireColor bActionGroup::cs() const {
 		return A ( B reinterpret_cast<bAction3_4_0*>(data_ptr)-> C); \
 	else if (blender_ver < BlenderVersion::VER_4_2_0) \
 		return A ( B reinterpret_cast<bAction4_1_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<bAction4_2_0*>(data_ptr)-> C);
+	else if (blender_ver < BlenderVersion::VER_4_3_0) \
+		return A ( B reinterpret_cast<bAction4_2_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<bAction4_3_0*>(data_ptr)-> C);
 
 #define BACT_RETURN_REF(T, M) BACT_BASE_RETURN_BODY(T, &, M)
 #define BACT_RETURN_AS(T, M) BACT_BASE_RETURN_BODY(T,, M)
@@ -353,7 +355,9 @@ PreviewImage bAction::preview() const {
 #define ADAT_BASE_RETURN_BODY(A, B, C) \
 	if (blender_ver < BlenderVersion::VER_4_2_0) \
 		return A ( B reinterpret_cast<AnimData2_93_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<AnimData4_2_0*>(data_ptr)-> C);
+    else if (blender_ver < BlenderVersion::VER_4_3_0) \
+        return A ( B reinterpret_cast<AnimData4_2_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<AnimData4_3_0*>(data_ptr)-> C);
 
 #define ADAT_RETURN_REF(T, M) ADAT_BASE_RETURN_BODY(T, &, M)
 #define ADAT_RETURN_AS(T, M) ADAT_BASE_RETURN_BODY(T,, M)
@@ -1342,7 +1346,9 @@ short& CameraBGImage::source() const {
 		return A ( B reinterpret_cast<Camera4_0_0*>(data_ptr)-> C); \
 	else if (blender_ver < BlenderVersion::VER_4_2_0) \
 		return A ( B reinterpret_cast<Camera4_1_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<Camera4_2_0*>(data_ptr)-> C);
+	else if (blender_ver < BlenderVersion::VER_4_3_0) \
+		return A ( B reinterpret_cast<Camera4_2_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<Camera4_3_0*>(data_ptr)-> C);
 
 #define CAM_RETURN_REF(T, M) CAM_BASE_RETURN_BODY(T, &, M)
 #define CAM_RETURN_AS(T, M) CAM_BASE_RETURN_BODY(T,, M)
@@ -1443,7 +1449,9 @@ char& Camera::sensor_fit() const {
 		return A ( B reinterpret_cast<RenderData3_6_0*>(data_ptr)-> C); \
 	else if (blender_ver < BlenderVersion::VER_4_2_0) \
 		return A ( B reinterpret_cast<RenderData4_0_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<RenderData4_2_0*>(data_ptr)-> C);
+	else if (blender_ver < BlenderVersion::VER_4_3_0) \
+		return A ( B reinterpret_cast<RenderData4_2_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<RenderData4_3_0*>(data_ptr)-> C);
 
 #define RDAT_RETURN_REF(T, M) RDAT_BASE_RETURN_BODY(T, &, M)
 #define RDAT_RETURN_AS(T, M) RDAT_BASE_RETURN_BODY(T,, M)
@@ -1478,7 +1486,9 @@ int& RenderData::efra() const {
 		return A ( B reinterpret_cast<Scene4_0_0*>(data_ptr)-> C); \
 	else if (blender_ver < BlenderVersion::VER_4_2_0) \
 		return A ( B reinterpret_cast<Scene4_1_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<Scene4_2_0*>(data_ptr)-> C);
+	else if (blender_ver < BlenderVersion::VER_4_3_0) \
+		return A ( B reinterpret_cast<Scene4_2_0*>(data_ptr)-> C); \
+	return A ( B reinterpret_cast<Scene4_3_0*>(data_ptr)-> C);
 
 #define SCN_RETURN_REF(T, M) SCN_BASE_RETURN_BODY(T, &, M)
 #define SCN_RETURN_AS(T, M) SCN_BASE_RETURN_BODY(T,, M)
