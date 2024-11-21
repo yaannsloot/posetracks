@@ -77,7 +77,7 @@ def register():
 
     # Core lib compatibility mapping
 
-    if not ((2, 93, 0) <= bpy.app.version <= (4, 2, 1)):
+    if not ((2, 93, 0) <= bpy.app.version <= (4, 3, 0)):
         print("[PoseTracks] Registration failed.")
         registered = False
         return
