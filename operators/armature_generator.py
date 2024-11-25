@@ -209,6 +209,7 @@ def armature_mode_set(armature, mode):
     for obj in context.selected_objects:
         obj.select_set(False)
     context.view_layer.objects.active = armature_obj
+    armature_obj.hide_set(False)
     armature_obj.select_set(True)
     bpy.ops.object.mode_set(mode=mode)
 
