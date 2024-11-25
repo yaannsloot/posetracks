@@ -6,7 +6,7 @@ name = "PoseTracks"
 tagline = "Provides various computer vision and AI tracking tools in the clip editor"
 maintainer = "Ian Sloat"
 type = "add-on"
-website = "https://github.com/YaannSloot/posetracks"
+website = "https://github.com/yaannsloot/posetracks"
 tags = ["Animation", "Tracking"]
 blender_version_min = "4.3.0"
 
