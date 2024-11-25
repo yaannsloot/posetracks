@@ -15,6 +15,7 @@
 
 # Allow specific files
 !/CMakeLists.txt
+!/module/CMakeLists.txt
 !/LICENSE
 !/README.md
 !/build.py
