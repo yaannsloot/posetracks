@@ -21,7 +21,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 void OP_FilterTrackGaussian(int kernel_width);
 
-void OP_FilterFCurvesGaussian(int kernel_width);
+void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only);
 
 void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor);
 

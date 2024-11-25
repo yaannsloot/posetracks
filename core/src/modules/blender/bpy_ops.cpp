@@ -94,8 +94,12 @@ void OP_FilterTrackGaussian(int kernel_width) {
 	context.area().tag_redraw();
 }
 
+/* checks if the given BezTriple is selected */
+#define BEZT_ISSEL_ANY(bezt) \
+  ((bezt.f2() & 1) || (bezt.f1() & 1) || (bezt.f3() & 1))
+
 // Be sure to add an option to only filter selected keys later
-void OP_FilterFCurvesGaussian(int kernel_width) {
+void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only) {
 	PyBlendContext context;
 	PyFCurveSeq editable_fcurves = context.selected_editable_fcurves();
 	if (editable_fcurves.is_null()) {
@@ -110,9 +114,10 @@ void OP_FilterFCurvesGaussian(int kernel_width) {
 		if (num_points < 1)
 			continue;
 		py_curve.update();
-		std::vector<float*> points(num_points);
-		std::vector<std::vector<double>> intervals;
-		std::vector<double> inter;
+		std::vector<std::vector<float*>> p_inters;
+		std::vector<std::vector<double>> v_inters;
+		std::vector<float*> p_inter;
+		std::vector<double> v_inter;
 		float last_x = fcurve.bezt(0).vec()[1][0];
 		for (size_t j = 0; j < num_points; ++j) {
 			BezTriple bezt = fcurve.bezt(j);
@@ -122,23 +127,29 @@ void OP_FilterFCurvesGaussian(int kernel_width) {
 			// Snapping is not required in the graph editor, so an optional switch could be added to disable
 			// interval splitting.
 			// The curves module could also come back into play here for an optional slower method
-			if (vecs[1][0] - last_x > 1) {
-				intervals.push_back(inter);
-				inter.clear();
+			if (vecs[1][0] - last_x > 1 || (!BEZT_ISSEL_ANY(bezt) && selected_only)) {
+				if (!v_inter.empty()) {
+					v_inters.push_back(v_inter);
+					p_inters.push_back(p_inter);
+				}
+				v_inter.clear();
+				p_inter.clear();
 			}
-			inter.push_back(static_cast<double>(vecs[1][1]));
+			v_inter.push_back(static_cast<double>(vecs[1][1]));
+			p_inter.push_back(&vecs[1][1]);
 			last_x = vecs[1][0];
-			points[j] = &vecs[1][1];
 		}
-		if (!inter.empty())
-			intervals.push_back(inter);
-		size_t j = 0;
-		for (auto& iv : intervals) {
+		if (!v_inter.empty()) {
+			v_inters.push_back(v_inter);
+			p_inters.push_back(p_inter);
+		}
+		for (size_t j = 0; j < p_inters.size(); ++j) {
+			auto& ip = p_inters[j];
+			auto& iv = v_inters[j];
 			int k_width = std::min(kernel_width, static_cast<int>(iv.size()));
 			auto filtered = g_conv_1d(iv, k_width);
-			for (double& y : filtered) {
-				*points[j] = static_cast<float>(y);
-				++j;
+			for (size_t k = 0; k < ip.size(); ++k) {
+				*ip[k] = static_cast<float>(filtered[k]);
 			}
 		}
 		py_curve.update();
