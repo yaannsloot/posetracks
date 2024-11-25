@@ -19,11 +19,11 @@ import bpy
 
 
 class PoseSelectedView3DUIPanel(bpy.types.Panel):
-    bl_label = "Selected Pose"
+    bl_label = "PoseNode Info"
     bl_idname = "POSETRACKS_POSE_SELECTED_VIEW3D_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Item"
+    bl_category = "PoseTracks"
     bl_context = "objectmode"
 
     display_priority = 2
@@ -52,18 +52,18 @@ class PoseSelectedView3DUIPanel(bpy.types.Panel):
         row = box.row()
         row.label(text=f'Source: {pose_source.capitalize()}')
         row = box.row()
-        row.label(text=f'Active ID: {joint_id}')
+        row.label(text=f'Node ID: {joint_id}')
 
         row = layout.row()
         row.operator("posetracks.generate_armature_operator")
 
 
 class ArmatureSelectedView3DUIPanel(bpy.types.Panel):
-    bl_label = "Selected Armature"
+    bl_label = "Armature Info"
     bl_idname = "POSETRACKS_ARMATURE_SELECTED_VIEW3D_PT_panel"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Item"
+    bl_category = "PoseTracks"
     bl_context = "objectmode"
 
     display_priority = 3
