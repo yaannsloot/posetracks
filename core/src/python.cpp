@@ -103,7 +103,7 @@ namespace pybind11::detail {
 
 }
 
-PYBIND11_MODULE(ptcore, m)
+PYBIND11_MODULE(PYBIND_MODULE_NAME, m)
 {
 	// Submodules
 	auto m_data = m.def_submodule("data");

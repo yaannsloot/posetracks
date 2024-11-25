@@ -109,11 +109,14 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
 )
     set(LINK_LIST_BASE tbb ${LINK_LIST_BASE})
 endif()
-
-# Pybind Subdirectories
-add_subdirectory(module/cp39)
-add_subdirectory(module/cp310)
-add_subdirectory(module/cp311)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/module/
+    DESTINATION ${CMAKE_BINARY_DIR}/redis
+    PATTERN "CMakeLists.txt" EXCLUDE
+    
+)
+# Pybind Subdirectory
+set(PYTHON_VERSIONS 3.9 3.10 3.11)
+add_subdirectory(module)
 
 # INSTALL Target setup
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/module/

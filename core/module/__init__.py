@@ -21,41 +21,22 @@ import json
 import importlib
 import urllib.request
 
-# Temporarily add module directory to environment
-_old_path = os.environ.get('PATH', '')
-_init_path = os.path.dirname(os.path.abspath(__file__))
-if os.name == 'nt':
-    _dll_path = os.path.join(_init_path, "bin")
-    os.environ['PATH'] = _init_path + os.pathsep + _dll_path + os.pathsep + _old_path
-    os.add_dll_directory(_init_path)
-    os.add_dll_directory(_dll_path)
+_vmin = sys.version_info.minor
+if _vmin == 9:
+    from . import ptcore_cp39 as _pyc
+elif _vmin == 10:
+    from . import ptcore_cp310 as _pyc
+elif _vmin == 11:
+    from . import ptcore_cp311 as _pyc
 else:
-    # Library will be rpathed to lib dir, so no need to add to path
-    os.environ['PATH'] = _init_path + os.pathsep + _old_path
+    raise ImportError("python version not supported")
 
-# Get the current Python version
-_python_version = f"cp{sys.version_info.major}{sys.version_info.minor}"
-
-# Get the directory of the correct version of the module
-_module_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), _python_version)
-
-# Add the module directory to sys.path
-sys.path.insert(0, _module_dir)
-
-# Compiled modules
-_pyc = importlib.import_module("ptcore")
-
-# Remove the module directory from sys.path
-sys.path.remove(_module_dir)
-
-_model_dir = os.path.join(_init_path, "models")
-
+_model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 
 # General functions, classes, and constants
 
 def model_path(model_file):
     return os.path.join(_model_dir, model_file)
-
 
 # Pythonic extensions to native class bindings
 
