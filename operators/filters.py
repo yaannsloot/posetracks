@@ -61,13 +61,19 @@ class FilterFCurvesGaussian(bpy.types.Operator):
         min=1,
     )
 
+    selected_only: bpy.props.BoolProperty(
+        name="Selected Only",
+        description="Only filter selected keys",
+        default=False,
+    )
+
     @classmethod
     def poll(cls, context):
         return (context.area.type == 'GRAPH_EDITOR' and
                 context.selected_editable_fcurves)
 
     def execute(self, context):
-        pt_core.blender.OP_FilterFCurvesGaussian(self.kernel_width)
+        pt_core.blender.OP_FilterFCurvesGaussian(self.kernel_width, self.selected_only)
         return {'FINISHED'}
 
 
