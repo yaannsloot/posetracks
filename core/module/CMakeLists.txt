@@ -23,6 +23,7 @@ else()
     set_target_properties(${MOD_NAME} PROPERTIES
         SUFFIX ".pyd"
     )
+    target_link_options(${MOD_NAME} PRIVATE "/DELAYLOAD:onnxruntime.dll")
     install(TARGETS ${MOD_NAME} RUNTIME DESTINATION ${CMAKE_BINARY_DIR}/redis)
 endif()
 else()

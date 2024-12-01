@@ -20,7 +20,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #include <thread>
 #include <limits>
 
+bool checkForProvider(const std::string provider_str) {
+	// ONNXRuntime is now set to delay load following support for blender 4.3.
+	// It must be initialized manually to ensure proper loading of dependencies.
+	Ort::InitApi();
+
+	std::vector<std::string> providers = Ort::GetAvailableProviders();
+	for (const auto& provider : providers) {
+		if (provider_str == provider)
+			return true;
+	}
+	return false;
+}
+
 void ModelImpl::load(const std::string& model_path, Executor target_executor) {
+	Ort::InitApi();
+
 	// Unload the model if it is already loaded
 	unload();
 

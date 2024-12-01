@@ -71,51 +71,30 @@ def draw_ops_track_panel(self, context):
 
 keymaps = []
 
+def _compat_ver_to_tup(ver):
+    ver = [int(v) for v in ver.replace("VER_", "").split("_")]
+    return tuple(ver)
 
 def register():
     global registered
 
     # Core lib compatibility mapping
+    compat_map = zip(list(posetracks_core.BlenderVersion.__members__),
+                      [int(e) for e in posetracks_core.BlenderVersion.__members__.values()])   
+    compat_map = [(_compat_ver_to_tup(n), posetracks_core.BlenderVersion(v)) for n,v in compat_map]
+    compat_map.sort(key=lambda item : item[0])
+    bpy_ver = bpy.app.version
+    compat_ver = None
 
-    if not ((2, 93, 0) <= bpy.app.version <= (4, 3, 0)):
+    if not (compat_map[0][0] <= bpy.app.version <= compat_map[-1][0]):
         print("[PoseTracks] Registration failed.")
         registered = False
         return
 
-    compat_ver = None
-
-    if bpy.app.version < (2, 93, 4):
-        compat_ver = posetracks_core.VER_2_93_0
-    elif bpy.app.version < (3, 0, 0):
-        compat_ver = posetracks_core.VER_2_93_4
-    elif bpy.app.version < (3, 1, 0):
-        compat_ver = posetracks_core.VER_3_0_0
-    elif bpy.app.version < (3, 2, 0):
-        compat_ver = posetracks_core.VER_3_1_0
-    elif bpy.app.version < (3, 3, 0):
-        compat_ver = posetracks_core.VER_3_2_0
-    elif bpy.app.version < (3, 4, 0):
-        compat_ver = posetracks_core.VER_3_3_0
-    elif bpy.app.version < (3, 5, 0):
-        compat_ver = posetracks_core.VER_3_4_0
-    elif bpy.app.version < (3, 6, 0):
-        compat_ver = posetracks_core.VER_3_5_0
-    elif bpy.app.version < (3, 6, 8):
-        compat_ver = posetracks_core.VER_3_6_0
-    elif bpy.app.version < (4, 0, 0):
-        compat_ver = posetracks_core.VER_3_6_8
-    elif bpy.app.version < (4, 1, 0):
-        compat_ver = posetracks_core.VER_4_0_0
-    elif bpy.app.version < (4, 2, 0):
-        compat_ver = posetracks_core.VER_4_1_0
-    elif bpy.app.version < (4, 2, 1):
-        compat_ver = posetracks_core.VER_4_2_0
-    elif bpy.app.version < (4, 2, 4):
-        compat_ver = posetracks_core.VER_4_2_1
-    elif bpy.app.version < (4, 3, 0):
-        compat_ver = posetracks_core.VER_4_2_4
-    else:
-        compat_ver = posetracks_core.VER_4_3_0
+    for ver in compat_map:
+        if bpy_ver < ver[0]:
+            break
+        compat_ver = ver[1]
 
     posetracks_core.set_compatibility_mode(compat_ver)
 

@@ -18,8 +18,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #define NOMINMAX
 
 #include "dnn.hpp"
-
-#include <onnxruntime_cxx_api.h>
 #include <execution>
 
 Detection::Detection() {
@@ -738,15 +736,6 @@ std::vector<float> FitImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& ou
 
 void StretchImage(const cv::Mat& src, cv::Mat& dst, const cv::Size& out_size) {
 	cv::resize(src, dst, out_size);
-}
-
-bool checkForProvider(const std::string provider_str) {
-	std::vector<std::string> providers = Ort::GetAvailableProviders();
-	for (const auto& provider : providers) {
-		if (provider_str == provider)
-			return true;
-	}
-	return false;
 }
 
 cv::Mat getRoiWithPadding(const cv::Mat& image, cv::Rect roi) {

@@ -21,11 +21,10 @@ DllMain for windows builds. Adds bin to the list of DLL directories.
 
 #include <windows.h>
 #include <cstdio>
-#include <string>
+#include <filesystem>
 #include <iostream>
 
 BOOL WINAPI DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
-    std::cout << "OWOWOWOWWO" << std::endl;
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
     {
@@ -50,15 +49,13 @@ BOOL WINAPI DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved
             fprintf(stderr, "SetDefaultDllDirectories failed, error = %d\n", ret);
             return false;
         }
-        std::string fullpath(path);
-        fullpath += "\\bin";
-        std::wstring wfullpath = std::wstring(fullpath.begin(), fullpath.end());
-        if (!AddDllDirectory(wfullpath.c_str())) {
+        std::filesystem::path module_path(path);
+        std::filesystem::path bin_path = module_path.parent_path() / "bin";
+        if (!AddDllDirectory(bin_path.c_str())) {
             int ret = GetLastError();
             fprintf(stderr, "AddDllDirectory failed, error = %d\n", ret);
             return false;
         }
-        std::cout << fullpath << std::endl;
         break;
     }
     default:

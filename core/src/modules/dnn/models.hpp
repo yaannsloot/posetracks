@@ -17,6 +17,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
+#define ORT_API_MANUAL_INIT
+
 #include "dnn.hpp"
 #include <onnxruntime_cxx_api.h>
 #include <type_traits>
