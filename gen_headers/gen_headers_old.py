@@ -16,13 +16,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ----------------------------------------------------------------------
 
-This script is a bit messy but can be used as a starting point for
-generating headers that contain all variations of Blender's
-DNA and RNA structures.
-
-enum extraction is included but not used
-
-Expect this file to be heavily refactored at a later date
+This script is a horrid mess and needs to be completely redone.
+Do not use any output files out of the box. They will not compile properly.
 """
 
 import os
@@ -49,14 +44,12 @@ def prepare_directory(dir):
 def remove_comments(text):
     def nl(s):
         return "" + ("\n" * s.count('\n'))
-
     def replacer(match):
         s = match.group(0)
         if s.startswith('/'):
             return nl(s)
         else:
             return s
-
     pattern = re.compile(
         r'\/\/.*?$|\/\*.*?\*\/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE

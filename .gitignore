@@ -72,6 +72,9 @@ cython_debug/
 *.txt
 *.onnx
 *.pyc
+/gen_headers/blender
+/gen_headers/*.db
+
 
 # Allow gitignore
 !/.gitignore
@@ -81,6 +84,7 @@ cython_debug/
 !/operators
 !/property_groups
 !/ui
+!/gen_headers
 
 # Allowed files
 !/LICENSE
@@ -92,4 +96,3 @@ cython_debug/
 !/pose_autogen_defs.py
 !/utils.py
 !/blender_manifest.toml
-!/gen_headers.py
