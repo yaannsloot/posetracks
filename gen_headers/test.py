@@ -80,14 +80,13 @@ def test2():
     print(graph.nodes, graph.edges)
     print(graph.sort())
 
+
 def test3():
-    db.init_db()
-    db.add_version(2, 3, 0)
-    db.add_version(2, 4, 0)
-    db.add_version(2, 5, 0)
-    print(db.get_versions())
-    print(db.is_loaded(1, 0, 0))
-    print(db.is_loaded(2, 3, 0))
+    ver, _ = db.BlenderVersion.get_or_create(major=2, minor=3, patch=5)
+    struct, _ = db.Struct.get_or_create(tag='TheStruct')
+    revision, _ = db.Revision.get_or_create(ver_id=ver, struct_id=struct, src="whoa", crc32=db.crc32("whoa"))
+    print([rev for rev in struct.revisions])
+
 
 
 test3()
