@@ -70,12 +70,13 @@ class Revision(BaseModel):
 class Dependency(BaseModel):
     dep_id = IntegerField(primary_key=True)
     rev_id = ForeignKeyField(Revision, backref='dependencies')
-    struct_id = ForeignKeyField(Struct)
+    rev_ref_id = ForeignKeyField(Revision, null=True)
+    tag = TextField()
     is_ptr = BooleanField(default=False)
 
     class Meta:
         indexes = (
-            (('rev_id', 'struct_id'), True),
+            (('rev_id', 'rev_ref_id'), True),
         )
 
 

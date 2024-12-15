@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 Tests for new gen header functions
 """
+import peewee
 
 from gen_headers import git
 from gen_headers import regex
@@ -88,5 +89,44 @@ def test3():
     print([rev for rev in struct.revisions])
 
 
+def test4():
+    git.init_repo()
+    versions = git.available_versions()
+    dna_dir = 'blender/source/blender/makesdna'
+    for v in versions:
+        git.checkout_version(v)
+        db_ver, _ = db.BlenderVersion.get_or_create(major=v[0], minor=v[1], patch=v[2])
+        src_structs = {}
+        structs = {}
+        db_structs = {}
+        db_revisions = {}
+        db_dependencies = {}
+        for header in os.listdir(dna_dir):
+            if not header.endswith(('.h', '.hpp')):
+                continue
+            header = os.path.join(dna_dir, header)
+            with open(header, 'r') as f:
+                header = f.read()
+            regex.file_structs_to_dict(header, src_structs)
+        for n, s in src_structs.items():
+            str_obj = types.StructDef(n, s[1:-1])
+            if not str_obj.valid:
+                continue
+            structs[n] = str_obj
+            db_structs[n], _ = db.Struct.get_or_create(tag=n)
+            s_str = str(str_obj)
+            try:
+                db_revisions[n], _ = db.Revision.get_or_create(struct_id=db_structs[n], ver_id=db_ver, src=s_str,
+                                                               crc32=db.crc32(s_str))
+            except peewee.IntegrityError:
+                continue
+            for line in str_obj.body:
+                if not line.is_struct:
+                    continue
+                dep_map = db_dependencies.setdefault(n, {})
+                dep_map[line.struct_name], _ = db.Dependency.get_or_create(rev_id=db_revisions[n],
+                                                                           tag=line.struct_name,
+                                                                           is_ptr=line.ptr_level > 0)
 
-test3()
+
+test4()
