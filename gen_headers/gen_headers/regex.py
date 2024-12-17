@@ -76,12 +76,19 @@ def extract_enum_definitions(file_content):
             for match in matches]
 
 
-def file_structs_to_dict(file_content, output):
-    file_content = remove_comments(file_content)
-    file_content = remove_macros(remove_comments(file_content))
-    for struct, body in extract_struct_definitions(file_content).items():
+def src_structs_to_dict(src_content):
+    output = {}
+    content = remove_macros(remove_comments(src_content))
+    for struct, body in extract_struct_definitions(content).items():
         body = ([body[0]] +
                 ['    ' + line.replace('DNA_DEPRECATED', '').strip() + ';' for line in
                  ''.join(body[1:-1]).split(';') if line.strip() != ''] +
                 [body[-1]])
         output[struct] = body
+    return output
+    
+
+def load_structs_from_file(path):
+    with open(path, 'r') as f:
+        src = f.read()
+    return src_structs_to_dict(src)

@@ -127,3 +127,12 @@ class StructDef:
     def orig_str(self):
         return 'struct ' + self.orig_name + ' {\n' + '\n'.join(
             ['    ' + line.orig_str() for line in self.body]) + '\n};'
+
+def from_mapping(struct_dict, keep_invalid=False):
+    output = {}
+    for n, s in struct_dict.items():
+        s_def = StructDef(n, s[1:-1])
+        if not s_def.valid and not keep_invalid:
+            continue
+        output[n] = s_def
+    return output

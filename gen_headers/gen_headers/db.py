@@ -76,8 +76,128 @@ class Dependency(BaseModel):
 
     class Meta:
         indexes = (
-            (('rev_id', 'rev_ref_id'), True),
+            (('rev_id', 'rev_ref_id', 'tag', 'is_ptr'), True),
         )
+
+def _get_ranked_rev_cte(ver):
+    return (
+        Revision.select(
+            BlenderVersion.major, BlenderVersion.minor, BlenderVersion.patch,
+            Struct.tag,
+            Revision.available, Revision.rev_id,
+            fn.ROW_NUMBER().over(
+                partition_by=[Struct.tag],
+                order_by=[
+                    BlenderVersion.major.desc(),
+                    BlenderVersion.minor.desc(),
+                    BlenderVersion.patch.desc()
+                ]
+            ).alias('rank')
+        ).join(BlenderVersion, on=(BlenderVersion.ver_id == Revision.ver_id))
+        .join(Struct, on=(Struct.struct_id == Revision.struct_id))
+        .where(
+            (BlenderVersion.major < ver[0]) | 
+            ((BlenderVersion.major == ver[0]) & (BlenderVersion.minor < ver[1])) | 
+            ((BlenderVersion.major == ver[0]) & (BlenderVersion.minor == ver[1]) & (BlenderVersion.patch <= ver[2]))
+        )
+        .cte('ranked_revisions')
+    )
+
+def _get_top_rev_cte(ranked_rev_cte):
+    return (
+        ranked_rev_cte.select(
+            ranked_rev_cte.c.major, 
+            ranked_rev_cte.c.minor, 
+            ranked_rev_cte.c.patch, 
+            ranked_rev_cte.c.tag, 
+            ranked_rev_cte.c.available,
+            ranked_rev_cte.c.rev_id
+        ).where(ranked_rev_cte.c.rank == 1)
+        .cte('top_revisions')
+    )
+
+def _get_target_dep_cte(top_rev_cte, ver):
+    return (
+        Revision.select(
+            BlenderVersion.major, BlenderVersion.minor, BlenderVersion.patch,
+            Struct.tag,
+            Revision.rev_id,
+            Revision.src,
+            Dependency.tag.alias('dep_tag'),
+            top_rev_cte.c.rev_id.alias('dep_id'),
+            Dependency.is_ptr.alias('dep_is_ptr'),
+            Case(None, (
+                (Dependency.tag.is_null(), None),
+                (top_rev_cte.c.available == 1, 1)
+            ), 0).alias('dep_available')
+        )
+        .join(BlenderVersion, on=(BlenderVersion.ver_id == Revision.ver_id))
+        .join(Dependency, JOIN.LEFT_OUTER, on=(Dependency.rev_id == Revision.rev_id))
+        .join(top_rev_cte, JOIN.LEFT_OUTER, on=(top_rev_cte.c.tag == Dependency.tag))
+        .join(Struct, on=(Struct.struct_id == Revision.struct_id))
+        .where((BlenderVersion.major == ver[0]) & (BlenderVersion.minor == ver[1]) & (BlenderVersion.patch == ver[2]))
+        .cte('target_dependency_table')
+    )
+
+def _get_target_rev_available_cte(target_dep_cte):
+    return (
+        target_dep_cte.select(
+            target_dep_cte.c.tag,
+            (fn.SUM((target_dep_cte.c.dep_available.is_null()) | (target_dep_cte.c.dep_available == 1) | (target_dep_cte.c.dep_is_ptr == 1)) == fn.COUNT(1)).alias('rev_available')
+        ).group_by(target_dep_cte.c.tag)
+        .cte('target_rev_available')
+    )
+
+def debug_cte(primary_cte, dependencies):
+    return (
+        primary_cte.select()
+        .with_cte(*dependencies)
+    )
+
+def resolve_dependencies(ver):
+    ranked_revisions = _get_ranked_rev_cte(ver)
+    top_revisions = _get_top_rev_cte(ranked_revisions)
+    target_dep_table = _get_target_dep_cte(top_revisions, ver)
+    available_revs = _get_target_rev_available_cte(target_dep_table)
+    query = (
+        target_dep_table.select(
+            target_dep_table.c.major,
+            target_dep_table.c.minor,
+            target_dep_table.c.patch,
+            target_dep_table.c.rev_id,
+            target_dep_table.c.tag,
+            target_dep_table.c.src,
+            target_dep_table.c.dep_tag,
+            target_dep_table.c.dep_id,
+            target_dep_table.c.dep_available,
+            target_dep_table.c.dep_is_ptr,
+            available_revs.c.rev_available
+        )
+        .join(available_revs, on=(target_dep_table.c.tag == available_revs.c.tag))
+        .with_cte(ranked_revisions, top_revisions, target_dep_table, available_revs)
+    )
+    return _db.execute(query=query)
+
+def get_ver_ref(ver: tuple[int, int, int]):
+    db_ver, _ = BlenderVersion.get_or_create(major=ver[0], minor=ver[1], patch=ver[2])
+    return db_ver
+
+
+def add_dependency(revision, tag, is_ptr):
+    db_dep, _ = Dependency.get_or_create(rev_id=revision, tag=tag, is_ptr=is_ptr)
+    return db_dep
+
+
+def add_revision(ver, s_def):
+    db_ver = get_ver_ref(ver)
+    db_struct, _ = Struct.get_or_create(tag=s_def.name)
+    src_str = str(s_def)
+    try:
+        db_rev, _ = Revision.get_or_create(struct_id=db_struct, ver_id=db_ver, src=src_str,
+                                           crc32=crc32(src_str))
+        return db_rev
+    except IntegrityError:
+        return
 
 
 _db.connect()

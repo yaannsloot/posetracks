@@ -89,44 +89,52 @@ def test3():
     print([rev for rev in struct.revisions])
 
 
+
+
 def test4():
     git.init_repo()
     versions = git.available_versions()
     dna_dir = 'blender/source/blender/makesdna'
     for v in versions:
+        db_ver = db.get_ver_ref(v)
+        if db_ver.loaded:
+            continue
         git.checkout_version(v)
-        db_ver, _ = db.BlenderVersion.get_or_create(major=v[0], minor=v[1], patch=v[2])
-        src_structs = {}
-        structs = {}
-        db_structs = {}
-        db_revisions = {}
-        db_dependencies = {}
-        for header in os.listdir(dna_dir):
-            if not header.endswith(('.h', '.hpp')):
-                continue
-            header = os.path.join(dna_dir, header)
-            with open(header, 'r') as f:
-                header = f.read()
-            regex.file_structs_to_dict(header, src_structs)
-        for n, s in src_structs.items():
-            str_obj = types.StructDef(n, s[1:-1])
-            if not str_obj.valid:
-                continue
-            structs[n] = str_obj
-            db_structs[n], _ = db.Struct.get_or_create(tag=n)
-            s_str = str(str_obj)
-            try:
-                db_revisions[n], _ = db.Revision.get_or_create(struct_id=db_structs[n], ver_id=db_ver, src=s_str,
-                                                               crc32=db.crc32(s_str))
-            except peewee.IntegrityError:
-                continue
-            for line in str_obj.body:
-                if not line.is_struct:
+        for header in git.list_headers(dna_dir):
+            structs = regex.load_structs_from_file(header)
+            for tag, s_def in types.from_mapping(structs).items():
+                rev = db.add_revision(v, s_def)
+                if rev is None:
                     continue
-                dep_map = db_dependencies.setdefault(n, {})
-                dep_map[line.struct_name], _ = db.Dependency.get_or_create(rev_id=db_revisions[n],
-                                                                           tag=line.struct_name,
-                                                                           is_ptr=line.ptr_level > 0)
+                for line in s_def.body:
+                    if not line.is_struct:
+                        continue
+                    db.add_dependency(rev, line.struct_name, line.ptr_level > 0)
+        db_ver.loaded = True
+        db_ver.save()
+    for v in versions:
+        db_ver = db.get_ver_ref(v)
+        if db_ver.evaluated:
+            continue
+        print("Evaluating blender ver", v)
+        deps = db.resolve_dependencies(v)
+        last_id = -1
+        db_rev = None
+        for row in deps:
+            current_id = row[3]
+            if current_id != last_id:
+                db_rev = db.Revision.get(rev_id=row[3])
+                db_rev.available = row[10]
+                db_rev.save()
+            if row[6] is None:
+                continue
+            # Graph needs to be evaluated somewhere in here
+            db_dep = db.Dependency.get(rev_id=db_rev, tag=row[6])
+            db_dep.rev_ref_id = row[7]
+            db_dep.save()
+            last_id = current_id
+        db_ver.evaluated = True
+        db_ver.save()
 
 
 test4()
