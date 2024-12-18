@@ -67,6 +67,7 @@ def test2():
     graph.add_node('b')
     graph.add_node('c')
     graph.add_node('d')
+    graph.add_node('z')
     graph.add_edge('a', 'd')
     graph.add_edge('a', 'b')
     graph.add_edge('e', 'd')
@@ -114,27 +115,33 @@ def test4():
         db_ver.save()
     for v in versions:
         db_ver = db.get_ver_ref(v)
+        """
         if db_ver.evaluated:
             continue
+        """
         print("Evaluating blender ver", v)
         deps = db.resolve_dependencies(v)
-        last_id = -1
-        db_rev = None
+        graph = depgraph.graph()
+        all_tags = set()
         for row in deps:
-            current_id = row[3]
-            if current_id != last_id:
-                db_rev = db.Revision.get(rev_id=row[3])
-                db_rev.available = row[10]
-                db_rev.save()
-            if row[6] is None:
-                continue
-            # Graph needs to be evaluated somewhere in here
-            db_dep = db.Dependency.get(rev_id=db_rev, tag=row[6])
-            db_dep.rev_ref_id = row[7]
-            db_dep.save()
-            last_id = current_id
+            all_tags.add(row['tag'])
+            if row['rev_available']:
+                graph.add_node(row['tag'])
+            if row['dep_available']:
+                graph.add_node(row['dep_tag'])
+            if row['dep_available'] is not None and not row['dep_is_ptr']: 
+                graph.add_edge(row['dep_tag'], row['tag'])
+        graph.remove_dangling()
+        unavailable = all_tags - graph.nodes
+        targets = db.Revision.select().join(db.Struct).where((db.Revision.ver_id == db_ver) & (db.Struct.tag << unavailable))
+        db.single_val_update_atomic(db.Revision, {"rev_id": targets}, {"available": 0})
         db_ver.evaluated = True
         db_ver.save()
+        
 
 
 test4()
+#db_ver = db.get_ver_ref((2,25,0))
+#unavailable = {"bPoseChannel", "bPose", "bActionChannel"}
+#targets = db.Revision.select().join(db.Struct).where((db.Revision.ver_id == db_ver) & (db.Struct.tag << unavailable))
+#db.single_val_update_atomic(db.Revision, {"rev_id": targets}, {"available": 0})

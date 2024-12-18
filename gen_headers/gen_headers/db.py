@@ -176,7 +176,7 @@ def resolve_dependencies(ver):
         .join(available_revs, on=(target_dep_table.c.tag == available_revs.c.tag))
         .with_cte(ranked_revisions, top_revisions, target_dep_table, available_revs)
     )
-    return _db.execute(query=query)
+    return list(query.bind(_db).dicts())
 
 def get_ver_ref(ver: tuple[int, int, int]):
     db_ver, _ = BlenderVersion.get_or_create(major=ver[0], minor=ver[1], patch=ver[2])
@@ -199,6 +199,19 @@ def add_revision(ver, s_def):
     except IntegrityError:
         return
 
+def single_val_update_atomic(db_obj, sel_attr_dict, attr_val_dict):
+    with _db.atomic():
+        condition = None
+        for k, v in sel_attr_dict.items():
+            sub_condition = getattr(db_obj, k).in_(v)
+            condition = sub_condition if condition is None else condition & sub_condition
+        objs = db_obj.select()
+        if condition is not None:
+            objs = objs.where(condition)
+        for obj in objs:
+            for k, v in attr_val_dict.items():
+                setattr(obj, k, v)
+        db_obj.bulk_update(objs, fields=list(attr_val_dict.keys()), batch_size=50)
 
 _db.connect()
 _db.create_tables([BlenderVersion, Struct, Revision, Dependency])
