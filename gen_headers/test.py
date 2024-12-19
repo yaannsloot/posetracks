@@ -98,45 +98,28 @@ def test4():
     dna_dir = 'blender/source/blender/makesdna'
     for v in versions:
         db_ver = db.get_ver_ref(v)
-        if db_ver.loaded:
-            continue
-        git.checkout_version(v)
-        for header in git.list_headers(dna_dir):
-            structs = regex.load_structs_from_file(header)
-            for tag, s_def in types.from_mapping(structs).items():
-                rev = db.add_revision(v, s_def)
-                if rev is None:
-                    continue
-                for line in s_def.body:
-                    if not line.is_struct:
-                        continue
-                    db.add_dependency(rev, line.struct_name, line.ptr_level > 0)
-        db_ver.loaded = True
-        db_ver.save()
-    for v in versions:
-        db_ver = db.get_ver_ref(v)
-        """
-        if db_ver.evaluated:
-            continue
-        """
-        print("Evaluating blender ver", v)
-        deps = db.resolve_dependencies(v)
-        graph = depgraph.graph()
-        all_tags = set()
-        for row in deps:
-            all_tags.add(row['tag'])
-            if row['rev_available']:
-                graph.add_node(row['tag'])
-            if row['dep_available']:
-                graph.add_node(row['dep_tag'])
-            if row['dep_available'] is not None and not row['dep_is_ptr']: 
-                graph.add_edge(row['dep_tag'], row['tag'])
-        graph.remove_dangling()
-        unavailable = all_tags - graph.nodes
-        targets = db.Revision.select().join(db.Struct).where((db.Revision.ver_id == db_ver) & (db.Struct.tag << unavailable))
-        db.single_val_update_atomic(db.Revision, {"rev_id": targets}, {"available": 0})
-        db_ver.evaluated = True
-        db_ver.save()
+        if not db_ver.loaded:
+            print('Checking out blender version...', v)
+            git.checkout_version(v)
+            print("Loading structs...")
+            s_map = regex.load_structs_from_dir(dna_dir)
+            s_defs = types.from_mapping(s_map)
+            print("Writing structs to db...")
+            db.load_revisions_atomic(v, s_defs)
+            db_ver.loaded = True
+            db_ver.save()
+        if not db_ver.evaluated:
+            print("Evaluating dependencies...", v)
+            deps = db.resolve_dependencies(v)
+            graph, all_tags = depgraph.graph_from_dep_query(deps)
+            graph.remove_dangling()
+            unavailable = all_tags - graph.nodes
+            targets = db.Revision.select().join(db.Struct).where((db.Revision.ver_id == db_ver) & (db.Struct.tag << unavailable))
+            db.single_val_update_atomic(db.Revision, {"rev_id": targets}, {"available": 0})
+            db_ver.evaluated = True
+            db_ver.save()
+        
+        
         
 
 

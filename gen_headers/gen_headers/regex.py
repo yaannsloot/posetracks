@@ -20,6 +20,7 @@ Regex functions for processing C header source code
 """
 
 import regex as re
+from . import git
 
 
 def remove_comments(text):
@@ -92,3 +93,9 @@ def load_structs_from_file(path):
     with open(path, 'r') as f:
         src = f.read()
     return src_structs_to_dict(src)
+
+def load_structs_from_dir(path):
+    structs = {}
+    for header in git.list_headers(path):
+        structs.update(load_structs_from_file(header))
+    return structs

@@ -88,3 +88,16 @@ class graph:
                 raise RuntimeError('Cycle detected while sorting graph')
             last_len = len(node_degrees)
         return order
+
+def graph_from_dep_query(deps):
+    g = graph()
+    all_tags = set()
+    for row in deps:
+        all_tags.add(row['tag'])
+        if row['rev_available']:
+            g.add_node(row['tag'])
+        if row['dep_available']:
+            g.add_node(row['dep_tag'])
+        if row['dep_available'] is not None and not row['dep_is_ptr']: 
+            g.add_edge(row['dep_tag'], row['tag'])
+    return g, all_tags

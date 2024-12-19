@@ -32,7 +32,7 @@ def init_repo():
         _repo = git.Repo('blender')
     else:
         _repo = git.Repo.clone_from('https://github.com/blender/blender.git', 'blender')
-    #_update_repo()
+    _update_repo()
     _get_versions()
 
 
@@ -54,8 +54,7 @@ def _get_versions():
 def _update_repo():
     if _repo is None:
         return
-    _repo.git.reset('--hard')
-    _repo.remotes.origin.pull()
+    _repo.remotes.origin.fetch()
 
 def available_versions():
     return sorted([v[1] for v in _versions])
@@ -68,7 +67,6 @@ def checkout_version(ver):
             ver_str = v[0]
     if not ver_str:
         print(f"{ver} not a valid blender version")
-    print(f'Checking out blender version {ver}...')
     _repo.git.checkout(ver_str, '-f')
 
 def list_headers(path):

@@ -213,5 +213,16 @@ def single_val_update_atomic(db_obj, sel_attr_dict, attr_val_dict):
                 setattr(obj, k, v)
         db_obj.bulk_update(objs, fields=list(attr_val_dict.keys()), batch_size=50)
 
+def load_revisions_atomic(ver, s_defs):
+    with _db.atomic():
+        for tag, s_def in s_defs.items():
+            rev = add_revision(ver, s_def)
+            if rev is None:
+                    continue
+            for line in s_def.body:
+                if not line.is_struct:
+                    continue
+                add_dependency(rev, line.struct_name, line.ptr_level > 0)
+
 _db.connect()
 _db.create_tables([BlenderVersion, Struct, Revision, Dependency])
