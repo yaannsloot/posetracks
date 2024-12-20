@@ -126,6 +126,9 @@ def _get_target_dep_cte(top_rev_cte, ver):
             Dependency.tag.alias('dep_tag'),
             top_rev_cte.c.rev_id.alias('dep_id'),
             Dependency.is_ptr.alias('dep_is_ptr'),
+            top_rev_cte.c.major.alias('dep_major'),
+            top_rev_cte.c.minor.alias('dep_minor'),
+            top_rev_cte.c.patch.alias('dep_patch'),
             Case(None, (
                 (Dependency.tag.is_null(), None),
                 (top_rev_cte.c.available == 1, 1)
@@ -171,6 +174,9 @@ def resolve_dependencies(ver):
             target_dep_table.c.dep_id,
             target_dep_table.c.dep_available,
             target_dep_table.c.dep_is_ptr,
+            target_dep_table.c.dep_major,
+            target_dep_table.c.dep_minor,
+            target_dep_table.c.dep_patch,
             available_revs.c.rev_available
         )
         .join(available_revs, on=(target_dep_table.c.tag == available_revs.c.tag))

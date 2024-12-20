@@ -27,7 +27,7 @@ from gen_headers import depgraph
 from gen_headers import db
 import os
 import pprint
-
+import re
 
 def test():
     git.init_repo()
@@ -89,8 +89,37 @@ def test3():
     revision, _ = db.Revision.get_or_create(ver_id=ver, struct_id=struct, src="whoa", crc32=db.crc32("whoa"))
     print([rev for rev in struct.revisions])
 
-
-
+def write_header(name_prefix, ver, dep_graph, deps):
+    final_output = ""
+    if len(deps) == 0:
+        return final_output, ""
+    ver_string = lambda a: f"{a[0]}_{a[1]}_{a[2]}"
+    ver_name = lambda b: f"{name_prefix}{ver_string(b)}"
+    import_vers = set()
+    name_mappings = {}
+    src_mappings = {}
+    for d in deps:
+        main_v = (d['major'], d['minor'], d['patch'])
+        dep_v = (d["dep_major"], d["dep_minor"], d["dep_patch"])
+        name_mappings[d['tag']] = f"{d['tag']}{ver_string(main_v)}"
+        src_mappings[d['tag']] = d['src']
+        if main_v == dep_v:
+            continue
+        if d['dep_available']:
+            import_vers.add(dep_v)
+            name_mappings[d['dep_tag']] = f"{d['dep_tag']}{ver_string(dep_v)}"
+        else:
+            name_mappings[d['dep_tag']] = "void"
+    for v in sorted(list(import_vers)):
+        final_output += f'#include "{ver_name(v)}.hpp"\n'
+    for tag in dep_graph.sort():
+        if tag in src_mappings:
+            final_output += '\n' + src_mappings[tag] + '\n'
+    for orig, nname in name_mappings.items():
+        pattern = rf" {orig}(\s|\*)"
+        replacement = rf" {nname}\1"
+        final_output = re.sub(pattern, replacement, final_output)
+    return final_output, f"{ver_name(ver)}.hpp"
 
 def test4():
     git.init_repo()
@@ -108,16 +137,27 @@ def test4():
             db.load_revisions_atomic(v, s_defs)
             db_ver.loaded = True
             db_ver.save()
+        deps = db.resolve_dependencies(v)
+        graph, all_tags = depgraph.graph_from_dep_query(deps)
+        graph.remove_dangling()
         if not db_ver.evaluated:
             print("Evaluating dependencies...", v)
-            deps = db.resolve_dependencies(v)
-            graph, all_tags = depgraph.graph_from_dep_query(deps)
-            graph.remove_dangling()
             unavailable = all_tags - graph.nodes
             targets = db.Revision.select().join(db.Struct).where((db.Revision.ver_id == db_ver) & (db.Struct.tag << unavailable))
             db.single_val_update_atomic(db.Revision, {"rev_id": targets}, {"available": 0})
             db_ver.evaluated = True
             db_ver.save()
+            deps = db.resolve_dependencies(v)
+        if len(deps) == 0:
+            continue
+        print("Writing header file...", v)
+        header_out, fname = write_header("makesdna_types", v, graph, deps)
+        os.makedirs("output", exist_ok=True)
+        with open(os.path.join("output", fname), 'w') as f:
+            f.write(header_out)
+
+        
+        
         
         
         
