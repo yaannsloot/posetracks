@@ -230,5 +230,20 @@ def load_revisions_atomic(ver, s_defs):
                     continue
                 add_dependency(rev, line.struct_name, line.ptr_level > 0)
 
+def get_version_mappings():
+    revs = (Revision.select(
+        BlenderVersion.major,
+        BlenderVersion.minor,
+        BlenderVersion.patch,
+        Struct.tag
+    ).join(BlenderVersion, on=(Revision.ver_id == BlenderVersion.ver_id))
+    .join(Struct, on=(Revision.struct_id == Struct.struct_id))
+    .where(Revision.available == 1).dicts())
+    result = {}
+    for rev in revs:
+        vers = result.setdefault(rev['tag'], set())
+        vers.add((rev['major'], rev['minor'], rev['patch']))
+    return result
+
 _db.connect()
 _db.create_tables([BlenderVersion, Struct, Revision, Dependency])

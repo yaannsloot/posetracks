@@ -111,7 +111,7 @@ def write_header(name_prefix, ver, dep_graph, deps):
         else:
             name_mappings[d['dep_tag']] = "void"
     for v in sorted(list(import_vers)):
-        final_output += f'#include "{ver_name(v)}.hpp"\n'
+        final_output += f'#include "{ver_name(v)}.h"\n'
     for tag in dep_graph.sort():
         if tag in src_mappings:
             final_output += '\n' + src_mappings[tag] + '\n'
@@ -119,7 +119,36 @@ def write_header(name_prefix, ver, dep_graph, deps):
         pattern = rf" {orig}(\s|\*)"
         replacement = rf" {nname}\1"
         final_output = re.sub(pattern, replacement, final_output)
-    return final_output, f"{ver_name(ver)}.hpp"
+    guard = f"{ver_name(ver)}_H".upper()
+    final_output = f"#ifndef {guard}\n#define {guard}\n" + final_output + "\n#endif"
+    return final_output, f"{ver_name(ver)}.h"
+
+def get_version_macro(obj_name, versions, global_ref="blender_ver", global_ref_type="BlenderVersion", class_ref="data_ptr"):
+    ver_string = lambda a: f"{a[0]}_{a[1]}_{a[2]}"
+    output = f"#define {obj_name.upper()}_BASE_RETURN_BODY(A, B, C) \\\n"
+    versions = sorted(list(versions))
+    for i in range(1, len(versions)):
+        current_ver = versions[i - 1]
+        next_ver = versions[i]
+        ref_name = obj_name + ver_string(current_ver)
+        output += (f"    if ({global_ref} < {global_ref_type}::VER_{ver_string(next_ver)}) \\\n"
+        f"        return A ( B reinterpret_cast<{ref_name}*>({class_ref})-> C); \\\n")
+    last_ref = obj_name + ver_string(versions[-1])
+    output += (f"    return A ( B reinterpret_cast<{last_ref}*>({class_ref})-> C); \n"
+    f"#define {obj_name.upper()}_RETURN_REF(T, M)    {obj_name.upper()}_BASE_RETURN_BODY(T, &, M) \n"
+    f"#define {obj_name.upper()}_RETURN_AS(T, M)     {obj_name.upper()}_BASE_RETURN_BODY(T,, M) \n"
+    f"#define {obj_name.upper()}_RETURN(M)           {obj_name.upper()}_BASE_RETURN_BODY(,, M) \n")
+    return output
+
+
+def write_macros(structs, file_name):
+    output = ""
+    for s, vers in structs.items():
+        macro = get_version_macro(s, vers)
+        output += macro + '\n'
+    guard = file_name.replace('.', '_').upper()
+    return f"#ifndef {guard}\n#define {guard}\n\n" + output + "#endif"
+
 
 def test4():
     git.init_repo()
@@ -155,6 +184,10 @@ def test4():
         os.makedirs("output", exist_ok=True)
         with open(os.path.join("output", fname), 'w') as f:
             f.write(header_out)
+    macros_out = write_macros(db.get_version_mappings(), "makesdna_mappings.h")
+    with open(os.path.join("output", "makesdna_mappings.h"), 'w') as f:
+            f.write(macros_out)
+        
 
         
         
@@ -168,3 +201,5 @@ test4()
 #unavailable = {"bPoseChannel", "bPose", "bActionChannel"}
 #targets = db.Revision.select().join(db.Struct).where((db.Revision.ver_id == db_ver) & (db.Struct.tag << unavailable))
 #db.single_val_update_atomic(db.Revision, {"rev_id": targets}, {"available": 0})
+
+#print(gen_version_map("Object", [(1,0,0),(2,0,0),(2,2,0),(3,0,0)]))
