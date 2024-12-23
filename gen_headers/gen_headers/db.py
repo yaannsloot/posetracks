@@ -67,7 +67,7 @@ class RevisionVersion(BaseModel):
 
     class Meta:
         indexes = (
-            (('ver_id', 'rev_id'), True)
+            (('ver_id', 'rev_id'), True),
         )
 
 
@@ -203,8 +203,9 @@ def add_revision(ver, s_def):
     db_struct, _ = Struct.get_or_create(tag=s_def.name)
     src_str = str(s_def)
     try:
-        db_rev, _ = Revision.get_or_create(struct_id=db_struct, ver_id=db_ver, src=src_str,
+        db_rev = Revision.create(struct_id=db_struct, src=src_str,
                                            crc32=crc32(src_str))
+        RevisionVersion.get_or_create(ver_id=db_ver, rev_id=db_rev)
         return db_rev
     except IntegrityError:
         return
@@ -250,4 +251,4 @@ def get_version_mappings():
     return result
 
 _db.connect()
-_db.create_tables([BlenderVersion, Struct, Revision, Dependency])
+_db.create_tables([BlenderVersion, Struct, Revision, RevisionVersion, Dependency])

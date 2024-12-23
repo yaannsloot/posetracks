@@ -114,6 +114,7 @@ def main():
             db.load_revisions_atomic(v, s_defs)
             db_ver.loaded = True
             db_ver.save()
+        continue
         deps = db.resolve_dependencies(v)
         graph, all_tags = depgraph.graph_from_dep_query(deps)
         graph.remove_dangling()
@@ -132,6 +133,7 @@ def main():
         os.makedirs("output", exist_ok=True)
         with open(os.path.join("output", fname), 'w') as f:
             f.write(header_out)
+    return
     macros_out = write_macros(db.get_version_mappings(), "makesdna_mappings.h")
     with open(os.path.join("output", "makesdna_mappings.h"), 'w') as f:
             f.write(macros_out)
