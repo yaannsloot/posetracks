@@ -56,14 +56,18 @@ class Struct(BaseModel):
 class Revision(BaseModel):
     rev_id = IntegerField(primary_key=True)
     struct_id = ForeignKeyField(Struct, backref='revisions')
-    ver_id = ForeignKeyField(BlenderVersion)
     src = TextField()
     crc32 = IntegerField(unique=True)
     available = BooleanField(default=True)
 
+
+class RevisionVersion(BaseModel):
+    ver_id = ForeignKeyField(BlenderVersion)
+    rev_id = ForeignKeyField(Revision, backref='versions')
+
     class Meta:
         indexes = (
-            (('struct_id', 'ver_id'), True),
+            (('ver_id', 'rev_id'), True)
         )
 
 
