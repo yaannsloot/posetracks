@@ -44,6 +44,7 @@ class EnumVal:
 class LineDef:
     primitive_types = [
         'void',
+        'bool',
         'char',
         'short',
         'ushort',
@@ -77,7 +78,7 @@ class LineDef:
 
         # A bandaid to a problem that should be investigated
         if src_line.startswith('{'):
-            src_line = src_line.replace('{', '', 1).strip()
+            self.valid = False
 
         src_line = src_line.replace('struct ', '').replace('DNA_DEPRECATED', '').strip()
         self.line = src_line

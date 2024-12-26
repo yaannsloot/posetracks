@@ -24,21 +24,11 @@ from . import git
 
 
 def remove_comments(text):
-    def nl(s):
-        return "" + ("\n" * s.count('\n'))
-
-    def replacer(match):
-        s = match.group(0)
-        if s.startswith('/'):
-            return nl(s)
-        else:
-            return s
-
     pattern = re.compile(
         r'\/\/.*?$|\/\*.*?\*\/|\'(?:\\.|[^\\\'])*\'|"(?:\\.|[^\\"])*"',
         re.DOTALL | re.MULTILINE
     )
-    return re.sub(pattern, replacer, text)
+    return re.sub(pattern, "", text)
 
 
 def remove_if_directives(text):

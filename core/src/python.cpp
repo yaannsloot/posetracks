@@ -116,25 +116,7 @@ PYBIND11_MODULE(PYBIND_MODULE_NAME, m)
 	// Enum bindings
 
 	// Base
-	py::enum_<BlenderVersion>(m, "BlenderVersion")
-		.value("VER_2_93_0", BlenderVersion::VER_2_93_0)
-		.value("VER_2_93_4", BlenderVersion::VER_2_93_4)
-		.value("VER_3_0_0", BlenderVersion::VER_3_0_0)
-		.value("VER_3_1_0", BlenderVersion::VER_3_1_0)
-		.value("VER_3_2_0", BlenderVersion::VER_3_2_0)
-		.value("VER_3_3_0", BlenderVersion::VER_3_3_0)
-		.value("VER_3_4_0", BlenderVersion::VER_3_4_0)
-		.value("VER_3_5_0", BlenderVersion::VER_3_5_0)
-		.value("VER_3_6_0", BlenderVersion::VER_3_6_0)
-		.value("VER_3_6_8", BlenderVersion::VER_3_6_8)
-		.value("VER_4_0_0", BlenderVersion::VER_4_0_0)
-		.value("VER_4_1_0", BlenderVersion::VER_4_1_0)
-		.value("VER_4_1_1", BlenderVersion::VER_4_1_1)
-		.value("VER_4_2_0", BlenderVersion::VER_4_2_0)
-		.value("VER_4_2_1", BlenderVersion::VER_4_2_1)
-		.value("VER_4_2_4", BlenderVersion::VER_4_2_4)
-		.value("VER_4_3_0", BlenderVersion::VER_4_3_0)
-		.export_values();
+	BLENDVER_ENUM_BINDINGS(BlenderVersion, m)
 
 	py::enum_<cv::aruco::PredefinedDictionaryType>(m, "TagDictionary")
 		.value("DICT_4X4", cv::aruco::PredefinedDictionaryType::DICT_4X4_1000)

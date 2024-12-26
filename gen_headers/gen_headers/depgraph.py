@@ -84,7 +84,7 @@ class Graph:
     def get_nodes_in_ver(self, ver):
         output = set()
         def visit_adj(node):
-            if str(node) in output or node is None or node.ver > ver:
+            if node in output or node is None or node.ver > ver:
                 return
             output.add(node)
             for node in self.edges.get(str(node), []):
@@ -92,6 +92,13 @@ class Graph:
         for node in self.nodes.values():
             if node.ver == ver:
                 visit_adj(node)
+        return output
+    
+    def get_version_subgraph(self, ver):
+        output = Graph()
+        output.nodes = {node.tag: node for node in self.get_nodes_in_ver(ver)}
+        tags = set(output.nodes.keys())
+        output.edges = {parent: children & tags for parent, children in self.edges.items() if parent in tags}
         return output
 
     def get_loopless_edges(self):
@@ -124,13 +131,14 @@ class Graph:
             last_len = len(node_degrees)
         return order
 
-def graph_from_dep_query(deps):
+def graph_from_dep_query(deps, current_ver):
     g = Graph()
     all_tags = set()
     for row in deps:
         tag = row['tag']
         ver = (row['major'], row['minor'], row['patch'])
-        all_tags.add(tag)
+        if current_ver == ver:
+            all_tags.add(tag)
         if row['rev_available']:
             g.add_node(tag, ver)
         if row['dep_available']:
