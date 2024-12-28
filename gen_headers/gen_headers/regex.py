@@ -33,7 +33,7 @@ def remove_comments(text):
 
 def remove_if_directives(text):
     pattern = re.compile(
-        r'#if.*#endif',
+        r'#ifdef.*?#endif',
         re.DOTALL
     )
     return re.sub(pattern, '', text)
@@ -41,21 +41,71 @@ def remove_if_directives(text):
 
 def remove_macros(text):
     pattern = re.compile(
-        r'\s([A-Z_]*\(\w*\))\s',
+        r'#define[ \t]+[A-Za-z_][A-Za-z0-9_]*(?:\(.*?\))?(?:[ \t]+.*?|\\\n.*?)*(?=\n|$)',
         re.DOTALL
     )
     return re.sub(pattern, '', text)
 
 
-def extract_struct_definitions(file_content):
+def find_structs(file_content):
     struct_pattern = re.compile(
-        r'(typedef\s+)?struct\s+(\w+)\s*\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}\s*(\w+)?\s*;', re.DOTALL
+        r'(?:typedef\s+)?struct\s*(\w+)?\s*\{((?:[^{}]*|\{(?:[^{}]*|\{[^{}]*\})*\})*)\}\s*(\w+)?\s*;', re.DOTALL
     )
     matches = struct_pattern.finditer(file_content)
-    return {
-        match.group(2): [line for line in remove_macros(remove_if_directives(match.group(0))).splitlines()
-                         if not line.strip() == '']
-        for match in matches}
+    output = {}
+    for match in matches:
+        name = match.group(1)
+        body = match.group(2)
+        alias = match.group(3)
+        tag = name or alias
+        output[tag] = {"body": body, "match": match.group(
+        ), "replacement": f"struct {tag} {'{}'};"}
+    return output
+
+
+def serialize_struct_body(struct_body):
+    structs = find_structs(struct_body)
+    for body in structs.values():
+        struct_body = struct_body.replace(body["match"], body["replacement"])
+    for line in struct_body.split(';'):
+        line = line.replace('DNA_DEPRECATED', '').strip() + ';'
+        if line == ';':
+            continue
+        struct = find_structs(line)
+        if struct:
+            tag = next(iter(struct.keys()))
+            yield {tag: list(serialize_struct_body(structs[tag]["body"]))}
+        else:
+            line = re.sub(r'\s+', ' ', line)
+            line = re.sub(r'(\w+)\s*\*\s*(\w+)', r'\1* \2', line)
+            yield line
+
+
+def remove_include_guard(file_content):
+    pattern = re.compile(
+        r"#ifndef\s+([A-Z][A-Z0-9_]*)\s+#define\s+\1\s+(.*\n)*?#endif\s*$", re.DOTALL
+    )
+    match = next(pattern.finditer(file_content), None)
+    if match is None:
+        return file_content
+    match = match.group(2)
+    return re.sub(pattern, match, file_content)
+
+
+def strip_src(content):
+    content = remove_comments(content)
+    content = remove_include_guard(content)
+    content = remove_if_directives(content)
+    content = remove_macros(content)
+    return content
+
+
+def extract_struct_definitions(file_content):
+    file_content = strip_src(file_content)
+    structs = find_structs(file_content)
+    structs = {tag: list(serialize_struct_body(
+        body["body"])) for tag, body in structs.items()}
+    return structs
 
 
 def extract_enum_definitions(file_content):
@@ -67,22 +117,11 @@ def extract_enum_definitions(file_content):
             for match in matches]
 
 
-def src_structs_to_dict(src_content):
-    output = {}
-    content = remove_macros(remove_comments(src_content))
-    for struct, body in extract_struct_definitions(content).items():
-        body = ([body[0]] +
-                ['    ' + line.replace('DNA_DEPRECATED', '').strip() + ';' for line in
-                 ''.join(body[1:-1]).split(';') if line.strip() != ''] +
-                [body[-1]])
-        output[struct] = body
-    return output
-    
-
 def load_structs_from_file(path):
     with open(path, 'r') as f:
         src = f.read()
-    return src_structs_to_dict(src)
+    return extract_struct_definitions(src)
+
 
 def load_structs_from_dir(path):
     structs = {}

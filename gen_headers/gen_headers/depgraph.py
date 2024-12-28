@@ -21,21 +21,23 @@ Graph functions used for building and processing a C struct dependency tree
 
 # MODIFY THIS TO WORK WITH CONVERSIONS TO VOID PTRS
 
+
 class Node:
     def __init__(self, tag, ver):
         self.tag = tag
         self.ver = ver
-    
+
     def __eq__(self, value):
         if isinstance(value, Node):
             return self.tag == value.tag
         return False
-    
+
     def __str__(self):
         return self.tag
-    
+
     def __hash__(self):
         return hash(self.tag)
+
 
 class Graph:
     def __init__(self):
@@ -80,9 +82,10 @@ class Graph:
             for parent in empty_edges:
                 output.edges.pop(parent, None)
         return output
-    
+
     def get_nodes_in_ver(self, ver):
         output = set()
+
         def visit_adj(node):
             if node in output or node is None or node.ver > ver:
                 return
@@ -93,12 +96,13 @@ class Graph:
             if node.ver == ver:
                 visit_adj(node)
         return output
-    
+
     def get_version_subgraph(self, ver):
         output = Graph()
         output.nodes = {node.tag: node for node in self.get_nodes_in_ver(ver)}
         tags = set(output.nodes.keys())
-        output.edges = {parent: children & tags for parent, children in self.edges.items() if parent in tags}
+        output.edges = {parent: children & tags for parent,
+                        children in self.edges.items() if parent in tags}
         return output
 
     def get_loopless_edges(self):
@@ -131,6 +135,7 @@ class Graph:
             last_len = len(node_degrees)
         return order
 
+
 def graph_from_dep_query(deps, current_ver):
     g = Graph()
     all_tags = set()
@@ -143,6 +148,6 @@ def graph_from_dep_query(deps, current_ver):
             g.add_node(tag, ver)
         if row['dep_available']:
             g.add_node(tag, ver)
-        if row['dep_available'] is not None and not row['dep_is_ptr']: 
+        if row['dep_available'] is not None and not row['dep_is_ptr']:
             g.add_edge(row['dep_tag'], tag)
     return g, all_tags

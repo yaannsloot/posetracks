@@ -24,6 +24,7 @@ from peewee import *
 
 _db = SqliteDatabase(None)
 
+
 def crc32(src):
     return zlib.crc32(src.encode("utf-8"), 0) & 0xffffffff
 
@@ -73,14 +74,14 @@ class RevisionVersion(BaseModel):
 class Dependency(BaseModel):
     dep_id = IntegerField(primary_key=True)
     rev_id = ForeignKeyField(Revision, backref='dependencies')
-    rev_ref_id = ForeignKeyField(Revision, null=True)
     tag = TextField()
     is_ptr = BooleanField(default=False)
 
     class Meta:
         indexes = (
-            (('rev_id', 'rev_ref_id', 'tag', 'is_ptr'), True),
+            (('rev_id', 'tag', 'is_ptr'), True),
         )
+
 
 def _get_ranked_rev_cte(ver):
     return (
@@ -100,25 +101,28 @@ def _get_ranked_rev_cte(ver):
         .join(BlenderVersion, on=(BlenderVersion.ver_id == RevisionVersion.ver_id))
         .join(Struct, on=(Struct.struct_id == Revision.struct_id))
         .where(
-            (BlenderVersion.major < ver[0]) | 
-            ((BlenderVersion.major == ver[0]) & (BlenderVersion.minor < ver[1])) | 
-            ((BlenderVersion.major == ver[0]) & (BlenderVersion.minor == ver[1]) & (BlenderVersion.patch <= ver[2]))
+            (BlenderVersion.major < ver[0]) |
+            ((BlenderVersion.major == ver[0]) & (BlenderVersion.minor < ver[1])) |
+            ((BlenderVersion.major == ver[0]) & (
+                BlenderVersion.minor == ver[1]) & (BlenderVersion.patch <= ver[2]))
         )
         .cte('ranked_revisions')
     )
 
+
 def _get_top_rev_cte(ranked_rev_cte):
     return (
         ranked_rev_cte.select(
-            ranked_rev_cte.c.major, 
-            ranked_rev_cte.c.minor, 
-            ranked_rev_cte.c.patch, 
-            ranked_rev_cte.c.tag, 
+            ranked_rev_cte.c.major,
+            ranked_rev_cte.c.minor,
+            ranked_rev_cte.c.patch,
+            ranked_rev_cte.c.tag,
             ranked_rev_cte.c.available,
             ranked_rev_cte.c.rev_id
         ).where(ranked_rev_cte.c.rank == 1)
         .cte('top_revisions')
     )
+
 
 def _get_target_dep_cte(top_rev_cte):
     other_top_rev = top_rev_cte.alias('tr_b')
@@ -145,20 +149,24 @@ def _get_target_dep_cte(top_rev_cte):
         .cte('target_dependency_table')
     )
 
+
 def _get_target_rev_available_cte(target_dep_cte):
     return (
         target_dep_cte.select(
             target_dep_cte.c.tag,
-            (fn.SUM((target_dep_cte.c.dep_available.is_null()) | (target_dep_cte.c.dep_available == 1) | (target_dep_cte.c.dep_is_ptr == 1)) == fn.COUNT(1)).alias('rev_available')
+            (fn.SUM((target_dep_cte.c.dep_available.is_null()) | (target_dep_cte.c.dep_available == 1) | (
+                target_dep_cte.c.dep_is_ptr == 1)) == fn.COUNT(1)).alias('rev_available')
         ).group_by(target_dep_cte.c.tag)
         .cte('target_rev_available')
     )
+
 
 def debug_cte(primary_cte, dependencies):
     return (
         primary_cte.select()
         .with_cte(*dependencies)
     )
+
 
 def resolve_dependencies(ver):
     ranked_revisions = _get_ranked_rev_cte(ver)
@@ -187,13 +195,16 @@ def resolve_dependencies(ver):
     )
     return list(query.bind(_db).dicts())
 
+
 def get_ver_ref(ver: tuple[int, int, int]):
-    db_ver, _ = BlenderVersion.get_or_create(major=ver[0], minor=ver[1], patch=ver[2])
+    db_ver, _ = BlenderVersion.get_or_create(
+        major=ver[0], minor=ver[1], patch=ver[2])
     return db_ver
 
 
 def add_dependency(revision, tag, is_ptr):
-    db_dep, _ = Dependency.get_or_create(rev_id=revision, tag=tag, is_ptr=is_ptr)
+    db_dep, _ = Dependency.get_or_create(
+        rev_id=revision, tag=tag, is_ptr=is_ptr)
     return db_dep
 
 
@@ -203,11 +214,12 @@ def add_revision(ver, s_def):
     src_str = str(s_def)
     try:
         db_rev = Revision.create(struct_id=db_struct, src=src_str,
-                                           crc32=crc32(src_str))
+                                 crc32=crc32(src_str))
         RevisionVersion.get_or_create(ver_id=db_ver, rev_id=db_rev)
         return db_rev
     except IntegrityError:
         return
+
 
 def single_val_update_atomic(db_obj, sel_attr_dict, attr_val_dict):
     with _db.atomic():
@@ -221,24 +233,29 @@ def single_val_update_atomic(db_obj, sel_attr_dict, attr_val_dict):
         for obj in objs:
             for k, v in attr_val_dict.items():
                 setattr(obj, k, v)
-        db_obj.bulk_update(objs, fields=list(attr_val_dict.keys()), batch_size=50)
+        db_obj.bulk_update(objs, fields=list(
+            attr_val_dict.keys()), batch_size=50)
+
 
 def tag_revisions_with_ver_atomic(revisions, ver):
     with _db.atomic():
         db_ver = get_ver_ref(ver)
-        values = [{"ver_id": db_ver.ver_id, "rev_id": rev.rev_id} for rev in revisions]
+        values = [{"ver_id": db_ver.ver_id, "rev_id": rev.rev_id}
+                  for rev in revisions]
         RevisionVersion.insert_many(values).on_conflict_ignore().execute()
+
 
 def load_revisions_atomic(ver, s_defs):
     with _db.atomic():
         for tag, s_def in s_defs.items():
             rev = add_revision(ver, s_def)
             if rev is None:
-                    continue
+                continue
             for line in s_def.body:
                 if not line.is_struct:
                     continue
                 add_dependency(rev, line.struct_name, line.ptr_level > 0)
+
 
 def get_version_mappings():
     revs = (Revision.select(
@@ -247,29 +264,39 @@ def get_version_mappings():
         BlenderVersion.patch,
         Struct.tag
     ).join(Struct, on=(Revision.struct_id == Struct.struct_id))
-    .join(RevisionVersion, on=(Revision.rev_id == RevisionVersion.rev_id))
-    .join(BlenderVersion, on=(RevisionVersion.ver_id == BlenderVersion.ver_id))
-    .where(RevisionVersion.available == 1).dicts())
+        .join(RevisionVersion, on=(Revision.rev_id == RevisionVersion.rev_id))
+        .join(BlenderVersion, on=(RevisionVersion.ver_id == BlenderVersion.ver_id))
+        .where(RevisionVersion.available == 1).dicts())
     result = {}
     for rev in revs:
         vers = result.setdefault(rev['tag'], set())
         vers.add((rev['major'], rev['minor'], rev['patch']))
     return result
 
+
 def get_active_versions():
     vers = (BlenderVersion.select(
             BlenderVersion.major,
             BlenderVersion.minor,
             BlenderVersion.patch
-        ).distinct()
-        .join(RevisionVersion, on=(RevisionVersion.ver_id == BlenderVersion.ver_id))
-        .where(RevisionVersion.available == 1).tuples()
-    )
+            ).distinct()
+            .join(RevisionVersion, on=(RevisionVersion.ver_id == BlenderVersion.ver_id))
+            .where(RevisionVersion.available == 1).tuples()
+            )
     return list(vers)
 
+
+def _close_db():
+    if not _db.is_closed():
+        _db.close()
+
+
 def _init_db(db_file):
+    _close_db()
     _db.init(db_file)
     _db.connect()
-    _db.create_tables([BlenderVersion, Struct, Revision, RevisionVersion, Dependency])
+    _db.create_tables([BlenderVersion, Struct, Revision,
+                      RevisionVersion, Dependency])
+
 
 _init_db('header_data.db')

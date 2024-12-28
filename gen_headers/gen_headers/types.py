@@ -80,11 +80,14 @@ class LineDef:
         if src_line.startswith('{'):
             self.valid = False
 
-        src_line = src_line.replace('struct ', '').replace('DNA_DEPRECATED', '').strip()
+        src_line = src_line.replace('struct ', '').replace(
+            'DNA_DEPRECATED', '').strip()
         self.line = src_line
         self.ptr_level = src_line.count('*')
-        src_line = [word for word in ' '.join(src_line.split('*')).split(' ') if word != '']
-        type_dict = {p_type: src_line.count(p_type) for p_type in self.primitive_types}
+        src_line = [word for word in ' '.join(
+            src_line.split('*')).split(' ') if word != '']
+        type_dict = {p_type: src_line.count(p_type)
+                     for p_type in self.primitive_types}
         self.struct_name = ''
         self.is_struct = sum(type_dict.values()) == 0
         if self.is_struct:
@@ -128,6 +131,7 @@ class StructDef:
     def orig_str(self):
         return 'struct ' + self.orig_name + ' {\n' + '\n'.join(
             ['    ' + line.orig_str() for line in self.body]) + '\n};'
+
 
 def from_mapping(struct_dict, keep_invalid=False):
     output = {}

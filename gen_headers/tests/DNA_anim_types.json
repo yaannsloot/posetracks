@@ -1,0 +1,221 @@
+{
+    "FModifier": [
+      "struct FModifier* next, *prev;",
+      "struct FCurve* curve;",
+      "void* data;",
+      "char name[64];",
+      "short type;",
+      "short flag;",
+      "short ui_expand_flag;",
+      "char _pad[6];",
+      "float influence;",
+      "float sfra;",
+      "float efra;",
+      "float blendin;",
+      "float blendout;"
+    ],
+    "FMod_Generator": [
+      "float* coefficients;",
+      "unsigned int arraysize;",
+      "int poly_order;",
+      "int mode;",
+      "int flag;"
+    ],
+    "FMod_FunctionGenerator": [
+      "float amplitude;",
+      "float phase_multiplier;",
+      "float phase_offset;",
+      "float value_offset;",
+      "int type;",
+      "int flag;"
+    ],
+    "FCM_EnvelopeData": [
+      "float min, max;",
+      "float time;",
+      "short f1;",
+      "short f2;"
+    ],
+    "FMod_Envelope": [
+      "FCM_EnvelopeData* data;",
+      "int totvert;",
+      "float midval;",
+      "float min, max;"
+    ],
+    "FMod_Cycles": [
+      "short before_mode;",
+      "short after_mode;",
+      "short before_cycles;",
+      "short after_cycles;"
+    ],
+    "FMod_Limits": [
+      "rctf rect;",
+      "int flag;",
+      "char _pad[4];"
+    ],
+    "FMod_Noise": [
+      "float size;",
+      "float strength;",
+      "float phase;",
+      "float offset;",
+      "float roughness;",
+      "float lacunarity;",
+      "short depth;",
+      "short modification;",
+      "char legacy_noise;",
+      "char _pad[3];"
+    ],
+    "FMod_Stepped": [
+      "float step_size;",
+      "float offset;",
+      "float start_frame;",
+      "float end_frame;",
+      "int flag;"
+    ],
+    "DriverTarget": [
+      "ID* id;",
+      "char* rna_path;",
+      "char pchan_name[64];",
+      "short transChan;",
+      "char rotation_mode;",
+      "char _pad[5];",
+      "short flag;",
+      "short options;",
+      "int idtype;",
+      "int context_property;",
+      "float fallback_value;"
+    ],
+    "DriverVar": [
+      "struct DriverVar* next, *prev;",
+      "char name[64];",
+      "DriverTarget targets[8];",
+      "char num_targets;",
+      "char type;",
+      "short flag;",
+      "float curval;"
+    ],
+    "ChannelDriver": [
+      "ListBase variables;",
+      "char expression[256];",
+      "void* expr_comp;",
+      "struct ExprPyLike_Parsed* expr_simple;",
+      "float curval;",
+      "float influence;",
+      "int type;",
+      "int flag;"
+    ],
+    "FPoint": [
+      "float vec[2];",
+      "int flag;",
+      "char _pad[4];"
+    ],
+    "FCurve": [
+      "struct FCurve* next, *prev;",
+      "bActionGroup* grp;",
+      "ChannelDriver* driver;",
+      "ListBase modifiers;",
+      "BezTriple* bezt;",
+      "FPoint* fpt;",
+      "unsigned int totvert;",
+      "int active_keyframe_index;",
+      "float curval;",
+      "short flag;",
+      "short extend;",
+      "char auto_smoothing;",
+      "char _pad[3];",
+      "int array_index;",
+      "char* rna_path;",
+      "int color_mode;",
+      "float color[3];",
+      "float prev_norm_factor, prev_offset;"
+    ],
+    "NlaStrip": [
+      "struct NlaStrip* next, *prev;",
+      "ListBase strips;",
+      "bAction* act;",
+      "int32_t action_slot_handle;",
+      "char last_slot_identifier[66];",
+      "char _pad0[2];",
+      "ListBase fcurves;",
+      "ListBase modifiers;",
+      "char name[64];",
+      "float influence;",
+      "float strip_time;",
+      "float start, end;",
+      "float actstart, actend;",
+      "float repeat;",
+      "float scale;",
+      "float blendin, blendout;",
+      "short blendmode;",
+      "short extendmode;",
+      "char _pad1[2];",
+      "short type;",
+      "void* speaker_handle;",
+      "int flag;",
+      "char _pad2[4];",
+      "struct NlaStrip* orig_strip;",
+      "void* _pad3;"
+    ],
+    "NlaTrack": [
+      "struct NlaTrack* next, *prev;",
+      "ListBase strips;",
+      "int flag;",
+      "int index;",
+      "char name[64];"
+    ],
+    "KS_Path": [
+      "struct KS_Path* next, *prev;",
+      "ID* id;",
+      "char group[64];",
+      "int idtype;",
+      "short groupmode;",
+      "short flag;",
+      "char* rna_path;",
+      "int array_index;",
+      "short keyingflag;",
+      "short keyingoverride;"
+    ],
+    "KeyingSet": [
+      "struct KeyingSet* next, *prev;",
+      "ListBase paths;",
+      "char idname[64];",
+      "char name[64];",
+      "char description[1024];",
+      "char typeinfo[64];",
+      "int active_path;",
+      "short flag;",
+      "short keyingflag;",
+      "short keyingoverride;",
+      "char _pad[6];"
+    ],
+    "AnimOverride": [
+      "struct AnimOverride* next, *prev;",
+      "char* rna_path;",
+      "int array_index;",
+      "float value;"
+    ],
+    "AnimData": [
+      "bAction* action;",
+      "int32_t slot_handle;",
+      "char last_slot_identifier[66];",
+      "uint8_t _pad0[2];",
+      "bAction* tmpact;",
+      "int32_t tmp_slot_handle;",
+      "char tmp_last_slot_identifier[66];",
+      "uint8_t _pad1[2];",
+      "ListBase nla_tracks;",
+      "NlaTrack* act_track;",
+      "NlaStrip* actstrip;",
+      "ListBase drivers;",
+      "ListBase overrides;",
+      "FCurve **driver_array;",
+      "int flag;",
+      "short act_blendmode;",
+      "short act_extendmode;",
+      "float act_influence;",
+      "uint8_t _pad2[4];"
+    ],
+    "IdAdtTemplate": [
+      "ID id;",
+      "AnimData* adt;"
+    ]
+  }
