@@ -20,6 +20,8 @@ Regex functions for processing C header source code
 """
 
 import regex as re
+from collections import UserDict
+from enum import Enum
 from . import git
 
 
@@ -128,3 +130,107 @@ def load_structs_from_dir(path):
     for header in git.list_headers(path):
         structs.update(load_structs_from_file(header))
     return structs
+
+
+primitive_types = [
+    'void',
+    'bool',
+    'char',
+    'short',
+    'ushort',
+    'int',
+    'long',
+    'float',
+    'double',
+    'int8_t',
+    'uint8_t',
+    'int16_t',
+    'uint16_t',
+    'int32_t',
+    'uint32_t',
+    'int64_t',
+    'uint64_t'
+]
+
+keywords = [
+    'signed',
+    'unsigned',
+    'const',
+    'struct'
+]
+
+
+class Type(Enum):
+    PRIMITIVE = 0
+    USER_DEF = 1
+    NESTED_STRUCTURE = 2
+
+
+def get_ptr_level(line: str):
+    return line.count('*')
+
+
+def get_typename(line):
+    for kw in keywords:
+        line = line.replace(kw, '')
+    line = [word for word in line.replace('*', ' ').split(' ') if word != '']
+    return line[0]
+
+
+def get_src_type(src):
+    if isinstance(src, dict):
+        return Type.NESTED_STRUCTURE
+    matches = {p_type: src.count(p_type)
+               for p_type in primitive_types}
+    if sum(matches.values()) == 0:
+        return Type.USER_DEF
+    return Type.PRIMITIVE
+
+
+def find_user_deps(i, output):
+    for item in i:
+        t = get_src_type(item)
+        if t == Type.NESTED_STRUCTURE:
+            find_user_deps(next(iter(item.values())), output)
+            continue
+        elif t == Type.PRIMITIVE:
+            continue
+        tn = get_typename(item)
+        is_ptr = get_ptr_level(item) > 0
+        val = output.setdefault(tn, False)
+        if not val:
+            output[tn] = is_ptr
+
+
+def get_dependencies(src):
+    output = {}
+    for tag, lines in src.items():
+        dependencies = {}
+        find_user_deps(lines, dependencies)
+        if not dependencies:
+            continue
+        output[tag] = dependencies
+    return output
+
+def deserialize_lines(lines, out, indent):
+    i = " " * (indent * 4)
+    for line in lines:
+        t = get_src_type(line)
+        if t == Type.NESTED_STRUCTURE:
+            tag, nested = next(iter(line.items()))
+            out.append(i + "struct {")
+            deserialize_lines(nested, out, indent + 1)
+            out.append(i + f"{'}'} {tag};")
+            continue
+        elif t == Type.USER_DEF:
+            line = line.replace('struct', '').strip()
+        out.append(i + line)
+
+def deserialize_structs(structs):
+    output = {}
+    for tag, lines in structs.items():
+        body = [f"struct {tag} {'{'}"]
+        deserialize_lines(lines, body, 1)
+        body.append("};")
+        output[tag] = '\n'.join(body)
+    return output

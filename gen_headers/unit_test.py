@@ -142,6 +142,19 @@ class TestDB(unittest.TestCase):
             pass
 
 
+def test_equal_str(case, base_path, unit):
+    for file in os.listdir(base_path):
+        if not (file.startswith('in') and file.endswith('.txt')):
+            continue
+        src = os.path.join(base_path, file)
+        target = os.path.join(base_path, file.replace('in', 'out'))
+        with open(src, 'r') as f:
+            src = f.read()
+        with open(target, 'r') as f:
+            target = f.read()
+        case.assertEqual(unit(src), target)
+
+
 class TestRegex(unittest.TestCase):
     def setUp(self):
         return super().setUp()
@@ -150,64 +163,15 @@ class TestRegex(unittest.TestCase):
         # Expected:
         # Double slash removes chars from start of sequence to newline or EOF
         # Slash asterisk comments should be removed from opening /* to ending */
-        test_src1 = (
-            "int a;\n"
-            "//a comment\n"
-            "char b;\n"
-            "int wow; // int not_a_var;    \n"
-        )
-        expected_output1 = (
-            "int a;\n\n"
-            "char b;\n"
-            "int wow; \n"
-        )
-        test_src2 = (
-            "int a;\n"
-            "//a comment\n"
-            "/*  */int wow /* int not_a_var; */ = 2;    \n"
-            "/* some  \n"
-            "   text     \n"
-            "    */  \n"
-            "int c = 5; // aaa"
-        )
-        expected_output2 = (
-            "int a;\n\n"
-            "int wow  = 2;    \n  \n"
-            "int c = 5; "
-        )
-        self.assertEqual(regex.remove_comments(test_src1), expected_output1)
-        self.assertEqual(regex.remove_comments(test_src2), expected_output2)
+        test_equal_str(self, "tests/regex/remove_comments",
+                       regex.remove_comments)
 
     def test_remove_if_directives(self):
         # Expected:
         # All chars from #if to #endif inclusive are to be removed.
         # Trailing whitespace including newlines are not to be removed.
-        test_src1 = (
-            "int a;\n"
-            "int b;\n"
-            "#ifdef MACRO_CONDITION\n"
-            "#  include \"wow.h\"\n"
-            "// This should not be here\n"
-            "int should_not_exist = 1;\n"
-            "#endif\n"
-            "int d;\n"
-            "#ifdef MACRO_CONDITION\n"
-            "#  include \"wow.h\"\n"
-            "// This should not be here\n"
-            "int should_not_exist = 1;\n"
-            "#endif\n"
-            "int c;\n"
-        )
-        expected_output1 = (
-            "int a;\n"
-            "int b;\n"
-            "\n"
-            "int d;\n"
-            "\n"
-            "int c;\n"
-        )
-        self.assertEqual(regex.remove_if_directives(
-            test_src1), expected_output1)
+        test_equal_str(self, "tests/regex/remove_if_directives",
+                       regex.remove_if_directives)
 
     def test_remove_macros(self):
         # Expected:
@@ -215,76 +179,17 @@ class TestRegex(unittest.TestCase):
         # up to the first terminating newline. A backtick indicates a deferred
         # terminaton of the macro definition, causing the following newline to
         # be ignored. Terminating newlines are not to be removed.
-        test_src1 = (
-            "some code ...\n"
-            "#define MACRO_A\n"
-            "some code ...\n"
-            "#define MACRO_B 7\n"
-            "some code ...\n"
-            "#define MACRO_C() \\\\\n"
-            "    some code... \\\n"
-            "    finished;\n"
-            "some code ...\n"
-        )
-        expected_output1 = (
-            "some code ...\n\n"
-            "some code ...\n\n"
-            "some code ...\n\n"
-            "some code ...\n"
-        )
-        self.assertEqual(regex.remove_macros(test_src1), expected_output1)
-
-    def test_find_structs(self):
-        pass
+        test_equal_str(self, "tests/regex/remove_macros", regex.remove_macros)
 
     def test_remove_include_guard(self):
-        test_cases = {
-            """
-#ifndef EXAMPLE_HEADER_H
-#define EXAMPLE_HEADER_H
-#ifndef A
-#define A
-#ifndef B
-#define B
-dsdasa
-int example_function();asd
-sdfdsdfs
-asd
-#endif
-#endif
-#endif
-#endif
-""": """
-#ifndef A
-#define A
-#ifndef B
-#define B
-dsdasa
-int example_function();asd
-sdfdsdfs
-asd
-#endif
-#endif
-#endif
-""",
-            """
-aaaa
-#ifndef EXAMPLE_HEADER_H
-#define EXAMPLE_HEADER_H
+        test_equal_str(self, "tests/regex/remove_include_guard",
+                       regex.remove_include_guard)
 
-int example_function();
+    def test_extract_enum_definitions(self):  # not used currently
+        pass
 
-#endif
-""": """
-aaaa
-int example_function();
-
-"""
-        }
-        for k, v in test_cases.items():
-            self.assertEqual(v, regex.remove_include_guard(k))
-
-    def test_extract_struct_definitions(self):
+    def test_load_structs_from_file(self):
+        # Also tests extract_struct_definitions under the hood
         # Expected:
         # - Extracts all struct definitions (those starting with `typedef struct ...`)
         #   into a dictionary formatted as: {struct_tag: [normalized lines...]}.
@@ -296,59 +201,16 @@ int example_function();
         #   instead of a string.
         # - Nested dictionaries should contain only a single key, unlike the root dictionary.
         # - All pointer asterisks should be on the left side next to the type name.
-        test_cases = {
-            """
-typedef struct { int   x;
-    struct {
-        float y;
-        char  z ;
-    } NestedStruct;
-} ComplexStruct;
-
-struct ComplexStruct2 {
-    int *   ptr  DNA_DEPRECATED;
-    char str[100];
-    float x, y, z;
-};
-
-enum week{Mon, Tue, Wed};
-enum week day;
-""": {
-                "ComplexStruct": [
-                    "int x;",
-                    {
-                        "NestedStruct": [
-                            "float y;",
-                            "char z;"
-                        ]
-                    }
-                ],
-                "ComplexStruct2": [
-                    "int* ptr;",
-                    "char str[100];",
-                    "float x, y, z;"
-                ]
-            }
-        }
-        for k, v in test_cases.items():
-            self.assertEqual(v, regex.extract_struct_definitions(k))
-
-    def test_extract_enum_definitions(self):
-        pass
-
-    def test_load_structs_from_file(self):
-        for file in os.listdir('tests'):
+        base_path = "tests/regex/load_from_file"
+        for file in os.listdir(base_path):
             if not file.endswith(('.h', '.hpp')):
                 continue
             results = os.path.join(
-                "tests", os.path.splitext(file)[0] + '.json')
+                base_path, os.path.splitext(file)[0] + '.json')
             with open(results, 'r') as f:
                 results = json.load(f)
-            file = os.path.join("tests", file)
+            file = os.path.join(base_path, file)
             self.assertEqual(regex.load_structs_from_file(file), results)
-
-    def test_load_structs_from_dir(self):
-        pass
 
 
 class TestGit(unittest.TestCase):
@@ -504,4 +366,4 @@ class TestOutput(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(TestRegex(), verbosity=2)
+    unittest.main(verbosity=2)

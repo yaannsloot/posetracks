@@ -42,31 +42,6 @@ class EnumVal:
 
 
 class LineDef:
-    primitive_types = [
-        'void',
-        'bool',
-        'char',
-        'short',
-        'ushort',
-        'int',
-        'long',
-        'float',
-        'double',
-        'int8_t',
-        'uint8_t',
-        'int16_t',
-        'uint16_t',
-        'int32_t',
-        'uint32_t',
-        'int64_t',
-        'uint64_t'
-    ]
-
-    keywords = [
-        'signed',
-        'unsigned',
-        'const'
-    ]
 
     def __init__(self, src_line: str):
         self.valid = True

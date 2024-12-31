@@ -21,6 +21,7 @@ Database model definitions for storing processed C structures
 
 import zlib
 from peewee import *
+from . import regex
 
 _db = SqliteDatabase(None)
 
@@ -208,13 +209,12 @@ def add_dependency(revision, tag, is_ptr):
     return db_dep
 
 
-def add_revision(ver, s_def):
+def add_revision(ver, tag, src):
     db_ver = get_ver_ref(ver)
-    db_struct, _ = Struct.get_or_create(tag=s_def.name)
-    src_str = str(s_def)
+    db_struct, _ = Struct.get_or_create(tag=tag)
     try:
-        db_rev = Revision.create(struct_id=db_struct, src=src_str,
-                                 crc32=crc32(src_str))
+        db_rev = Revision.create(struct_id=db_struct, src=src,
+                                 crc32=crc32(src))
         RevisionVersion.get_or_create(ver_id=db_ver, rev_id=db_rev)
         return db_rev
     except IntegrityError:
@@ -246,15 +246,18 @@ def tag_revisions_with_ver_atomic(revisions, ver):
 
 
 def load_revisions_atomic(ver, s_defs):
+    src = regex.deserialize_structs(s_defs)
+    deps = regex.get_dependencies(s_defs)
     with _db.atomic():
-        for tag, s_def in s_defs.items():
-            rev = add_revision(ver, s_def)
+        for tag in s_defs:
+            rev = add_revision(ver, tag, src[tag])
             if rev is None:
                 continue
-            for line in s_def.body:
-                if not line.is_struct:
-                    continue
-                add_dependency(rev, line.struct_name, line.ptr_level > 0)
+            dep_map = deps.get(tag, None)
+            if not dep_map:
+                continue
+            for dep_tag, is_ptr in dep_map.items():
+                add_dependency(rev, dep_tag, is_ptr)
 
 
 def get_version_mappings():

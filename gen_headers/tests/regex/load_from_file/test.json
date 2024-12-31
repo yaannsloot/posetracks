@@ -1,0 +1,16 @@
+{
+    "ComplexStruct": [
+        "int x;",
+        {
+            "NestedStruct": [
+                "float y;",
+                "char z;"
+            ]
+        }
+    ],
+    "ComplexStruct2": [
+        "int* ptr;",
+        "char str[100];",
+        "float x, y, z;"
+    ]
+}

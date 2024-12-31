@@ -41,22 +41,22 @@ def main():
             git.checkout_version(v)
             print("Loading structs...")
             s_map = regex.load_structs_from_dir(dna_dir)
-            s_defs = types.from_mapping(s_map)
             print("Writing structs to db...")
-            db.load_revisions_atomic(v, s_defs)
+            db.load_revisions_atomic(v, s_map)
             db_ver.loaded = True
             db_ver.save()
         deps = db.resolve_dependencies(v)
         graph, _ = depgraph.graph_from_dep_query(deps, v)
+
         if not db_ver.evaluated:
             print("Evaluating dependencies...", v)
-            transitive_updates = [(str(node), node.ver[0], node.ver[1], node.ver[2])
-                                  for node in graph.get_nodes_in_ver(v) if node.ver != v]
+            t_deps = graph.get_transitive_dependencies(v)
             targets = (db.Revision.select()
                        .join(db.Struct, on=(db.Revision.struct_id == db.Struct.struct_id))
                        .join(db.RevisionVersion, on=(db.Revision.rev_id == db.RevisionVersion.rev_id))
                        .join(db.BlenderVersion, on=(db.RevisionVersion.ver_id == db.BlenderVersion.ver_id))
-                       .where(Tuple(db.Struct.tag, db.BlenderVersion.major, db.BlenderVersion.minor, db.BlenderVersion.patch).in_(transitive_updates)))
+                       .where(Tuple(db.Struct.tag, db.BlenderVersion.major, db.BlenderVersion.minor, db.BlenderVersion.patch)
+                              .in_([tuple(td) for td in t_deps])))
             db.tag_revisions_with_ver_atomic(targets, v)
             graph, all_tags = depgraph.graph_from_dep_query(deps, v)
             graph.remove_dangling()
@@ -71,19 +71,19 @@ def main():
             db_ver.save()
             deps = db.resolve_dependencies(v)
         print("Writing header file...", v)
-        header_out, fname = output.write_header(
+        header_out, fname = output.generate_header(
             "makesdna_types_", v, graph, deps)
         if not header_out:
             continue
         os.makedirs("output", exist_ok=True)
         with open(os.path.join("output", fname), 'w') as f:
             f.write(header_out)
-    macros_out = output.write_macros(
+    macros_out = output.generate_macros(
         db.get_version_mappings(), "makesdna_mappings.h")
     with open(os.path.join("output", "makesdna_mappings.h"), 'w') as f:
         f.write(macros_out)
     with open(os.path.join("output", "blender_makesdna.hpp"), 'w') as f:
-        f.write(output.write_types_hpp("blender_makesdna.hpp",
+        f.write(output.generate_types_hpp("blender_makesdna.hpp",
                 db.get_active_versions(), "makesdna_types_", "makesdna_mappings.h"))
 
 

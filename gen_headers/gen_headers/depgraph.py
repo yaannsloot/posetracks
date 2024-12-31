@@ -21,6 +21,8 @@ Graph functions used for building and processing a C struct dependency tree
 
 # MODIFY THIS TO WORK WITH CONVERSIONS TO VOID PTRS
 
+from . import db
+
 
 class Node:
     def __init__(self, tag, ver):
@@ -37,6 +39,11 @@ class Node:
 
     def __hash__(self):
         return hash(self.tag)
+
+    def __iter__(self):
+        yield self.tag
+        for v in self.ver:
+            yield v
 
 
 class Graph:
@@ -134,6 +141,9 @@ class Graph:
                 raise RuntimeError('Cycle detected while sorting graph')
             last_len = len(node_degrees)
         return order
+
+    def get_transitive_dependencies(self, ver):
+        return {node for node in self.get_nodes_in_ver(ver) if node.ver != ver}
 
 
 def graph_from_dep_query(deps, current_ver):
