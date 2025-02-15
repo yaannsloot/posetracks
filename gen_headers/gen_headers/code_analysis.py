@@ -15,10 +15,13 @@ import json
 import re
 import os
 import copy
+from sys import version
 import textwrap
+from webbrowser import get
 import clang.cindex
 from bisect import bisect
 from typing import Any, List, Union
+from collections import deque
 
 # Must have clang pip package installed for this to work
 clang.cindex.Config.set_library_path(os.path.join(
@@ -242,7 +245,7 @@ class VarType:
             if not match:
                 raise ValueError(f"Type not found.")
             type = match.group(1).strip()
-            typedef = typedefs.get(type, None)
+            typedef = typedefs.get(type)
             if not typedef:
                 raise ValueError(f'Typedef "{type}" not found.')
             return cls.from_str(re.sub(pattern, typedef + ' ', text, 1))
@@ -351,13 +354,19 @@ class Struct:
         return dependencies - local_structs
 
     def void_dependency(self, name):
-        def traverse(struct):
-            for field in struct.fields:
-                if isinstance(field, Struct):
-                    traverse(field)
-                elif field.type.is_tagged() and field.type.tag == name:
-                    field.reduce()
-        traverse(self)
+        for field in self.fields:
+            if isinstance(field, Struct):
+                field.void_dependency(name)
+            elif field.type.is_tagged() and field.type.tag == name:
+                field.reduce()
+
+    def uses_stdint(self):
+        for field in self.fields:
+            if isinstance(field, Struct) and field.uses_stdint():
+                return True
+            if field.type.is_stdint():
+                return True
+        return False
 
     def __eq__(self, value):
         if isinstance(value, Struct):
@@ -429,13 +438,15 @@ class SyntaxTree:
         for item in other.items.values():
             self.add(item)
 
-    def dependency_graph(self, include_pointers=True):
+    def dependency_graph(self, include_pointers=True, with_leafs=False):
         dependencies = {}
         for item in self.items.values():
             if isinstance(item, Revision):
                 item = item.ref
             if not isinstance(item, Struct):
                 continue
+            if with_leafs:
+                dependencies.setdefault(item.name, set())
             for dependency in item.dependencies(include_pointers):
                 depends = dependencies.setdefault(dependency, set())
                 depends.add(item.name)
@@ -462,7 +473,7 @@ class SyntaxTree:
                 break
             for missing in missing_refs:
                 for dependent in dependencies[missing]:
-                    struct = structs.get(dependent, None)
+                    struct = structs.get(dependent)
                     if not struct:
                         continue
                     try:
@@ -474,19 +485,14 @@ class SyntaxTree:
         return new_tree
 
     def get_order(self):
-        dependencies = self.dependency_graph(False)
-        all_names = set(self.items.keys())
-        for name, dependents in dependencies.items():
-            dependents.discard(name)
-            all_names.update(dependents)
-            all_names.add(name)
-        degrees = {name: 0 for name in all_names}
+        dependencies = self.dependency_graph(False, True)
+        degrees = {name: 0 for name in dependencies.keys()}
         for children in dependencies.values():
             for child in children:
                 degrees[child] = degrees.get(child, 0) + 1
         order = []
         last_len = len(degrees)
-        while len(degrees) > 0:
+        while degrees:
             for name, degree in degrees.copy().items():
                 if degree <= 0:
                     children = dependencies.get(name, set())
@@ -499,6 +505,48 @@ class SyntaxTree:
                 raise RuntimeError('Cycle detected while sorting graph')
             last_len = len(degrees)
         return order
+
+    def get_versions(self):
+        versions = set()
+        for item in self.items.values():
+            if isinstance(item, Revision):
+                versions.add(item.ver)
+        return sorted(list(versions))
+
+    def get_transitive_updates(self):
+        output = set()
+        versions = self.get_versions()
+        if not versions or len(versions) == 1:
+            return output
+        latest = versions[-1]
+        dependencies = self.dependency_graph()
+        queue = deque()
+        for dependency, dependents in dependencies.items():
+            obj = self.items.get(dependency)
+            if obj and isinstance(obj, Revision) and obj.ver == latest:
+                queue.append(dependency)
+        current_deps = set(queue)
+        while queue:
+            dependency = queue.popleft()
+            if dependency in output:
+                continue
+            if dependency not in current_deps:
+                output.add(dependency)
+            for dependent in dependencies.get(dependency, []):
+                obj = self.items.get(dependent)
+                if obj and isinstance(obj, Revision) and obj.ver != latest:
+                    queue.append(dependent)
+        return output
+
+    def uses_stdint(self):
+        for item in self.items:
+            if isinstance(item, Revision):
+                item = item.ref
+            if not isinstance(item, Struct):
+                continue
+            if item.uses_stdint():
+                return True
+        return False
 
     @classmethod
     def from_file(cls, path):
@@ -552,18 +600,14 @@ class ItemRemoval:
 
 
 class DependencyUpdate:
-    def __init__(self):
-        self.dependencies = set()
+    def __init__(self, name):
+        self.name = name
 
     def to_dict(self):
-        return {"type": "dependency_update", "dependencies": list(self.dependencies)}
+        return {"type": "dependency_update"}
 
 
 class VersionedSyntaxTree:
-    """
-    Tracks changes between syntax trees
-    """
-
     def __init__(self):
         self.master_tree = {}
 
@@ -572,6 +616,9 @@ class VersionedSyntaxTree:
             self.add(item, ver)
         for name in set(self.master_tree.keys()) - set(ast.items.keys()):
             self.add(ItemRemoval(name), ver)
+        transitive_updates = self.get_tree(ver).get_transitive_updates()
+        for name in transitive_updates:
+            self.add(DependencyUpdate(name), ver)
 
     def add(self, item, ver):
         if not hasattr(item, "name"):
@@ -579,7 +626,8 @@ class VersionedSyntaxTree:
         branch = self.master_tree.setdefault(item.name, [])
         insertion_point = bisect(branch, ver, key=lambda a: a.ver)
         prev = branch[insertion_point - 1] if insertion_point > 0 else None
-        if prev and (prev.ver == ver or prev.ref == item):
+        if prev and (prev.ver == ver or prev.ref == item or
+                     (isinstance(prev.ref, DependencyUpdate) and self.get(prev.ref.name, prev.ver).ref == item)):
             return
         branch.insert(insertion_point, Revision(item, ver))
 
@@ -598,10 +646,25 @@ class VersionedSyntaxTree:
         if ver is None:
             return branch[-1]
         target = bisect(self.master_tree[name], ver, key=lambda a: a.ver) - 1
-        if target < 0:
-            raise KeyError(
-                f"{ver} is less than lowest version {branch[0].ver}")
-        return branch[target]
+        original_target = target
+        while True:
+            if target < 0:
+                raise KeyError(
+                    f"{ver} is less than lowest version {branch[0].ver}")
+            if isinstance(branch[target].ref, DependencyUpdate):
+                target -= 1
+            else:
+                break
+        ref = copy.copy(branch[target])
+        ref.ver = branch[original_target].ver
+        return ref
+
+    def get_versions(self):
+        versions = set()
+        for branch in self.master_tree.values():
+            for item in branch:
+                versions.add(item.ver)
+        return sorted(list(versions))
 
     def to_dict(self):
         return {name: [item.to_dict() for item in revs] for name, revs in self.master_tree.items()}
@@ -625,6 +688,15 @@ if __name__ == "__main__":
             continue
         ast.merge(SyntaxTree.from_file(os.path.join(dna_dir, file)))
     print(json.dumps(test.to_dict()))
+
+    ast2 = VersionedSyntaxTree()
+    ast2.add_tree(test, 2)
+    test_item = list(ast2.master_tree.keys())[0]
+    ast3 = ast2.get_tree(2)
+    ast3.items[test_item].ver = 3
+    print(ast2.master_tree[test_item][0].ver)
+    print(test_item)
+    print(ast3.get_transitive_updates())
 
     test_var = Variable.from_str("void *(*e[4][4])[4][4];")
     test_var.reduce()
