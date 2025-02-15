@@ -666,36 +666,3 @@ class VersionedSyntaxTree:
 
     def to_dict(self):
         return {name: [item.to_dict() for item in revs] for name, revs in self.master_tree.items()}
-
-
-if __name__ == "__main__":
-    test = SyntaxTree.from_file("tests/regex/load_from_file/test.h")
-    print(test.items["ComplexStruct3"])
-    print(test.items["ComplexStruct3"].dependencies())
-    print(test.items["NoStruct"].dependencies())
-    print(test.items["NoStruct"])
-    new_tree = test.get_fixed_tree()
-    print(test.items.keys())
-    print(new_tree.items.keys())
-    print(test.get_order())
-
-    dna_dir = 'blender/source/blender/makesdna'
-    ast = SyntaxTree()
-    for file in os.listdir(dna_dir):
-        if not file.endswith((".hpp", ".h")):
-            continue
-        ast.merge(SyntaxTree.from_file(os.path.join(dna_dir, file)))
-    print(json.dumps(test.to_dict()))
-
-    ast2 = VersionedSyntaxTree()
-    ast2.add_tree(test, 2)
-    test_item = list(ast2.master_tree.keys())[0]
-    ast3 = ast2.get_tree(2)
-    ast3.items[test_item].ver = 3
-    print(ast2.master_tree[test_item][0].ver)
-    print(test_item)
-    print(ast3.get_transitive_updates())
-
-    test_var = Variable.from_str("void *(*e[4][4])[4][4];")
-    test_var.reduce()
-    print(test_var)
