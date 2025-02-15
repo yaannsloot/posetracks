@@ -15,9 +15,7 @@ import json
 import re
 import os
 import copy
-from sys import version
 import textwrap
-from webbrowser import get
 import clang.cindex
 from bisect import bisect
 from typing import Any, List, Union
