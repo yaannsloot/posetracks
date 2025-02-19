@@ -73,7 +73,9 @@ cython_debug/
 *.onnx
 *.pyc
 /gen_headers/blender
-/gen_headers/*.db
+/gen_headers/output
+/gen_headers/syntax_trees
+/gen_headers/.vscode
 
 
 # Allow gitignore

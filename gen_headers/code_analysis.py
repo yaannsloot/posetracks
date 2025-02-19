@@ -15,11 +15,15 @@ import json
 import re
 import os
 import copy
+import struct
 import textwrap
 import clang.cindex
 from bisect import bisect
 from typing import Any, List, Union
 from collections import deque
+
+import regex
+from yaml import scan
 
 # Must have clang pip package installed for this to work
 clang.cindex.Config.set_library_path(os.path.join(
@@ -89,10 +93,10 @@ for kw, alts in keywords.items():
     for alias in alts:
         aliases[alias] = kw
 
+
 kw_pattern = sorted(list(keywords.keys()) +
                     list(aliases.keys()) + list(tagged), key=len, reverse=True)
-kw_pattern = r'^(' + "|".join(map(re.escape,
-                                  map(lambda s: s + ' ', kw_pattern))) + ")"
+kw_pattern = r'^(' + "|".join(map(re.escape, kw_pattern)) + ")"
 
 
 def normalize_text(text):
@@ -135,29 +139,82 @@ def match_kw(text):
     return text, None
 
 
+def find_group(text):
+    start = -1
+    stop = -1
+    level = 0
+    for i in range(len(text) - 1, -1, -1):
+        if text[i] == ")":
+            if level == 0:
+                stop = i + 1
+            level += 1
+        elif text[i] == "(":
+            level -= 1
+        if level == 0 and stop != -1:
+            start = i
+            break
+    return start, stop
+
+
+def lfind_group(text):
+    start = -1
+    stop = -1
+    level = 0
+    for i in range(len(text)):
+        if text[i] == "(":
+            if level == 0:
+                start = i
+            level += 1
+        elif text[i] == ")":
+            level -= 1
+        if level == 0 and start != -1:
+            stop = i + 1
+            break
+    return start, stop
+
+
 class Parenthesis:
     def to_dict(self):
         return {"type": "parenthesis"}
 
     @staticmethod
-    def wrap(text):
+    def __call__(text):
         return f"({text})"
 
     @classmethod
     def from_str(cls, text):
         text = normalize_text(text)
-        pattern = r'^\((.+)\)$'
-        match = re.match(pattern, text)
-        if match:
-            text = match.group(1).strip()
-        return text, cls() if match else None
+        group = find_group(text)
+        if group[0] == 0 and group[1] == len(text):
+            return text[group[0] + 1: group[1] - 1], cls()
+        return text, None
+
+
+class Function:
+    # TODO: add params
+    def __init__(self):
+        pass
+
+    def __call__(self, text):
+        return f"{text}()"
+
+    def to_dict(self):
+        return {"type": "function"}
+
+    @classmethod
+    def from_str(cls, text):
+        text = normalize_text(text)
+        group = find_group(text)
+        if group[0] != -1 and group[1] == len(text):
+            return text[:group[0]], cls()
+        return text, None
 
 
 class Array:
     def __init__(self, size: int = None):
         self.size = size if size is not None else None
 
-    def wrap(self, text):
+    def __call__(self, text):
         return f"{text}[{self.size if self.size is not None else ''}]"
 
     def to_dict(self):
@@ -181,7 +238,7 @@ class Pointer:
         return {"type": "pointer"}
 
     @staticmethod
-    def wrap(text):
+    def __call__(text):
         return f"*{text}"
 
     @classmethod
@@ -194,7 +251,7 @@ class Pointer:
         return text, cls() if match else None
 
 
-def _extract_inline_type(text, cursor):
+def _a(cursor):
     type = None
     tag = None
     first_child = None
@@ -212,86 +269,58 @@ def _extract_inline_type(text, cursor):
     return text, type, tag
 
 
-class VarType:
-    def __init__(self, keyword: str, tag: str = None):
-        self.keyword = keyword.strip()
-        self.tag = tag.strip() if tag else None
-
-    def is_tagged(self):
-        return bool(self.tag)
-
-    def __str__(self):
-        return self.keyword + (f" {self.tag}" if self.tag else '')
-
-    def is_stdint(self):
-        return self.keyword in stdint
-
-    def to_dict(self):
-        return {"keyword": self.keyword, "tag": self.tag}
-
-    @classmethod
-    def from_str(cls, text, typedefs=None, cursor=None):
-        text, type, tag = _extract_inline_type(normalize_text(text), cursor)
-        if not type:
-            text, type = match_kw(text)
-        pattern = r'^(\w+\s+)'
-        if not type:
-            if typedefs is None:
-                raise ValueError(
-                    f"A custom type was found with no provided type dictionary.")
-            match = re.match(pattern, text)
-            if not match:
-                raise ValueError(f"Type not found.")
-            type = match.group(1).strip()
-            typedef = typedefs.get(type)
-            if not typedef:
-                raise ValueError(f'Typedef "{type}" not found.')
-            return cls.from_str(re.sub(pattern, typedef + ' ', text, 1))
-        if not tag and type in tagged:
-            match = re.match(pattern, text)
-            if not match:
-                raise ValueError(f"Tag not found for {type}.")
-            tag = match.group(1).strip()
-            text = re.sub(pattern, '', text, 1)
-        separators = find_sep(text)
-        if separators:
-            text = text[separators[-1] + 1:]
-        return text, cls(type, tag)
-
-
 def _match_any(text):
-    cases = [Pointer, Array, Parenthesis]
+    cases = [Pointer, Array, Parenthesis, Function]
     for case in cases:
         text, match = case.from_str(text)
         if match:
+            if isinstance(match, Function):
+                raise ValueError("Functions are not supported")
             break
     return text, match
 
 
-class IrreducibleVariableError(Exception):
-    pass
+def _get_structure(text):
+    structure = []
+    while True:
+        text, match = _match_any(text)
+        if not match:
+            break
+        structure.append(match)
+    return text, structure
 
 
-class Variable:
-    def __init__(self, type: VarType, name: str, const: bool = False,
+def _next_word(text):
+    pattern = r"^\s*([\w\d]+)\s+"
+    match = re.match(pattern, text)
+    if match:
+        return re.sub(pattern, '', text, 1), match.group(1)
+    return text, None
+
+
+def _get_type(text):
+    text, keyword = match_kw(text)
+    if not keyword:
+        return text, None, None
+    if keyword in tagged:
+        text, tag = _next_word(text)
+        return text, keyword, tag
+    return text, keyword, None
+
+
+def _strip_body(text):
+    return re.sub(r"^.*}", '', text, 1)
+
+
+class VarType:
+    def __init__(self, keyword: str, tag: str = None,
                  structure: List[Union[Parenthesis, Array, Pointer]] = None):
-        self.type = type
-        self.name = name
-        self.const = const
+        self.keyword = keyword.strip()
+        self.tag = tag.strip() if tag else None
         self.structure = structure if structure else []
 
-    def __str__(self):
-        left = f"const {str(self.type)}" if self.const else str(self.type)
-        right = self.name
-        for s in reversed(self.structure):
-            right = s.wrap(right)
-        return f"{left} {right};"
-
-    def voidable(self):
-        for mod in self.structure:
-            if isinstance(mod, Pointer):
-                return True
-        return False
+    def is_tagged(self):
+        return bool(self.tag)
 
     def reduce(self):
         new_structure = []
@@ -303,12 +332,81 @@ class Variable:
         if not new_structure or not isinstance(new_structure[0], Pointer):
             raise IrreducibleVariableError(
                 "Variable is not a pointer and cannot be reduced")
-        self.type = VarType("void")
+        self.keyword = "void"
+        self.tag = None
         self.structure = new_structure
 
+    def __str__(self):
+        return self.keyword + (f" {self.tag}" if self.tag else '')
+
+    def __call__(self, text):
+        for s in self.structure:
+            text = s(text)
+        return self.keyword + (f" {self.tag}" if self.tag else '') + f" {text}"
+
+    def is_stdint(self):
+        return self.keyword in stdint
+
     def to_dict(self):
-        return {"type": self.type.to_dict(), "name": self.name, "is_const": self.const,
-                "structure": [item.to_dict() for item in self.structure]}
+        return {"keyword": self.keyword, "tag": self.tag,
+                "structure": [s.to_dict() for s in self.structure]}
+
+    @classmethod
+    def from_str(cls, text):
+        text, keyword, tag = _get_type(text)
+        text = _strip_body(text).replace(';', '')
+        separators = find_sep(text)
+        if separators:
+            text = text[separators[-1] + 1:]
+        text, structure = _get_structure(text)
+        return text, cls(keyword, tag, structure)
+
+    @classmethod
+    def from_cursor(cls, cursor):
+        if cursor.type.get_declaration().kind == clang.cindex.CursorKind.TYPEDEF_DECL:
+            text = cursor.type.get_declaration().underlying_typedef_type.spelling
+        else:
+            text = cursor.type.get_canonical().spelling
+        pattern = r'^(const\ )'
+        const = re.match(pattern, text)
+        if const:
+            text = re.sub(pattern, '', text, 1)
+        text, keyword, tag = _get_type(text)
+        if keyword in tagged and not tag:
+            start, end = lfind_group(text)
+            if start == -1 or end == -1:
+                tag = text
+                text = ''
+            else:
+                tag = text[start:end]
+                text = text[end:]
+        text, structure = _get_structure(text)
+        return cls(keyword, tag, structure)
+
+
+class IrreducibleVariableError(Exception):
+    pass
+
+
+class Variable:
+    def __init__(self, type: VarType, name: str, const: bool = False):
+        self.type = type
+        self.name = name
+        self.const = const
+
+    def __str__(self):
+        left = "const " if self.const else ""
+        right = self.type(self.name)
+        return f"{left} {right};".strip()
+
+    def voidable(self):
+        for mod in self.type.structure:
+            if isinstance(mod, Pointer):
+                return True
+        return False
+
+    def to_dict(self):
+        return {"type": self.type.to_dict(), "name": self.name, "is_const": self.const}
 
     @classmethod
     def from_str(cls, text, typedefs=None, cursor=None):
@@ -328,6 +426,38 @@ class Variable:
                 break
             structure.append(match)
         return cls(type, text, const, structure)
+
+    @classmethod
+    def from_cursor(cls, cursor):
+        name = cursor.spelling
+        type = VarType.from_cursor(cursor)
+        if cursor.type.get_declaration().kind == clang.cindex.CursorKind.TYPEDEF_DECL:
+            text = cursor.type.get_declaration().underlying_typedef_type.spelling
+        else:
+            text = cursor.type.get_canonical().spelling
+        const = bool(re.match(r'^(const\ )', text))
+        return cls(type, name, const)
+
+
+def is_function(cursor):
+    return cursor.kind in {clang.cindex.CursorKind.FUNCTION_DECL,
+                           clang.cindex.CursorKind.CXX_METHOD}
+
+
+def is_function_pointer(cursor):
+    type_ = cursor.type
+    return (type_.kind == clang.cindex.TypeKind.POINTER and
+            type_.get_pointee().kind in {clang.cindex.TypeKind.FUNCTIONPROTO,
+                                         clang.cindex.TypeKind.FUNCTIONNOPROTO})
+
+
+def cursor_has_func(cursor):
+    if is_function(cursor) or is_function_pointer(cursor):
+        return True
+    for child in cursor.get_children():
+        if cursor_has_func(child):
+            return True
+    return False
 
 
 class Struct:
@@ -356,13 +486,11 @@ class Struct:
             if isinstance(field, Struct):
                 field.void_dependency(name)
             elif field.type.is_tagged() and field.type.tag == name:
-                field.reduce()
+                field.type.reduce()
 
     def uses_stdint(self):
         for field in self.fields:
-            if isinstance(field, Struct) and field.uses_stdint():
-                return True
-            if field.type.is_stdint():
+            if (isinstance(field, Struct) and field.uses_stdint()) or field.type.is_stdint():
                 return True
         return False
 
@@ -398,23 +526,21 @@ class Struct:
                 "dependencies": list(self.dependencies())}
 
     @classmethod
-    def from_cursor(cls, cursor, typedefs=None):
+    def from_cursor(cls, cursor):
         if cursor.kind != clang.cindex.CursorKind.STRUCT_DECL:
             raise ValueError("Cursor is not a struct declaration")
         fields = []
         for field in cursor.get_children():
             if field.kind == clang.cindex.CursorKind.FIELD_DECL:
-                line = ' '.join(
-                    [token.spelling for token in field.get_tokens()])
-                fields.append(Variable.from_str(line, typedefs, field))
+                fields.append(Variable.from_cursor(field))
             elif field.kind == clang.cindex.CursorKind.STRUCT_DECL:
-                inner_td_scope = typedefs.copy()
-                struct = cls.from_cursor(field, inner_td_scope)
+                struct = cls.from_cursor(field)
                 if struct.fields:
                     fields.append(struct)
-        if typedefs:
-            typedefs[cursor.spelling] = "struct " + cursor.spelling
-        return cls(cursor.spelling, fields)
+        name = cursor.spelling
+        if name.startswith("struct "):
+            name = name[7:].strip()
+        return cls(name, fields)
 
 
 class SyntaxTree:
@@ -537,7 +663,7 @@ class SyntaxTree:
         return output
 
     def uses_stdint(self):
-        for item in self.items:
+        for item in self.items.values():
             if isinstance(item, Revision):
                 item = item.ref
             if not isinstance(item, Struct):
@@ -553,14 +679,12 @@ class SyntaxTree:
             path,
             args=["-E", "-CC", "-detailed-preprocessing-record"],
         )
-        typedefs = {}
         tree = cls()
         for cursor in tu.cursor.get_children():
             try:
-                if cursor.kind == clang.cindex.CursorKind.TYPEDEF_DECL:
-                    typedefs[cursor.spelling] = cursor.underlying_typedef_type.spelling
-                elif cursor.kind == clang.cindex.CursorKind.STRUCT_DECL:
-                    tree.add(Struct.from_cursor(cursor, typedefs))
+                # scan_cursor is temporarily acting as a guardrail to prevent processing of unsupported cursor types
+                if cursor.kind == clang.cindex.CursorKind.STRUCT_DECL and not cursor_has_func(cursor):
+                    tree.add(Struct.from_cursor(cursor))
             except ValueError as e:
                 print(f"Encountered error while processing {path}:", e)
         return tree
@@ -632,9 +756,13 @@ class VersionedSyntaxTree:
     def get_tree(self, ver):
         sub_tree = SyntaxTree()
         for name in self.master_tree.keys():
-            item = self.get(name, ver)
-            if not isinstance(item.ref, ItemRemoval):
-                sub_tree.add(item)
+            try:
+                item = self.get(name, ver)
+                if not isinstance(item.ref, ItemRemoval):
+                    sub_tree.add(item)
+            except KeyError:
+                pass
+
         return sub_tree
 
     def get(self, name, ver=None):
@@ -661,8 +789,49 @@ class VersionedSyntaxTree:
         versions = set()
         for branch in self.master_tree.values():
             for item in branch:
-                versions.add(item.ver)
+                if not isinstance(item.ref, ItemRemoval):
+                    versions.add(item.ver)
         return sorted(list(versions))
 
     def to_dict(self):
         return {name: [item.to_dict() for item in revs] for name, revs in self.master_tree.items()}
+
+
+if __name__ == "__main__":
+    test_a = "a ()((afaef) (asdasd))"
+    print(Function.from_str(test_a))
+
+    input = "struct piss (*cock)[8];"
+    print(f"input: {input}")
+    name, type = VarType.from_str(input)
+    print(f"var name: {name}")
+    print(f"type obj: {type.to_dict()}")
+    print(f"reconstructed: {type(name)}")
+
+    path = "tests/regex/load_from_file/test.h"
+    index = clang.cindex.Index.create()
+    tu = index.parse(
+        path,
+        args=["-E", "-CC", "-detailed-preprocessing-record"],
+    )
+
+    def print_cursors(cursor, level=0):
+        print(level, str(cursor.kind))
+        if cursor.kind == clang.cindex.CursorKind.TYPEDEF_DECL or cursor.kind == clang.cindex.CursorKind.FIELD_DECL:
+            print(cursor.spelling)
+            print(cursor.type.get_canonical().spelling)
+            if cursor.type.get_declaration().kind == clang.cindex.CursorKind.TYPEDEF_DECL:
+                print(cursor.type.get_declaration(
+                ).underlying_typedef_type.spelling)
+            print(cursor.underlying_typedef_type.spelling)
+        for child in cursor.get_children():
+            print_cursors(child, level + 1)
+
+    print_cursors(tu.cursor)
+
+    path = "tests/regex/load_from_file/test.h"
+    syntax_tree = SyntaxTree.from_file(path)
+    print(json.dumps(syntax_tree.to_dict()))
+
+    for struct in syntax_tree.items.values():
+        print(struct)
