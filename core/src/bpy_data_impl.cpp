@@ -653,7 +653,15 @@ PyBCollection PyScene::collection() const {
 	return PyBCollection(&ret_obj);
 }
 
-DEF_INTERN(PyScene, Scene)
+const int PyScene::frame_start() {
+	REF_FUNC_RET_HEADER(0);
+	return obj->attr("frame_start").cast<int>();
+}
+
+const int PyScene::frame_end() {
+	REF_FUNC_RET_HEADER(0);
+	return obj->attr("frame_end").cast<int>();
+}
 
 // -------------------- BlendDataCameras --------------------
 

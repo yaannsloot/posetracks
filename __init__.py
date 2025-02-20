@@ -86,7 +86,7 @@ def register():
     bpy_ver = bpy.app.version
     compat_ver = None
 
-    if not (compat_map[0][0] <= bpy.app.version <= compat_map[-1][0]):
+    if not (compat_map[0][0] <= bpy.app.version):
         print("[PoseTracks] Registration failed.")
         registered = False
         return

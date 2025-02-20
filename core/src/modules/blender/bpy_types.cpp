@@ -1,26 +1,12 @@
-/*
-Copyright (C) 2024 Ian Sloat
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+/* Copyright (C) 2025 Ian Sloat
+* Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>. */
 
 #include "bpy_types.hpp"
-#include <iostream>
-#include <algorithm>
+#include "generated/makesdna_3_6_0.h"
+#include "generated/makesdna_4_3_0.h"
 
 // Global compatability mode (can be changed)
-BlenderVersion blender_ver = BlenderVersion::VER_2_93_0;
+BlenderVersion blender_ver = BlenderVersion::VER_3_6_0;
 
 void set_compatibility_mode(BlenderVersion version) {
 	blender_ver = version;
@@ -32,81 +18,71 @@ BlenderVersion get_compatability_mode() {
 
 // -------------------- BezTriple --------------------
 
-#define BZTRP_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<BezTriple2_93_0*>(data_ptr)-> C);
-
-#define BZTRP_RETURN(M) BZTRP_BASE_RETURN_BODY(,, M)
-
 BezTripleVecs BezTriple::vec() const {
-	BZTRP_RETURN(vec)
+	BEZTRIPLE_RETURN(vec)
 }
 
 float& BezTriple::tilt() const {
-	BZTRP_RETURN(tilt)
+	BEZTRIPLE_RETURN(tilt)
 }
 
 float& BezTriple::weight() const {
-	BZTRP_RETURN(weight)
+	BEZTRIPLE_RETURN(weight)
 }
 
 float& BezTriple::radius() const {
-	BZTRP_RETURN(radius)
+	BEZTRIPLE_RETURN(radius)
 }
 
 char& BezTriple::ipo() const {
-	BZTRP_RETURN(ipo)
+	BEZTRIPLE_RETURN(ipo)
 }
 
 uint8_t& BezTriple::h1() const {
-	BZTRP_RETURN(h1)
+	BEZTRIPLE_RETURN(h1)
 }
 
 uint8_t& BezTriple::h2() const {
-	BZTRP_RETURN(h2)
+	BEZTRIPLE_RETURN(h2)
 }
 
 uint8_t& BezTriple::f1() const {
-	BZTRP_RETURN(f1)
+	BEZTRIPLE_RETURN(f1)
 }
 
 uint8_t& BezTriple::f2() const {
-	BZTRP_RETURN(f2)
+	BEZTRIPLE_RETURN(f2)
 }
 
 uint8_t& BezTriple::f3() const {
-	BZTRP_RETURN(f3)
+	BEZTRIPLE_RETURN(f3)
 }
 
 char& BezTriple::hide() const {
-	BZTRP_RETURN(hide)
+	BEZTRIPLE_RETURN(hide)
 }
 
 char& BezTriple::easing() const {
-	BZTRP_RETURN(easing)
+	BEZTRIPLE_RETURN(easing)
 }
 
 float& BezTriple::back() const {
-	BZTRP_RETURN(back)
+	BEZTRIPLE_RETURN(back)
 }
 
 float& BezTriple::amplitude() const {
-	BZTRP_RETURN(amplitude)
+	BEZTRIPLE_RETURN(amplitude)
 }
 
 float& BezTriple::period() const {
-	BZTRP_RETURN(period)
+	BEZTRIPLE_RETURN(period)
 }
 
 char& BezTriple::auto_handle_type() const {
-	BZTRP_RETURN(auto_handle_type)
+	BEZTRIPLE_RETURN(auto_handle_type)
 }
 
 // -------------------- FPoint --------------------
-
-#define FPOINT_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<FPoint2_93_0*>(data_ptr)-> C);
-
-#define FPOINT_RETURN(M) FPOINT_BASE_RETURN_BODY(,, M)
 
 float* FPoint::vec() const {
 	FPOINT_RETURN(vec)
@@ -117,13 +93,6 @@ int& FPoint::flag() const {
 }
 
 // -------------------- FCurve --------------------
-
-#define FCURVE_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<FCurve2_93_0*>(data_ptr)-> C);
-
-#define FCURVE_RETURN_REF(T, M) FCURVE_BASE_RETURN_BODY(T, &, M)
-#define FCURVE_RETURN_AS(T, M) FCURVE_BASE_RETURN_BODY(T,, M)
-#define FCURVE_RETURN(M) FCURVE_BASE_RETURN_BODY(,, M)
 
 FCurve FCurve::next() const {
 	FCURVE_RETURN_AS(FCurve, next)
@@ -193,634 +162,449 @@ float FCurve::prev_offset() const {
 
 // -------------------- bConstraintChannel --------------------
 
-#define BCCH_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<bConstraintChannel2_93_0*>(data_ptr)-> C);
-
-#define BCCH_RETURN_AS(T, M) BCCH_BASE_RETURN_BODY(T,, M)
-#define BCCH_RETURN(M) BCCH_BASE_RETURN_BODY(,, M)
-
 bConstraintChannel bConstraintChannel::next() const {
-	BCCH_RETURN_AS(bConstraintChannel, next)
+	BCONSTRAINT_RETURN_AS(bConstraintChannel, next)
 }
 
 bConstraintChannel bConstraintChannel::prev() const {
-	BCCH_RETURN_AS(bConstraintChannel, prev)
+	BCONSTRAINT_RETURN_AS(bConstraintChannel, prev)
 }
 
 Ipo bConstraintChannel::ipo() const {
-	BCCH_RETURN_AS(Ipo, ipo)
+	BCONSTRAINT_RETURN_AS(Ipo, ipo)
 }
 
 short& bConstraintChannel::flag() const {
-	BCCH_RETURN(flag)
+	BCONSTRAINT_RETURN(flag)
 }
 
 std::string bConstraintChannel::name() const {
-	BCCH_RETURN_AS(std::string, name)
+	BCONSTRAINT_RETURN_AS(std::string, name)
 }
 
 // -------------------- bActionChannel --------------------
 
-#define BACH_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<bActionChannel2_93_0*>(data_ptr)-> C);
-
-#define BACH_RETURN_REF(T, M) BACH_BASE_RETURN_BODY(T, &, M)
-#define BACH_RETURN_AS(T, M) BACH_BASE_RETURN_BODY(T,, M)
-#define BACH_RETURN(M) BACH_BASE_RETURN_BODY(,, M)
-
 bActionChannel bActionChannel::next() const {
-	BACH_RETURN_AS(bActionChannel, next)
+	BACTIONCHANNEL_RETURN_AS(bActionChannel, next)
 }
 
 bActionChannel bActionChannel::prev() const {
-	BACH_RETURN_AS(bActionChannel, prev)
+	BACTIONCHANNEL_RETURN_AS(bActionChannel, prev)
 }
 
 bActionGroup bActionChannel::grp() const {
-	BACH_RETURN_AS(bActionGroup, grp)
+	BACTIONCHANNEL_RETURN_AS(bActionGroup, grp)
 }
 
 Ipo bActionChannel::ipo() const {
-	BACH_RETURN_AS(Ipo, ipo)
+	BACTIONCHANNEL_RETURN_AS(Ipo, ipo)
 }
 
 ListBase<bConstraintChannel> bActionChannel::constraintChannels() const {
-	BACH_RETURN_REF(ListBase<bConstraintChannel>, constraintChannels)
+	BACTIONCHANNEL_RETURN_REF(ListBase<bConstraintChannel>, constraintChannels)
 }
 
 int& bActionChannel::flag() const {
-	BACH_RETURN(flag)
+	BACTIONCHANNEL_RETURN(flag)
 }
 
 std::string bActionChannel::name() const {
-	BACH_RETURN_AS(std::string, name)
+	BACTIONCHANNEL_RETURN_AS(std::string, name)
 }
 
 int& bActionChannel::temp() const {
-	BACH_RETURN(temp)
+	BACTIONCHANNEL_RETURN(temp)
 }
 
 // -------------------- bActionGroup --------------------
 
-#define BAGRP_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<bActionGroup2_93_0*>(data_ptr)-> C);
-
-#define BAGRP_RETURN_REF(T, M) BAGRP_BASE_RETURN_BODY(T, &, M)
-#define BAGRP_RETURN_AS(T, M) BAGRP_BASE_RETURN_BODY(T,, M)
-#define BAGRP_RETURN(M) BAGRP_BASE_RETURN_BODY(,, M)
-
 bActionGroup bActionGroup::next() const {
-	BAGRP_RETURN_AS(bActionGroup, next)
+	BACTIONGROUP_RETURN_AS(bActionGroup, next)
 }
 
 bActionGroup bActionGroup::prev() const {
-	BAGRP_RETURN_AS(bActionGroup, prev)
+	BACTIONGROUP_RETURN_AS(bActionGroup, prev)
 }
 
 ListBase<bActionChannel> bActionGroup::channels() const {
-	BAGRP_RETURN_REF(ListBase<bActionChannel>, channels)
+	BACTIONGROUP_RETURN_REF(ListBase<bActionChannel>, channels)
 }
 
 int& bActionGroup::flag() const {
-	BAGRP_RETURN(flag)
+	BACTIONGROUP_RETURN(flag)
 }
 
 int& bActionGroup::customCol() const {
-	BAGRP_RETURN(customCol)
+	BACTIONGROUP_RETURN(customCol)
 }
 
 std::string bActionGroup::name() const {
-	BAGRP_RETURN_AS(std::string, name)
+	BACTIONGROUP_RETURN_AS(std::string, name)
 }
 
 ThemeWireColor bActionGroup::cs() const {
-	BAGRP_RETURN_REF(ThemeWireColor, cs)
+	BACTIONGROUP_RETURN_REF(ThemeWireColor, cs)
 }
 
 // -------------------- bAction --------------------
 
-#define BACT_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<bAction2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_1_0) \
-		return A ( B reinterpret_cast<bAction3_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_2_0) \
-		return A ( B reinterpret_cast<bAction3_1_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_4_0) \
-		return A ( B reinterpret_cast<bAction3_2_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_1_0) \
-		return A ( B reinterpret_cast<bAction3_4_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A ( B reinterpret_cast<bAction4_1_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_3_0) \
-		return A ( B reinterpret_cast<bAction4_2_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<bAction4_3_0*>(data_ptr)-> C);
-
-#define BACT_RETURN_REF(T, M) BACT_BASE_RETURN_BODY(T, &, M)
-#define BACT_RETURN_AS(T, M) BACT_BASE_RETURN_BODY(T,, M)
-#define BACT_RETURN(M) BACT_BASE_RETURN_BODY(,, M)
-
 ID<bAction> bAction::id() const {
-	BACT_RETURN_REF(ID<bAction>, id)
+	BACTION_RETURN_REF(ID<bAction>, id)
 }
 
 ListBase<FCurve> bAction::curves() const {
-	BACT_RETURN_REF(ListBase<FCurve>, curves)
+	BACTION_RETURN_REF(ListBase<FCurve>, curves)
 }
 
 ListBase<bActionGroup> bAction::groups() const {
-	BACT_RETURN_REF(ListBase<bActionGroup>, groups)
+	BACTION_RETURN_REF(ListBase<bActionGroup>, groups)
 }
 
 // Add markers when type is determined
 
 int& bAction::flag() const {
-	BACT_RETURN(flag)
+	BACTION_RETURN(flag)
 }
 
 int& bAction::active_marker() const {
-	BACT_RETURN(active_marker)
+	BACTION_RETURN(active_marker)
 }
 
 int bAction::idroot() const {
-	BACT_RETURN(idroot)
+	BACTION_RETURN(idroot)
 }
 
 PreviewImage bAction::preview() const {
-	BACT_RETURN_AS(PreviewImage, preview)
+	BACTION_RETURN_AS(PreviewImage, preview)
 }
 
 // -------------------- AnimData --------------------
 
-#define ADAT_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A ( B reinterpret_cast<AnimData2_93_0*>(data_ptr)-> C); \
-    else if (blender_ver < BlenderVersion::VER_4_3_0) \
-        return A ( B reinterpret_cast<AnimData4_2_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<AnimData4_3_0*>(data_ptr)-> C);
-
-#define ADAT_RETURN_REF(T, M) ADAT_BASE_RETURN_BODY(T, &, M)
-#define ADAT_RETURN_AS(T, M) ADAT_BASE_RETURN_BODY(T,, M)
-#define ADAT_RETURN(M) ADAT_BASE_RETURN_BODY(,, M)
-
 bAction AnimData::action() const {
-	ADAT_RETURN_AS(bAction, action)
+	ANIMDATA_RETURN_AS(bAction, action)
 }
 
 bAction AnimData::tmpact() const {
-	ADAT_RETURN_AS(bAction, tmpact)
+	ANIMDATA_RETURN_AS(bAction, tmpact)
 }
 
 ListBase<NlaTrack> AnimData::nla_tracks() const {
-	ADAT_RETURN_REF(ListBase<NlaTrack>, nla_tracks)
+	ANIMDATA_RETURN_REF(ListBase<NlaTrack>, nla_tracks)
 }
 
 NlaTrack AnimData::act_track() const {
-	ADAT_RETURN_AS(NlaTrack, act_track)
+	ANIMDATA_RETURN_AS(NlaTrack, act_track)
 }
 
 NlaStrip AnimData::actstrip() const {
-	ADAT_RETURN_AS(NlaStrip, actstrip)
+	ANIMDATA_RETURN_AS(NlaStrip, actstrip)
 }
 
 ListBase<ChannelDriver> AnimData::drivers() const {
-	ADAT_RETURN_REF(ListBase<ChannelDriver>, drivers)
+	ANIMDATA_RETURN_REF(ListBase<ChannelDriver>, drivers)
 }
 
 ListBase<AnimOverride> AnimData::overrides() const {
-	ADAT_RETURN_REF(ListBase<AnimOverride>, overrides)
+	ANIMDATA_RETURN_REF(ListBase<AnimOverride>, overrides)
 }
 
 // -------------------- MovieTrackingCamera --------------------
 
-#define TRCAM_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<MovieTrackingCamera2_93_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<MovieTrackingCamera3_5_0*>(data_ptr)-> C);
-
-#define TRCAM_RETURN(M) TRCAM_BASE_RETURN_BODY(,, M)
-
 short& MovieTrackingCamera::distortion_model() const {
-	TRCAM_RETURN(distortion_model)
+	MOVIETRACKINGCAMERA_RETURN(distortion_model)
 }
 
 float& MovieTrackingCamera::sensor_width() const {
-	TRCAM_RETURN(sensor_width)
+	MOVIETRACKINGCAMERA_RETURN(sensor_width)
 }
 
 float& MovieTrackingCamera::pixel_aspect() const {
-	TRCAM_RETURN(pixel_aspect)
+	MOVIETRACKINGCAMERA_RETURN(pixel_aspect)
 }
 
 float& MovieTrackingCamera::focal() const {
-	TRCAM_RETURN(focal)
+	MOVIETRACKINGCAMERA_RETURN(focal)
 }
 
 short& MovieTrackingCamera::units() const {
-	TRCAM_RETURN(units)
+	MOVIETRACKINGCAMERA_RETURN(units)
 }
 
 float& MovieTrackingCamera::k1() const {
-	TRCAM_RETURN(k1)
+	MOVIETRACKINGCAMERA_RETURN(k1)
 }
 
 float& MovieTrackingCamera::k2() const {
-	TRCAM_RETURN(k2)
+	MOVIETRACKINGCAMERA_RETURN(k2)
 }
 
 float& MovieTrackingCamera::k3() const {
-	TRCAM_RETURN(k3)
+	MOVIETRACKINGCAMERA_RETURN(k3)
 }
 
 float& MovieTrackingCamera::division_k1() const {
-	TRCAM_RETURN(division_k1)
+	MOVIETRACKINGCAMERA_RETURN(division_k1)
 }
 
 float& MovieTrackingCamera::division_k2() const {
-	TRCAM_RETURN(division_k2)
+	MOVIETRACKINGCAMERA_RETURN(division_k2)
 }
 
 float& MovieTrackingCamera::nuke_k1() const {
-	TRCAM_RETURN(nuke_k1)
+	MOVIETRACKINGCAMERA_RETURN(nuke_k1)
 }
 
 float& MovieTrackingCamera::nuke_k2() const {
-	TRCAM_RETURN(nuke_k2)
+	MOVIETRACKINGCAMERA_RETURN(nuke_k2)
 }
 
 float& MovieTrackingCamera::brown_k1() const {
-	TRCAM_RETURN(brown_k1)
+	MOVIETRACKINGCAMERA_RETURN(brown_k1)
 }
 
 float& MovieTrackingCamera::brown_k2() const {
-	TRCAM_RETURN(brown_k2)
+	MOVIETRACKINGCAMERA_RETURN(brown_k2)
 }
 
 float& MovieTrackingCamera::brown_k3() const {
-	TRCAM_RETURN(brown_k3)
+	MOVIETRACKINGCAMERA_RETURN(brown_k3)
 }
 
 float& MovieTrackingCamera::brown_k4() const {
-	TRCAM_RETURN(brown_k4)
+	MOVIETRACKINGCAMERA_RETURN(brown_k4)
 }
 
 float& MovieTrackingCamera::brown_p1() const {
-	TRCAM_RETURN(brown_p1)
+	MOVIETRACKINGCAMERA_RETURN(brown_p1)
 }
 
 float& MovieTrackingCamera::brown_p2() const {
-	TRCAM_RETURN(brown_p2)
+	MOVIETRACKINGCAMERA_RETURN(brown_p2)
 }
 
 // -------------------- MovieTrackingMarker --------------------
 
-#define MARKER_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<MovieTrackingMarker2_93_0*>(data_ptr)-> C);
-
-#define MARKER_RETURN(M) MARKER_BASE_RETURN_BODY(,, M)
-
 float* MovieTrackingMarker::pos() const {
-	MARKER_RETURN(pos)
+	MOVIETRACKINGMARKER_RETURN(pos)
 }
 
 Corners MovieTrackingMarker::pattern_corners() const {
-	MARKER_RETURN(pattern_corners)
+	MOVIETRACKINGMARKER_RETURN_REF(Corners, pattern_corners)
 }
 
 float* MovieTrackingMarker::search_min() const {
-	MARKER_RETURN(search_min)
+	MOVIETRACKINGMARKER_RETURN(search_min)
 }
 
 float* MovieTrackingMarker::search_max() const {
-	MARKER_RETURN(search_max)
+	MOVIETRACKINGMARKER_RETURN(search_max)
 }
 
 int& MovieTrackingMarker::framenr() const {
-	MARKER_RETURN(framenr)
+	MOVIETRACKINGMARKER_RETURN(framenr)
 }
 
 int& MovieTrackingMarker::flag() const {
-	MARKER_RETURN(flag)
-}
-
-void* new_marker() 
-{ 
-	// The struct hasn't changed since 2.93 so this is fine
-	MovieTrackingMarker2_93_0* marker = new MovieTrackingMarker2_93_0;
-
-	// Zero all fields
-	std::fill(&marker->pos[0], &marker->pos[0] + sizeof(marker->pos) / sizeof(float), 0.0f);
-	std::fill(&marker->pattern_corners[0][0], &marker->pattern_corners[0][0] + sizeof(marker->pattern_corners) / sizeof(float), 0.0f);
-	std::fill(&marker->search_min[0], &marker->search_min[0] + sizeof(marker->search_min) / sizeof(float), 0.0f);
-	std::fill(&marker->search_max[0], &marker->search_max[0] + sizeof(marker->search_max) / sizeof(float), 0.0f);
-	marker->framenr = 0;
-	marker->flag = 0;
-
-	// return as void ptr
-	return marker;
+	MOVIETRACKINGMARKER_RETURN(flag)
 }
 
 // -------------------- MovieTrackingTrack --------------------
 
-#define TRACK_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<MovieTrackingTrack2_93_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<MovieTrackingTrack3_6_0*>(data_ptr)-> C);
-
-#define TRACK_BASE_RETURN_BODY_LEGACY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<MovieTrackingTrack2_93_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<MovieTrackingTrack3_6_0*>(data_ptr)-> C##_legacy);
-
-#define TRACK_RETURN_REF(T, C) TRACK_BASE_RETURN_BODY(T, &, C)
-#define TRACK_RETURN_AS(T, C) TRACK_BASE_RETURN_BODY(T,, C)
-#define TRACK_RETURN(M) TRACK_BASE_RETURN_BODY(,, M)
-#define TRACK_RETURN_LEGACY(M) TRACK_BASE_RETURN_BODY_LEGACY(,, M)
-
 MovieTrackingTrack MovieTrackingTrack::next() const {
-	TRACK_RETURN_AS(MovieTrackingTrack, next)
+	MOVIETRACKINGTRACK_RETURN_AS(MovieTrackingTrack, next)
 }
 
 MovieTrackingTrack MovieTrackingTrack::prev() const {
-	TRACK_RETURN_AS(MovieTrackingTrack, prev)
+	MOVIETRACKINGTRACK_RETURN_AS(MovieTrackingTrack, prev)
 }
 
 const std::string MovieTrackingTrack::name() const {
-	TRACK_RETURN_AS(std::string, name)
+	MOVIETRACKINGTRACK_RETURN_AS(std::string, name)
 }
 
 float* MovieTrackingTrack::offset() const {
-	TRACK_RETURN(offset)
+	MOVIETRACKINGTRACK_RETURN(offset)
 }
 
 int &MovieTrackingTrack::markersnr() const {
-	TRACK_RETURN(markersnr)
+	MOVIETRACKINGTRACK_RETURN(markersnr)
 }
 
 MovieTrackingMarker MovieTrackingTrack::marker(size_t idx) const {
-	TRACK_RETURN_REF(MovieTrackingMarker, markers[idx])
+	MOVIETRACKINGTRACK_RETURN_REF(MovieTrackingMarker, markers[idx])
 }
 
 float* MovieTrackingTrack::bundle_pos() const {
-	TRACK_RETURN(bundle_pos)
+	MOVIETRACKINGTRACK_RETURN(bundle_pos)
 }
 
 float& MovieTrackingTrack::error() const {
-	TRACK_RETURN(error)
+	MOVIETRACKINGTRACK_RETURN(error)
 }
 
 int& MovieTrackingTrack::flag() const {
-	TRACK_RETURN(flag)
+	MOVIETRACKINGTRACK_RETURN(flag)
 }
 
 int& MovieTrackingTrack::pat_flag() const {
-	TRACK_RETURN(pat_flag)
+	MOVIETRACKINGTRACK_RETURN(pat_flag)
 }
 
 int& MovieTrackingTrack::search_flag() const {
-	TRACK_RETURN(search_flag)
+	MOVIETRACKINGTRACK_RETURN(search_flag)
 }
 
 float* MovieTrackingTrack::color() const {
-	TRACK_RETURN(color)
+	MOVIETRACKINGTRACK_RETURN(color)
 }
 
 short& MovieTrackingTrack::frames_limit() const {
-	TRACK_RETURN(frames_limit)
+	MOVIETRACKINGTRACK_RETURN(frames_limit)
 }
 
 short& MovieTrackingTrack::margin() const {
-	TRACK_RETURN(margin)
+	MOVIETRACKINGTRACK_RETURN(margin)
 }
 
 short& MovieTrackingTrack::pattern_match() const {
-	TRACK_RETURN(pattern_match)
+	MOVIETRACKINGTRACK_RETURN(pattern_match)
 }
 
 short& MovieTrackingTrack::motion_model() const {
-	TRACK_RETURN(motion_model)
+	MOVIETRACKINGTRACK_RETURN(motion_model)
 }
 
 int& MovieTrackingTrack::algorithm_flag() const {
-	TRACK_RETURN(algorithm_flag)
+	MOVIETRACKINGTRACK_RETURN(algorithm_flag)
 }
 
 float& MovieTrackingTrack::minimum_correlation() const {
-	TRACK_RETURN(minimum_correlation)
+	MOVIETRACKINGTRACK_RETURN(minimum_correlation)
 }
 
 bGPdata MovieTrackingTrack::gpd() const {
-	TRACK_RETURN_AS(bGPdata, gpd)
+	MOVIETRACKINGTRACK_RETURN_AS(bGPdata, gpd)
 }
 
 float& MovieTrackingTrack::weight() const {
-	TRACK_RETURN(weight)
+	MOVIETRACKINGTRACK_RETURN(weight)
 }
 
 float& MovieTrackingTrack::weight_stab() const {
-	TRACK_RETURN(weight_stab)
-}
-
-// Next 2 functions are based on code from tracking.cc
-// Copyright (C) 2024 Blender Foundation. All rights reserved.
-MovieTrackingMarker MovieTrackingTrack::tracking_marker_get(int framenr) const {
-	const int num_markers = markersnr();
-	if (num_markers == 0) {
-		std::cerr << "Detected degenerated track, should never happen." << std::endl;
-		return nullptr;
-	}
-	int left_boundary = 0;
-	int right_boundary = num_markers;
-	while (left_boundary < right_boundary) {
-		const int median_index = (left_boundary + right_boundary) / 2;
-		MovieTrackingMarker m = marker(median_index);
-		int m_framenr = m.framenr();
-		if (m_framenr == framenr)
-			return m;
-		if (m_framenr < framenr)
-			left_boundary = median_index + 1;
-		else
-			right_boundary = median_index - 1;
-	}
-	const int closest_index = std::clamp(right_boundary, 0, num_markers - 1);
-	return marker(closest_index);
-}
-
-MovieTrackingMarker MovieTrackingTrack::find_frame(int frame, bool exact) const {
-	MovieTrackingMarker marker = tracking_marker_get(frame);
-	if (exact && marker.framenr() != frame)
-		return MovieTrackingMarker();
-	return marker;
+	MOVIETRACKINGTRACK_RETURN(weight_stab)
 }
 
 // -------------------- MovieTrackingObject --------------------
 
-#define TOBJECT_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<MovieTrackingObject2_93_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<MovieTrackingObject3_5_0*>(data_ptr)-> C);
-
-#define TOBJECT_RETURN_REF(T, M) TOBJECT_BASE_RETURN_BODY(T, &, M)
-#define TOBJECT_RETURN_AS(T, M) TOBJECT_BASE_RETURN_BODY(T,, M)
-#define TOBJECT_RETURN(M) TOBJECT_BASE_RETURN_BODY(,, M)
-
 MovieTrackingObject MovieTrackingObject::next() const {
-	TOBJECT_RETURN_AS(MovieTrackingObject, next)
+	MOVIETRACKINGOBJECT_RETURN_AS(MovieTrackingObject, next)
 }
 
 MovieTrackingObject MovieTrackingObject::prev() const {
-	TOBJECT_RETURN_AS(MovieTrackingObject, prev)
+	MOVIETRACKINGOBJECT_RETURN_AS(MovieTrackingObject, prev)
 }
 
 const std::string MovieTrackingObject::name() const {
-	TOBJECT_RETURN_AS(std::string, name)
+	MOVIETRACKINGOBJECT_RETURN_AS(std::string, name)
 }
 
 int& MovieTrackingObject::flag() const {
-	TOBJECT_RETURN(flag)
+	MOVIETRACKINGOBJECT_RETURN(flag)
 }
 
 float& MovieTrackingObject::scale() const {
-	TOBJECT_RETURN(scale)
+	MOVIETRACKINGOBJECT_RETURN(scale)
 }
 
 ListBase<MovieTrackingTrack> MovieTrackingObject::tracks() const {
-	TOBJECT_RETURN_REF(ListBase<MovieTrackingTrack>, tracks)
+	MOVIETRACKINGOBJECT_RETURN_REF(ListBase<MovieTrackingTrack>, tracks)
 }
 
 ListBase<MovieTrackingPlaneTrack> MovieTrackingObject::plane_tracks() const {
-	TOBJECT_RETURN_REF(ListBase<MovieTrackingPlaneTrack>, plane_tracks)
+	MOVIETRACKINGOBJECT_RETURN_REF(ListBase<MovieTrackingPlaneTrack>, plane_tracks)
 }
 
 MovieTrackingReconstruction MovieTrackingObject::reconstruction() const {
-	TOBJECT_RETURN_REF(MovieTrackingReconstruction, reconstruction)
+	MOVIETRACKINGOBJECT_RETURN_REF(MovieTrackingReconstruction, reconstruction)
 }
 
 int& MovieTrackingObject::keyframe1() const {
-	TOBJECT_RETURN(keyframe1)
+	MOVIETRACKINGOBJECT_RETURN(keyframe1)
 }
 
 int& MovieTrackingObject::keyframe2() const {
-	TOBJECT_RETURN(keyframe2)
+	MOVIETRACKINGOBJECT_RETURN(keyframe2)
 }
 
 // -------------------- MovieTracking --------------------
 
-#define TRACKING_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<MovieTracking2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<MovieTracking3_5_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<MovieTracking3_6_0*>(data_ptr)-> C);
-
-#define TRACKING_BASE_RETURN_BODY_LEGACY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<MovieTracking2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<MovieTracking3_5_0*>(data_ptr)-> C##_legacy); \
-	return A ( B reinterpret_cast<MovieTracking3_6_0*>(data_ptr)-> C##_legacy);
-
-#define TRACKING_RETURN_REF(T, M) TRACKING_BASE_RETURN_BODY(T, &, M)
-#define TRACKING_RETURN_REF_LEGACY(T, M) TRACKING_BASE_RETURN_BODY_LEGACY(T, &, M)
-#define TRACKING_RETURN_AS(T, M) TRACKING_BASE_RETURN_BODY(T,, M)
-#define TRACKING_RETURN_AS_LEGACY(T, M) TRACKING_BASE_RETURN_BODY_LEGACY(T,, M)
-#define TRACKING_RETURN(M) TRACKING_BASE_RETURN_BODY(,, M)
-
 MovieTrackingSettings MovieTracking::settings() const {
-	TRACKING_RETURN_REF(MovieTrackingSettings, settings)
+	MOVIETRACKING_RETURN_REF(MovieTrackingSettings, settings)
 }
 
 MovieTrackingCamera MovieTracking::camera() const {
-	TRACKING_RETURN_REF(MovieTrackingCamera, camera)
+	MOVIETRACKING_RETURN_REF(MovieTrackingCamera, camera)
 }
 
 ListBase<MovieTrackingTrack> MovieTracking::tracks() const {
-	TRACKING_RETURN_REF_LEGACY(ListBase<MovieTrackingTrack>, tracks)
+	MOVIETRACKING_RETURN_REF(ListBase<MovieTrackingTrack>, tracks_legacy)
 }
 
 ListBase<MovieTrackingPlaneTrack> MovieTracking::plane_tracks() const {
-	TRACKING_RETURN_REF_LEGACY(ListBase<MovieTrackingPlaneTrack>, plane_tracks)
+	MOVIETRACKING_RETURN_REF(ListBase<MovieTrackingPlaneTrack>, plane_tracks_legacy)
 }
 
 MovieTrackingReconstruction MovieTracking::reconstruction() const {
-	TRACKING_RETURN_REF_LEGACY(MovieTrackingReconstruction, reconstruction)
+	MOVIETRACKING_RETURN_REF(MovieTrackingReconstruction, reconstruction_legacy)
 }
 
 MovieTrackingStabilization MovieTracking::stabilization() const {
-	TRACKING_RETURN_REF(MovieTrackingStabilization, stabilization)
+	MOVIETRACKING_RETURN_REF(MovieTrackingStabilization, stabilization)
 }
 
 MovieTrackingTrack MovieTracking::active_track() const {
-	TRACKING_RETURN_AS_LEGACY(MovieTrackingTrack, act_track)
+	MOVIETRACKING_RETURN_AS(MovieTrackingTrack, act_track_legacy)
 }
 
 MovieTrackingPlaneTrack MovieTracking::active_plane_track() const {
-	TRACKING_RETURN_AS_LEGACY(MovieTrackingPlaneTrack, act_plane_track)
+	MOVIETRACKING_RETURN_AS(MovieTrackingPlaneTrack, act_plane_track_legacy)
 }
 
 ListBase<MovieTrackingObject> MovieTracking::objects() const {
-	TRACKING_RETURN_REF(ListBase<MovieTrackingObject>, objects)
+	MOVIETRACKING_RETURN_REF(ListBase<MovieTrackingObject>, objects)
 }
 
 const int MovieTracking::objectnr() const {
-	TRACKING_RETURN(objectnr)
+	MOVIETRACKING_RETURN(objectnr)
 }
 
 const int MovieTracking::tot_objects() const {
-	TRACKING_RETURN(tot_object)
+	MOVIETRACKING_RETURN(tot_object)
 }
 
 MovieTrackingStats MovieTracking::stats() const {
-	TRACKING_RETURN_AS(MovieTrackingStats, stats)
+	MOVIETRACKING_RETURN_AS(MovieTrackingStats, stats)
 }
 
 MovieTrackingDopesheet MovieTracking::dopesheet() {
-	TRACKING_RETURN_REF(MovieTrackingDopesheet, dopesheet)
+	MOVIETRACKING_RETURN_REF(MovieTrackingDopesheet, dopesheet)
 }
 
 // -------------------- MovieClipUser --------------------
 
-#define MC_USER_BASE_RETURN_BODY(A, B, C) \
-	return A ( B reinterpret_cast<MovieClipUser2_93_0*>(data_ptr)-> C);
-
-#define MC_USER_RETURN_REF(T, M) MC_USER_BASE_RETURN_BODY(T, &, M)
-#define MC_USER_RETURN_AS(T, M) MC_USER_BASE_RETURN_BODY(T,, M)
-#define MC_USER_RETURN(M) MC_USER_BASE_RETURN_BODY(,, M)
-
 int& MovieClipUser::framenr() const {
-	MC_USER_RETURN(framenr)
+	MOVIECLIPUSER_RETURN(framenr)
 }
 
 short& MovieClipUser::render_size() const {
-	MC_USER_RETURN(render_size)
+	MOVIECLIPUSER_RETURN(render_size)
 }
 
 short& MovieClipUser::render_flag() const {
-	MC_USER_RETURN(render_flag)
+	MOVIECLIPUSER_RETURN(render_flag)
 }
 
 // -------------------- MovieClip --------------------
-
-#define MOVIECLIP_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<MovieClip2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_2_0) \
-		return A ( B reinterpret_cast<MovieClip3_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_4_0) \
-		return A ( B reinterpret_cast<MovieClip3_2_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<MovieClip3_4_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<MovieClip3_5_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_1_0) \
-		return A ( B reinterpret_cast<MovieClip3_6_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A ( B reinterpret_cast<MovieClip4_1_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<MovieClip4_2_0*>(data_ptr)-> C);
-
-#define MOVIECLIP_RETURN_REF(T, M) MOVIECLIP_BASE_RETURN_BODY(T, &, M)
-#define MOVIECLIP_RETURN_AS(T, M) MOVIECLIP_BASE_RETURN_BODY(T,, M)
-#define MOVIECLIP_RETURN(M) MOVIECLIP_BASE_RETURN_BODY(,, M)
 
 ID<MovieClip> MovieClip::id() const {
 	MOVIECLIP_RETURN_REF(ID<MovieClip>, id)
@@ -885,33 +669,8 @@ MovieClip_Runtime MovieClip::runtime() const {
 
 // -------------------- Collection --------------------
 
-#define COLL_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<Collection2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_2_0) \
-		return A ( B reinterpret_cast<Collection3_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_3_0) \
-		return A ( B reinterpret_cast<Collection3_2_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_4_0) \
-		return A ( B reinterpret_cast<Collection3_3_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<Collection3_4_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<Collection3_5_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_0_0) \
-		return A ( B reinterpret_cast<Collection3_6_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_1_0) \
-		return A(B reinterpret_cast<Collection4_0_0*>(data_ptr)->C); \
-	else if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A(B reinterpret_cast<Collection4_1_0*>(data_ptr)->C); \
-	return A ( B reinterpret_cast<Collection4_2_0*>(data_ptr)-> C);
-
-#define COLL_RETURN_REF(T, M) COLL_BASE_RETURN_BODY(T, &, M)
-#define COLL_RETURN_AS(T, M) COLL_BASE_RETURN_BODY(T,, M)
-#define COLL_RETURN(M) COLL_BASE_RETURN_BODY(,, M)
-
 ID<Collection> Collection::id() const {
-	COLL_RETURN_REF(ID<Collection>, id);
+	COLLECTION_RETURN_REF(ID<Collection>, id);
 }
 
 // -------------------- MaterialSlot --------------------
@@ -933,8 +692,6 @@ MaterialSlot MaterialSlotArray::operator[](const size_t idx) const {
 }
 
 // -------------------- Object --------------------
-
-// Macros are defined in header
 
 ID<Object> Object::id() const {
 	OBJECT_RETURN_REF(ID<Object>, id)
@@ -1278,226 +1035,122 @@ int Object::actcol() const {
 
 // -------------------- CameraBGImage --------------------
 
-#define CAMBGI_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<CameraBGImage2_93_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<CameraBGImage3_0_0*>(data_ptr)-> C);
-
-#define CAMBGI_RETURN_REF(T, M) CAMBGI_BASE_RETURN_BODY(T, &, M)
-#define CAMBGI_RETURN_AS(T, M) CAMBGI_BASE_RETURN_BODY(T,, M)
-#define CAMBGI_RETURN(M) CAMBGI_BASE_RETURN_BODY(,, M)
-
 CameraBGImage CameraBGImage::next() const {
-	CAMBGI_RETURN_AS(CameraBGImage, next)
+	CAMERABGIMAGE_RETURN_AS(CameraBGImage, next)
 }
 
 CameraBGImage CameraBGImage::prev() const {
-	CAMBGI_RETURN_AS(CameraBGImage, prev)
+	CAMERABGIMAGE_RETURN_AS(CameraBGImage, prev)
 }
 
 // Add ima and iuser later
 
 MovieClip CameraBGImage::clip() const {
-	CAMBGI_RETURN_AS(MovieClip, clip)
+	CAMERABGIMAGE_RETURN_AS(MovieClip, clip)
 }
 
 MovieClipUser CameraBGImage::cuser() const {
-	CAMBGI_RETURN_REF(MovieClipUser, cuser)
+	CAMERABGIMAGE_RETURN_REF(MovieClipUser, cuser)
 }
 
 float* CameraBGImage::offset() const {
-	CAMBGI_RETURN(offset);
+	CAMERABGIMAGE_RETURN(offset);
 }
 
 float& CameraBGImage::scale() const {
-	CAMBGI_RETURN(scale);
+	CAMERABGIMAGE_RETURN(scale);
 }
 
 float& CameraBGImage::rotation() const {
-	CAMBGI_RETURN(rotation);
+	CAMERABGIMAGE_RETURN(rotation);
 }
 
 float& CameraBGImage::alpha() const {
-	CAMBGI_RETURN(alpha);
+	CAMERABGIMAGE_RETURN(alpha);
 }
 
 short& CameraBGImage::flag() const {
-	CAMBGI_RETURN(flag);
+	CAMERABGIMAGE_RETURN(flag);
 }
 
 short& CameraBGImage::source() const {
-	CAMBGI_RETURN(source);
+	CAMERABGIMAGE_RETURN(source);
 }
 
 // -------------------- Camera --------------------
 
-#define CAM_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<Camera2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_2_0) \
-		return A ( B reinterpret_cast<Camera3_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_3_0) \
-		return A ( B reinterpret_cast<Camera3_2_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_4_0) \
-		return A ( B reinterpret_cast<Camera3_3_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_0_0) \
-		return A ( B reinterpret_cast<Camera3_4_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_1_0) \
-		return A ( B reinterpret_cast<Camera4_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A ( B reinterpret_cast<Camera4_1_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_3_0) \
-		return A ( B reinterpret_cast<Camera4_2_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<Camera4_3_0*>(data_ptr)-> C);
-
-#define CAM_RETURN_REF(T, M) CAM_BASE_RETURN_BODY(T, &, M)
-#define CAM_RETURN_AS(T, M) CAM_BASE_RETURN_BODY(T,, M)
-#define CAM_RETURN(M) CAM_BASE_RETURN_BODY(,, M)
-
 ID<Camera> Camera::id() const {
-	CAM_RETURN_REF(ID<Camera>, id)
+	CAMERA_RETURN_REF(ID<Camera>, id)
 }
 
 AnimData Camera::adt() const {
-	CAM_RETURN_AS(AnimData, adt)
+	CAMERA_RETURN_AS(AnimData, adt)
 }
 
 char& Camera::type() const {
-	CAM_RETURN(type)
+	CAMERA_RETURN(type)
 }
 
 char& Camera::dtx() const {
-	CAM_RETURN(dtx)
+	CAMERA_RETURN(dtx)
 }
 
 short& Camera::flag() const {
-	CAM_RETURN(flag)
+	CAMERA_RETURN(flag)
 }
 
 float& Camera::passepartalpha() const {
-	CAM_RETURN(passepartalpha)
+	CAMERA_RETURN(passepartalpha)
 }
 
 float& Camera::clip_start() const {
-	CAM_RETURN(clip_start)
+	CAMERA_RETURN(clip_start)
 }
 
 float& Camera::clip_end() const {
-	CAM_RETURN(clip_end)
+	CAMERA_RETURN(clip_end)
 }
 
 float& Camera::lens() const {
-	CAM_RETURN(lens)
+	CAMERA_RETURN(lens)
 }
 
 float& Camera::ortho_scale() const {
-	CAM_RETURN(ortho_scale)
+	CAMERA_RETURN(ortho_scale)
 }
 
 float& Camera::drawsize() const {
-	CAM_RETURN(drawsize)
+	CAMERA_RETURN(drawsize)
 }
 
 float& Camera::sensor_x() const {
-	CAM_RETURN(sensor_x)
+	CAMERA_RETURN(sensor_x)
 }
 
 float& Camera::sensor_y() const {
-	CAM_RETURN(sensor_y)
+	CAMERA_RETURN(sensor_y)
 }
 
 float& Camera::shiftx() const {
-	CAM_RETURN(shiftx)
+	CAMERA_RETURN(shiftx)
 }
 
 float& Camera::shifty() const {
-	CAM_RETURN(shifty)
+	CAMERA_RETURN(shifty)
 }
 
 float& Camera::dof_distance() const {
-	CAM_RETURN(dof_distance)
+	CAMERA_RETURN(dof_distance)
 }
 
 Ipo Camera::ipo() const {
-	CAM_RETURN_AS(Ipo, ipo)
+	CAMERA_RETURN_AS(Ipo, ipo)
 }
 
 ListBase<CameraBGImage> Camera::bg_images() const {
-	CAM_RETURN_REF(ListBase<CameraBGImage>, bg_images)
+	CAMERA_RETURN_REF(ListBase<CameraBGImage>, bg_images)
 }
 
 char& Camera::sensor_fit() const {
-	CAM_RETURN(sensor_fit)
-}
-
-// -------------------- RenderData --------------------
-
-#define RDAT_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<RenderData2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_1_0) \
-		return A ( B reinterpret_cast<RenderData3_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_2_0) \
-		return A ( B reinterpret_cast<RenderData3_1_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_4_0) \
-		return A ( B reinterpret_cast<RenderData3_2_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<RenderData3_4_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<RenderData3_5_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_0_0) \
-		return A ( B reinterpret_cast<RenderData3_6_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A ( B reinterpret_cast<RenderData4_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_3_0) \
-		return A ( B reinterpret_cast<RenderData4_2_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<RenderData4_3_0*>(data_ptr)-> C);
-
-#define RDAT_RETURN_REF(T, M) RDAT_BASE_RETURN_BODY(T, &, M)
-#define RDAT_RETURN_AS(T, M) RDAT_BASE_RETURN_BODY(T,, M)
-#define RDAT_RETURN(M) RDAT_BASE_RETURN_BODY(,, M)
-
-int& RenderData::sfra() const {
-	RDAT_RETURN(sfra)
-}
-
-int& RenderData::efra() const {
-	RDAT_RETURN(efra)
-}
-
-// -------------------- Scene --------------------
-
-#define SCN_BASE_RETURN_BODY(A, B, C) \
-	if (blender_ver < BlenderVersion::VER_3_0_0) \
-		return A ( B reinterpret_cast<Scene2_93_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_1_0) \
-		return A ( B reinterpret_cast<Scene3_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_2_0) \
-		return A ( B reinterpret_cast<Scene3_1_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_4_0) \
-		return A ( B reinterpret_cast<Scene3_2_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_5_0) \
-		return A ( B reinterpret_cast<Scene3_4_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_3_6_0) \
-		return A ( B reinterpret_cast<Scene3_5_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_0_0) \
-		return A ( B reinterpret_cast<Scene3_6_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_1_0) \
-		return A ( B reinterpret_cast<Scene4_0_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_2_0) \
-		return A ( B reinterpret_cast<Scene4_1_0*>(data_ptr)-> C); \
-	else if (blender_ver < BlenderVersion::VER_4_3_0) \
-		return A ( B reinterpret_cast<Scene4_2_0*>(data_ptr)-> C); \
-	return A ( B reinterpret_cast<Scene4_3_0*>(data_ptr)-> C);
-
-#define SCN_RETURN_REF(T, M) SCN_BASE_RETURN_BODY(T, &, M)
-#define SCN_RETURN_AS(T, M) SCN_BASE_RETURN_BODY(T,, M)
-#define SCN_RETURN(M) SCN_BASE_RETURN_BODY(,, M)
-
-ID<Scene> Scene::id() const {
-	SCN_RETURN_REF(ID<Scene>, id);
-}
-
-RenderData Scene::r() const {
-	SCN_RETURN_REF(RenderData, r)
+	CAMERA_RETURN(sensor_fit)
 }

@@ -1,19 +1,5 @@
-/*
-Copyright (C) 2024 Ian Sloat
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
+/* Copyright (C) 2025 Ian Sloat
+* Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>. */
 
 #include "bpy_utils.hpp"
 
@@ -178,10 +164,9 @@ TrackingData clip_tracking_data(const MovieClip clip, const double joint_conf_th
 	TrackingData data;
 	const int* lastsize = clip.last_size();
 	const int start_frame = clip.start_frame();
-	Scene scene = PyBlendContext().scene().intern();
-	RenderData r_data = scene.r();
-	const int scene_start = r_data.sfra();
-	const int scene_end = r_data.efra();
+	PyScene scene = PyBlendContext().scene();
+	const int scene_start = scene.frame_start();
+	const int scene_end = scene.frame_end();
 	const MovieTracking tracking = clip.tracking();
 	auto tracks = tracking.tracks(); // Try this first. May be deprecated in certain versions.
 	if (tracks.first().is_null())

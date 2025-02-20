@@ -152,7 +152,7 @@ def generate_macros(ast: code_analysis.VersionedSyntaxTree, file_name, min_ver, 
         try:
             for v in versions:
                 rev = ast.get(item, v)
-                if v == rev.ver and not isinstance(rev.ref, code_analysis.ItemRemoval):
+                if (v == rev.ver or v == min_ver) and not isinstance(rev.ref, code_analysis.ItemRemoval):
                     item_vers.append(v)
         except:
             pass
