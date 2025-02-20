@@ -1,7 +1,7 @@
 /* Copyright (C) 2025 Ian Sloat
-* Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>. 
-*
-* Operator invoke and execute functions used within the add-on code */
+ * Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>.
+ *
+ * Operator invoke and execute functions used within the add-on code */
 
 #include "bpy_ops.hpp"
 #include "bpy_types.hpp"
@@ -18,17 +18,20 @@
 #include <algorithm>
 #include <execution>
 
-void OP_FilterTrackGaussian(int kernel_width) {
-	PyBlendData data; // Points to bpy.data
+void OP_FilterTrackGaussian(int kernel_width)
+{
+	PyBlendData data;		// Points to bpy.data
 	PyBlendContext context; // Points to bpy.context
 	MovieClip active_clip = context.edit_movieclip().intern();
-	if (active_clip.is_null()) {
+	if (active_clip.is_null())
+	{
 		std::cout << "ACTIVE CLIP IS NONE! THIS SHOULD NOT HAPPEN!" << std::endl;
 		return;
 	}
-	int* last_size = active_clip.last_size();
+	int *last_size = active_clip.last_size();
 	std::vector<MovieTrackingTrack> selected_tracks = get_selected_tracks(active_clip.tracking().objects().first());
-	for (auto& track : selected_tracks) {
+	for (auto &track : selected_tracks)
+	{
 		std::vector<std::vector<MovieTrackingMarker>> track_frames;
 		std::vector<std::vector<double>> track_x;
 		std::vector<std::vector<double>> track_y;
@@ -38,11 +41,13 @@ void OP_FilterTrackGaussian(int kernel_width) {
 		MovieTrackingMarker first_marker = track.marker(0);
 		int last_frame = first_marker.framenr();
 		int markersnr = track.markersnr();
-		for (int i = 0; i < markersnr; ++i) {
+		for (int i = 0; i < markersnr; ++i)
+		{
 			auto marker = track.marker(i);
 			int frame = marker.framenr();
-			float* pos = marker.pos();
-			if (frame - last_frame > 1) {
+			float *pos = marker.pos();
+			if (frame - last_frame > 1)
+			{
 				track_frames.push_back(frames_inter);
 				track_x.push_back(x_inter);
 				track_y.push_back(y_inter);
@@ -55,21 +60,24 @@ void OP_FilterTrackGaussian(int kernel_width) {
 			y_inter.push_back(static_cast<double>(pos[1]) * last_size[1]);
 			last_frame = frame;
 		}
-		if (!frames_inter.empty()) {
+		if (!frames_inter.empty())
+		{
 			track_frames.push_back(frames_inter);
 			track_x.push_back(x_inter);
 			track_y.push_back(y_inter);
 		}
-		for (size_t i = 0; i < track_frames.size(); ++i) {
-			auto& m_inter = track_frames[i];
-			auto& x_inter = track_x[i];
-			auto& y_inter = track_y[i];
+		for (size_t i = 0; i < track_frames.size(); ++i)
+		{
+			auto &m_inter = track_frames[i];
+			auto &x_inter = track_x[i];
+			auto &y_inter = track_y[i];
 			int k_width = std::min(kernel_width, static_cast<int>(m_inter.size()));
 			auto x_filtered = g_conv_1d(x_inter, k_width);
 			auto y_filtered = g_conv_1d(y_inter, k_width);
-			for (size_t j = 0; j < m_inter.size(); ++j) {
-				auto& marker = m_inter[j];
-				float* pos = marker.pos();
+			for (size_t j = 0; j < m_inter.size(); ++j)
+			{
+				auto &marker = m_inter[j];
+				float *pos = marker.pos();
 				pos[0] = static_cast<float>(x_filtered[j]) / last_size[0];
 				pos[1] = static_cast<float>(y_filtered[j]) / last_size[1];
 			}
@@ -80,30 +88,34 @@ void OP_FilterTrackGaussian(int kernel_width) {
 
 /* checks if the given BezTriple is selected */
 #define BEZT_ISSEL_ANY(bezt) \
-  ((bezt.f2() & 1) || (bezt.f1() & 1) || (bezt.f3() & 1))
+	((bezt.f2() & 1) || (bezt.f1() & 1) || (bezt.f3() & 1))
 
 // Be sure to add an option to only filter selected keys later
-void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only) {
+void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only)
+{
 	PyBlendContext context;
 	PyFCurveSeq editable_fcurves = context.selected_editable_fcurves();
-	if (editable_fcurves.is_null()) {
+	if (editable_fcurves.is_null())
+	{
 		std::cout << "EDITABLE FCURVES IS NONE! THIS SHOULD NOT HAPPEN!" << std::endl;
 		return;
 	}
 	const int num_fcurves = editable_fcurves.size();
-	for (int i = 0; i < num_fcurves; ++i) {
+	for (int i = 0; i < num_fcurves; ++i)
+	{
 		PyFCurve py_curve = editable_fcurves[i];
 		FCurve fcurve = py_curve.intern();
 		const size_t num_points = fcurve.totvert();
 		if (num_points < 1)
 			continue;
 		py_curve.update();
-		std::vector<std::vector<float*>> p_inters;
+		std::vector<std::vector<float *>> p_inters;
 		std::vector<std::vector<double>> v_inters;
-		std::vector<float*> p_inter;
+		std::vector<float *> p_inter;
 		std::vector<double> v_inter;
 		float last_x = fcurve.bezt(0).vec()[1][0];
-		for (size_t j = 0; j < num_points; ++j) {
+		for (size_t j = 0; j < num_points; ++j)
+		{
 			BezTriple bezt = fcurve.bezt(j);
 			BezTripleVecs vecs = bezt.vec();
 			// X location (vecs[1][0]) is expected to be in multiples of 1
@@ -111,8 +123,10 @@ void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only) {
 			// Snapping is not required in the graph editor, so an optional switch could be added to disable
 			// interval splitting.
 			// The curves module could also come back into play here for an optional slower method
-			if (vecs[1][0] - last_x > 1 || (!BEZT_ISSEL_ANY(bezt) && selected_only)) {
-				if (!v_inter.empty()) {
+			if (vecs[1][0] - last_x > 1 || (!BEZT_ISSEL_ANY(bezt) && selected_only))
+			{
+				if (!v_inter.empty())
+				{
 					v_inters.push_back(v_inter);
 					p_inters.push_back(p_inter);
 				}
@@ -123,16 +137,19 @@ void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only) {
 			p_inter.push_back(&vecs[1][1]);
 			last_x = vecs[1][0];
 		}
-		if (!v_inter.empty()) {
+		if (!v_inter.empty())
+		{
 			v_inters.push_back(v_inter);
 			p_inters.push_back(p_inter);
 		}
-		for (size_t j = 0; j < p_inters.size(); ++j) {
-			auto& ip = p_inters[j];
-			auto& iv = v_inters[j];
+		for (size_t j = 0; j < p_inters.size(); ++j)
+		{
+			auto &ip = p_inters[j];
+			auto &iv = v_inters[j];
 			int k_width = std::min(kernel_width, static_cast<int>(iv.size()));
 			auto filtered = g_conv_1d(iv, k_width);
-			for (size_t k = 0; k < ip.size(); ++k) {
+			for (size_t k = 0; k < ip.size(); ++k)
+			{
 				*ip[k] = static_cast<float>(filtered[k]);
 			}
 		}
@@ -141,7 +158,74 @@ void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only) {
 	context.area().tag_redraw();
 }
 
-void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
+void OP_FilterTrackKalman(float measurementNoiseCov, float processNoiseCov)
+{
+	PyBlendData data;		// Points to bpy.data
+	PyBlendContext context; // Points to bpy.context
+	MovieClip active_clip = context.edit_movieclip().intern();
+	if (active_clip.is_null())
+	{
+		std::cout << "ACTIVE CLIP IS NONE! THIS SHOULD NOT HAPPEN!" << std::endl;
+		return;
+	}
+	int *last_size = active_clip.last_size();
+	std::vector<MovieTrackingTrack> selected_tracks = get_selected_tracks(active_clip.tracking().objects().first());
+	for (auto &track : selected_tracks)
+	{
+		cv::KalmanFilter track_filter(4, 2);
+		track_filter.transitionMatrix = (cv::Mat_<float>(4, 4) << 1, 0, 1, 0,
+										 0, 1, 0, 1,
+										 0, 0, 1, 0,
+										 0, 0, 0, 1);
+		track_filter.measurementMatrix = (cv::Mat_<float>(2, 4) << 1, 0, 0, 0,
+										  0, 1, 0, 0);
+		track_filter.measurementNoiseCov = cv::Mat_<float>::eye(2, 2) * measurementNoiseCov;
+		MovieTrackingMarker first_marker = track.marker(0);
+		int last_frame = first_marker.framenr();
+		int markersnr = track.markersnr();
+		for (int i = 0; i < markersnr; ++i)
+		{
+			auto marker = track.marker(i);
+			int frame = marker.framenr();
+			float *pos = marker.pos();
+			float x = pos[0] * last_size[0];
+			float y = pos[1] * last_size[1];
+			if (i == 0)
+			{
+				track_filter.statePre = (cv::Mat_<float>(4, 1) << x, y, 0, 0);
+				track_filter.statePost = (cv::Mat_<float>(4, 1) << x, y, 0, 0);
+				last_frame = frame;
+				track_filter.errorCovPost = cv::Mat_<float>::eye(4, 4);
+				continue;
+			}
+			float dt = (frame - last_frame > 1) ? frame - last_frame : 1.0f;
+			track_filter.transitionMatrix.at<float>(0, 2) = dt;
+			track_filter.transitionMatrix.at<float>(1, 3) = dt;
+			float dt4_4 = powf(dt, 4) / 4;
+			float dt3_2 = powf(dt, 3) / 2;
+			float dt2 = powf(dt, 2);
+			track_filter.processNoiseCov = (cv::Mat_<float>(4, 4) << dt4_4, 0, dt3_2, 0,
+											0, dt4_4, 0, dt3_2,
+											dt3_2, 0, dt2, 0,
+											0, dt3_2, 0, dt2) *
+										   processNoiseCov;
+
+			cv::Mat prediction = track_filter.predict();
+			last_frame = frame;
+		}
+	}
+}
+
+void OP_FilterFCurvesKalman(float measurementNoiseCov, float processNoiseCov)
+{
+}
+
+void OP_FilterLocationKalman(float measurementNoiseCov, float processNoiseCov)
+{
+}
+
+void OP_TriangulatePoints(PyBOperator calling_op, const std::string &anchor)
+{
 
 	if (anchor.empty())
 		return;
@@ -154,14 +238,16 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 	PyMovieClip py_anchor_clip = data.movieclips()[anchor];
 	std::unordered_map<std::string, MovieClip> clip_map;
 	auto clips_list = data.movieclips().items();
-	for (MovieClip clip = clips_list.first(); !clip.is_null(); clip = clip.id().next()) {
+	for (MovieClip clip = clips_list.first(); !clip.is_null(); clip = clip.id().next())
+	{
 		clip_map[clip.id().name().substr(2)] = clip;
 	}
 	PyScene scene = context.scene();
 	std::unordered_map<std::string, PyBObject> scene_object_map;
 	PySceneObjects scene_objects = scene.objects();
 	const int scene_obj_num = scene_objects.size();
-	for (int i = 0; i < scene_obj_num; ++i) {
+	for (int i = 0; i < scene_obj_num; ++i)
+	{
 		PyBObject py_cam_obj = scene_objects[i];
 		py_cam_obj.select_set(false); // Clear selection on all objects
 		Object cam_obj = py_cam_obj.intern();
@@ -172,14 +258,16 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 	}
 	MovieClip anchor_clip = py_anchor_clip.intern();
 	const std::string anchor_name = anchor_clip.id().name().substr(2);
-	if (scene_object_map.find(anchor_name) == scene_object_map.end()) {
+	if (scene_object_map.find(anchor_name) == scene_object_map.end())
+	{
 		std::cout << "ANCHOR NOT IN SCENE! TRIANGULATION ABORTED!" << std::endl;
 		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
 	}
 	PyBObject anchor_obj = scene_object_map[anchor_name];
 	const std::string solution_id = anchor_obj.data().get_property_str("solution_id");
-	if (solution_id.empty()) {
+	if (solution_id.empty())
+	{
 		std::cout << "ANCHOR HAS NO SOLUTION ID! TRIANGULATION ABORTED!" << std::endl;
 		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
@@ -190,7 +278,8 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 	std::vector<Kk> cam_Kk;
 	std::vector<Rt> cam_Rt;
 	std::mutex lock;
-	std::for_each(std::execution::par_unseq, clip_map.begin(), clip_map.end(), [&](auto& c_map_pair) {
+	std::for_each(std::execution::par_unseq, clip_map.begin(), clip_map.end(), [&](auto &c_map_pair)
+				  {
 		if (scene_object_map.find(c_map_pair.first) == scene_object_map.end())
 			return;
 		auto& py_cam = scene_object_map[c_map_pair.first];
@@ -214,9 +303,9 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 			t_data.push_back(data);
 			cam_Kk.push_back(cam_intrinsics);
 			cam_Rt.push_back(cam_t);
-		}
-	});
-	if (clips.size() < 2) {
+		} });
+	if (clips.size() < 2)
+	{
 		std::cout << "NO OTHER CAMERAS BESIDES ANCHOR HAVE A MATCHING SOLUTION ID! TRIANGULATION ABORTED!" << std::endl;
 		calling_op.report("WARNING", "Triangulation aborted. Check the console for more information.");
 		return;
@@ -225,9 +314,9 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 	// Prepare empties and collect location data
 
-	auto& poses = t_data_3d.poses;
-	auto& detections = t_data_3d.detections;
-	auto& tags = t_data_3d.tags;
+	auto &poses = t_data_3d.poses;
+	auto &detections = t_data_3d.detections;
+	auto &tags = t_data_3d.tags;
 
 	std::unordered_map<std::string, PyBObject> empty_map; // Note that names should never clash
 	std::unordered_map<std::string, std::vector<cv::Point3d>> loc_map;
@@ -237,18 +326,22 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 	// Poses
 
-	std::vector<std::string> base_pose_collection_path{ "PoseTracks", "Tracking", "Poses" };
+	std::vector<std::string> base_pose_collection_path{"PoseTracks", "Tracking", "Poses"};
 
-	for (auto& f_data : poses) {
+	for (auto &f_data : poses)
+	{
 		int frame = f_data.first;
-		for (auto& id_data : f_data.second) {
-			const std::string& pose_id = id_data.first;
-			for (auto& joint_data : id_data.second) {
+		for (auto &id_data : f_data.second)
+		{
+			const std::string &pose_id = id_data.first;
+			for (auto &joint_data : id_data.second)
+			{
 				int joint_id = joint_data.first;
-				auto& joint = joint_data.second;
+				auto &joint = joint_data.second;
 				std::string empty_name = pose_id + '.' + std::to_string(joint_id);
 				PyBObject &py_empty = empty_map[empty_name];
-				if (py_empty.is_null()) {
+				if (py_empty.is_null())
+				{
 					auto collection_path = base_pose_collection_path;
 					collection_path.push_back(pose_id);
 					auto new_empty = get_empty(empty_name, collection_path);
@@ -269,15 +362,18 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 	// Detections
 
-	std::vector<std::string> base_det_collection_path{ "PoseTracks", "Tracking", "Detections" };
+	std::vector<std::string> base_det_collection_path{"PoseTracks", "Tracking", "Detections"};
 
-	for (auto& f_data : detections) {
+	for (auto &f_data : detections)
+	{
 		int frame = f_data.first;
-		for (auto& det_data : f_data.second) {
-			auto& det_name = det_data.first;
-			auto& det = det_data.second;
-			PyBObject& py_empty = empty_map[det_name];
-			if (py_empty.is_null()) {
+		for (auto &det_data : f_data.second)
+		{
+			auto &det_name = det_data.first;
+			auto &det = det_data.second;
+			PyBObject &py_empty = empty_map[det_name];
+			if (py_empty.is_null())
+			{
 				auto collection_path = base_det_collection_path;
 				collection_path.push_back(det_name);
 				auto new_empty = get_empty(det_name, collection_path);
@@ -293,11 +389,12 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 
 	// Write animations
 
-	for (auto& e_data : empty_map) {
-		const auto& e_name = e_data.first;
-		auto& empty = e_data.second;
-		auto& locations = loc_map[e_name];
-		auto& frames = f_map[e_name];
+	for (auto &e_data : empty_map)
+	{
+		const auto &e_name = e_data.first;
+		auto &empty = e_data.second;
+		auto &locations = loc_map[e_name];
+		auto &frames = f_map[e_name];
 		auto anim_data = empty.animation_data();
 		auto f_curves = anim_data.action().fcurves();
 		f_curves.clear();
@@ -316,7 +413,8 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 		auto fc_intern_z = f_curve_z.intern();
 		std::vector<int> kf_idxs(locations.size());
 		std::iota(kf_idxs.begin(), kf_idxs.end(), 0);
-		std::for_each(std::execution::par_unseq, kf_idxs.begin(), kf_idxs.end(), [&](int i) {
+		std::for_each(std::execution::par_unseq, kf_idxs.begin(), kf_idxs.end(), [&](int i)
+					  {
 			int frame = frames[i];
 			auto& pt = locations[i];
 			auto bezt_x = fc_intern_x.bezt(i);
@@ -330,26 +428,25 @@ void OP_TriangulatePoints(PyBOperator calling_op, const std::string& anchor) {
 			vec_z[1][0] = static_cast<float>(frame);
 			vec_x[1][1] = static_cast<float>(pt.x);
 			vec_y[1][1] = static_cast<float>(-pt.y);
-			vec_z[1][1] = static_cast<float>(-pt.z);
-		});
+			vec_z[1][1] = static_cast<float>(-pt.z); });
 		f_curve_x.update();
 		f_curve_y.update();
 		f_curve_z.update();
 	}
-	
+
 	context.view_layer().objects().set_active(anchor_obj);
 	PyBlendOps ops;
 	ops.OP_OBJ_ParentSet("OBJECT", false, true);
 
 	context.area().tag_redraw();
-
 }
 
 std::string solvecameras_anchor;
 std::vector<std::string> camera_names;
 std::vector<Mat4x4> camera_transforms;
 
-void OP_SolveCameras_Invoke(const std::string& anchor) {
+void OP_SolveCameras_Invoke(const std::string &anchor)
+{
 	solvecameras_anchor = anchor;
 	camera_names.clear();
 	camera_transforms.clear();
@@ -360,13 +457,16 @@ void OP_SolveCameras_Invoke(const std::string& anchor) {
 	context.view_layer().update();
 	std::vector<MovieClip> clips;
 	std::vector<std::string> clip_names;
-	for (MovieClip clip = data.movieclips().items().first(); !clip.is_null(); clip = clip.id().next()) {
+	for (MovieClip clip = data.movieclips().items().first(); !clip.is_null(); clip = clip.id().next())
+	{
 		std::string clip_name = clip.id().name().substr(2);
-		if (clip_name == anchor) {
+		if (clip_name == anchor)
+		{
 			clips.insert(clips.begin(), clip);
 			clip_names.insert(clip_names.begin(), clip_name);
-		} 
-		else {
+		}
+		else
+		{
 			clips.push_back(clip);
 			clip_names.push_back(clip_name);
 		}
@@ -376,32 +476,35 @@ void OP_SolveCameras_Invoke(const std::string& anchor) {
 	std::iota(clip_idxs.begin(), clip_idxs.end(), 0);
 	std::vector<TrackingData> t_data(num_clips);
 	std::vector<Kk> cam_Kk(num_clips);
-	std::for_each(std::execution::par_unseq, clip_idxs.begin(), clip_idxs.end(), [&](size_t i) {
+	std::for_each(std::execution::par_unseq, clip_idxs.begin(), clip_idxs.end(), [&](size_t i)
+				  {
 		t_data[i] = clip_tracking_data(clips[i], 0.9, true);
-		cam_Kk[i] = get_clip_Kk(clips[i]);
-	});
+		cam_Kk[i] = get_clip_Kk(clips[i]); });
 	auto cam_transforms = solveStaticSet(t_data, cam_Kk);
-	for (size_t i = 1; i < num_clips; ++i) {
+	for (size_t i = 1; i < num_clips; ++i)
+	{
 		if (cam_transforms[i - 1].is_identity())
 			continue;
 		camera_names.push_back(clip_names[i]);
-		auto& tf = cam_transforms[i - 1];
+		auto &tf = cam_transforms[i - 1];
 		tf.invert();
 		camera_transforms.push_back(tf.to4x4().mul(flip_mtx));
 	}
 }
 
-void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, float solution_scale) {
-	
+void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string &anchor, float solution_scale)
+{
+
 	if (anchor.empty())
 		return;
-	
+
 	// Update solution if anchor was changed
 	if (solvecameras_anchor != anchor)
 		OP_SolveCameras_Invoke(anchor);
 
 	// Abort on empty solution transforms
-	if (camera_transforms.empty()) {
+	if (camera_transforms.empty())
+	{
 		calling_op.report("WARNING", "Solver could not find any valid camera transforms");
 		return;
 	}
@@ -418,23 +521,28 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 	PyBMat anchor_tf = anchor_obj.matrix_world();
 	Mat4x4 base_tf;
 
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
 			base_tf(i, j) = anchor_tf.get(i, j);
 		}
 	}
 
 	anchor_obj.set_parent(PyBObject());
 
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
+	for (int i = 0; i < 4; ++i)
+	{
+		for (int j = 0; j < 4; ++j)
+		{
 			anchor_tf.set(i, j, static_cast<float>(base_tf(i, j)));
 		}
 	}
 
 	const size_t num_cams = camera_transforms.size();
 	std::vector<PyBObject> cameras(num_cams);
-	for (size_t i = 0; i < num_cams; ++i) {
+	for (size_t i = 0; i < num_cams; ++i)
+	{
 		PyBObject cam_obj = prepare_camera_for_clip(camera_names[i]);
 		cameras[i] = cam_obj;
 		cam_obj.data().set_property_str("solution_id", solution_id);
@@ -446,14 +554,17 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 		cam_tf(2, 3) *= solution_scale;
 		cam_tf = base_tf * cam_tf;
 		PyBMat cam_world = cam_obj.matrix_world();
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
+		for (int i = 0; i < 4; ++i)
+		{
+			for (int j = 0; j < 4; ++j)
+			{
 				cam_world.set(i, j, static_cast<float>(cam_tf(i, j)));
 			}
 		}
 	}
 
-	if (base_tf == Mat4x4::eye()) {
+	if (base_tf == Mat4x4::eye())
+	{
 		anchor_tf.set(1, 1, 0);
 		anchor_tf.set(2, 2, 0);
 		anchor_tf.set(1, 2, -1);
@@ -465,7 +576,8 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 		float max_x = 0;
 		float max_y = 0;
 		float max_z = 0;
-		for (size_t i = 0; i < num_cams; ++i) {
+		for (size_t i = 0; i < num_cams; ++i)
+		{
 			PyBObject cam_obj = cameras[i];
 			PyBMat cam_tf = cam_obj.matrix_world();
 			const float cam_x = cam_tf.get(0, 3);
@@ -484,5 +596,4 @@ void OP_SolveCameras_Execute(PyBOperator calling_op, const std::string& anchor, 
 	}
 
 	context.area().tag_redraw();
-
 }
