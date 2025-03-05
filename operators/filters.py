@@ -1,18 +1,6 @@
 """
-Copyright (C) 2024 Ian Sloat
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+Copyright (C) 2025 Ian Sloat
+Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>.
 """
 
 from .. import posetracks_core as pt_core
@@ -48,6 +36,31 @@ class FilterTrackGaussian(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class FilterTrackKalman(bpy.types.Operator):
+    """Apply a kalman filter to selected tracks"""
+    bl_idname = "posetracks.filter_tracks_kalman_operator"
+    bl_label = "Apply Kalman Filter"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    noise_scale: bpy.props.FloatProperty(
+        name="Noise Scale",
+        description="Relative noisiness of input",
+        default=0.5,
+        min=0,
+        max=1,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return (context.area.type == 'CLIP_EDITOR' and
+                context.edit_movieclip is not None and
+                get_selected_tracks())
+
+    def execute(self, context):
+        pt_core.blender.OP_FilterTrackKalman(self.noise_scale)
+        return {'FINISHED'}
+
+
 class FilterFCurvesGaussian(bpy.types.Operator):
     """Apply a gaussian filter to selected f-curves"""
     bl_idname = "posetracks.filter_curves_gaussian_operator"
@@ -73,11 +86,45 @@ class FilterFCurvesGaussian(bpy.types.Operator):
                 context.selected_editable_fcurves)
 
     def execute(self, context):
-        pt_core.blender.OP_FilterFCurvesGaussian(self.kernel_width, self.selected_only)
+        pt_core.blender.OP_FilterFCurvesGaussian(
+            self.kernel_width, self.selected_only)
+        return {'FINISHED'}
+
+
+class FilterFCurvesKalman(bpy.types.Operator):
+    """Apply a kalman filter to selected f-curves"""
+    bl_idname = "posetracks.filter_curves_kalman_operator"
+    bl_label = "Apply Kalman Filter"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    noise_scale: bpy.props.FloatProperty(
+        name="Noise Scale",
+        description="Relative noisiness of input",
+        default=0.5,
+        min=0,
+        max=1,
+    )
+
+    selected_only: bpy.props.BoolProperty(
+        name="Selected Only",
+        description="Only filter selected keys",
+        default=False,
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return (context.area.type == 'GRAPH_EDITOR' and
+                context.selected_editable_fcurves)
+
+    def execute(self, context):
+        pt_core.blender.OP_FilterFCurvesKalman(
+            self.noise_scale, self.selected_only)
         return {'FINISHED'}
 
 
 CLASSES = [
     FilterTrackGaussian,
-    FilterFCurvesGaussian
+    FilterTrackKalman,
+    FilterFCurvesGaussian,
+    FilterFCurvesKalman
 ]

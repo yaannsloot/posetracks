@@ -158,7 +158,7 @@ void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only)
 	context.area().tag_redraw();
 }
 
-void OP_FilterTrackKalman(float measurementNoiseCov, float processNoiseCov)
+void OP_FilterTrackKalman(float noise_scale)
 {
 	PyBlendData data;		// Points to bpy.data
 	PyBlendContext context; // Points to bpy.context
@@ -170,16 +170,8 @@ void OP_FilterTrackKalman(float measurementNoiseCov, float processNoiseCov)
 	}
 	int *last_size = active_clip.last_size();
 	std::vector<MovieTrackingTrack> selected_tracks = get_selected_tracks(active_clip.tracking().objects().first());
-	for (auto &track : selected_tracks)
-	{
-		cv::KalmanFilter track_filter(4, 2);
-		track_filter.transitionMatrix = (cv::Mat_<float>(4, 4) << 1, 0, 1, 0,
-										 0, 1, 0, 1,
-										 0, 0, 1, 0,
-										 0, 0, 0, 1);
-		track_filter.measurementMatrix = (cv::Mat_<float>(2, 4) << 1, 0, 0, 0,
-										  0, 1, 0, 0);
-		track_filter.measurementNoiseCov = cv::Mat_<float>::eye(2, 2) * measurementNoiseCov;
+	std::for_each(std::execution::par_unseq, selected_tracks.begin(), selected_tracks.end(), [&](auto& track) {
+		auto filter = ConstantVelocityKF<2>(noise_scale);
 		MovieTrackingMarker first_marker = track.marker(0);
 		int last_frame = first_marker.framenr();
 		int markersnr = track.markersnr();
@@ -187,37 +179,72 @@ void OP_FilterTrackKalman(float measurementNoiseCov, float processNoiseCov)
 		{
 			auto marker = track.marker(i);
 			int frame = marker.framenr();
-			float *pos = marker.pos();
+			float* pos = marker.pos();
 			float x = pos[0] * last_size[0];
 			float y = pos[1] * last_size[1];
-			if (i == 0)
-			{
-				track_filter.statePre = (cv::Mat_<float>(4, 1) << x, y, 0, 0);
-				track_filter.statePost = (cv::Mat_<float>(4, 1) << x, y, 0, 0);
-				last_frame = frame;
-				track_filter.errorCovPost = cv::Mat_<float>::eye(4, 4);
-				continue;
-			}
 			float dt = (frame - last_frame > 1) ? frame - last_frame : 1.0f;
-			track_filter.transitionMatrix.at<float>(0, 2) = dt;
-			track_filter.transitionMatrix.at<float>(1, 3) = dt;
-			float dt4_4 = powf(dt, 4) / 4;
-			float dt3_2 = powf(dt, 3) / 2;
-			float dt2 = powf(dt, 2);
-			track_filter.processNoiseCov = (cv::Mat_<float>(4, 4) << dt4_4, 0, dt3_2, 0,
-											0, dt4_4, 0, dt3_2,
-											dt3_2, 0, dt2, 0,
-											0, dt3_2, 0, dt2) *
-										   processNoiseCov;
-
-			cv::Mat prediction = track_filter.predict();
+			filter.set_delta(dt);
+			auto new_pos = filter.filter({ x, y });
+			pos[0] = new_pos[0] / last_size[0];
+			pos[1] = new_pos[1] / last_size[1];
 			last_frame = frame;
 		}
-	}
+	});
+	context.area().tag_redraw();
 }
 
-void OP_FilterFCurvesKalman(float measurementNoiseCov, float processNoiseCov)
+void OP_FilterFCurvesKalman(float noise_scale, bool selected_only)
 {
+	PyBlendContext context;
+	PyFCurveSeq editable_fcurves = context.selected_editable_fcurves();
+	if (editable_fcurves.is_null())
+	{
+		std::cout << "EDITABLE FCURVES IS NONE! THIS SHOULD NOT HAPPEN!" << std::endl;
+		return;
+	}
+	const int num_fcurves = editable_fcurves.size();
+	for (int i = 0; i < num_fcurves; ++i)
+	{
+		PyFCurve py_curve = editable_fcurves[i];
+		FCurve fcurve = py_curve.intern();
+		const size_t num_points = fcurve.totvert();
+		if (num_points < 1)
+			continue;
+		py_curve.update();
+		std::vector<std::vector<float*>> inters;
+		std::vector<float*> inter;
+		float last_x = fcurve.bezt(0).vec()[1][0];
+		for (size_t j = 0; j < num_points; ++j)
+		{
+			BezTriple bezt = fcurve.bezt(j);
+			BezTripleVecs vecs = bezt.vec();
+			// X location (vecs[1][0]) is expected to be in multiples of 1
+			// Y location (vecs[1][1]) will be added to interval vector (inter)
+			// Snapping is not required in the graph editor, so an optional switch could be added to disable
+			// interval splitting.
+			// The curves module could also come back into play here for an optional slower method
+			if (vecs[1][0] - last_x > 1 || (!BEZT_ISSEL_ANY(bezt) && selected_only))
+			{
+				if (!inter.empty())
+					inters.push_back(inter);
+				inter.clear();
+			}
+			inter.push_back(&vecs[1][1]);
+			last_x = vecs[1][0];
+		}
+		if (!inter.empty())
+			inters.push_back(inter);
+		for (size_t j = 0; j < inters.size(); ++j)
+		{
+			auto& p_vec = inters[j];
+			ConstantVelocityKF<1> kf(noise_scale);
+			for (float *x : p_vec) {
+				*x = kf.filter({ *x })[0];
+			}
+		}
+		py_curve.update();
+	}
+	context.area().tag_redraw();
 }
 
 void OP_FilterLocationKalman(float measurementNoiseCov, float processNoiseCov)

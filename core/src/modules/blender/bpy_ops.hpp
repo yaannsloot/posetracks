@@ -9,9 +9,9 @@ void OP_FilterTrackGaussian(int kernel_width);
 
 void OP_FilterFCurvesGaussian(int kernel_width, bool selected_only);
 
-void OP_FilterTrackKalman(float measurementNoiseCov = 0.001, float processNoiseCov = 0.03);
+void OP_FilterTrackKalman(float noise_scale);
 
-void OP_FilterFCurvesKalman(float measurementNoiseCov = 0.001, float processNoiseCov = 0.03);
+void OP_FilterFCurvesKalman(float noise_scale, bool selected_only);
 
 void OP_FilterLocationKalman(float measurementNoiseCov = 0.001, float processNoiseCov = 0.03);
 
