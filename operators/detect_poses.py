@@ -67,8 +67,10 @@ def pose_task(bpy_data: event_ops.BpyData):
                                                        'keypoints': int(bpy_data.ui_props['pose_keypoints_enum'])},
                                                sorting_criteria=sorting_criteria[
                                                    bpy_data.ui_props['pose_model_sel_enum']])
-        clip = setup_frame_provider(bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
-        scene_start = bpy_data.clip_info.scene_to_true(bpy_data.scene_first_frame)
+        clip = setup_frame_provider(
+            bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
+        scene_start = bpy_data.clip_info.scene_to_true(
+            bpy_data.scene_first_frame)
         scene_end = bpy_data.clip_info.scene_to_true(bpy_data.scene_last_frame)
         data_frames = list(bpy_data.clip_tracks.detections.keys())
         clip_tracks_max_f = max(data_frames, default=0)
@@ -105,7 +107,8 @@ def pose_task(bpy_data: event_ops.BpyData):
                         continue
                     adjust_det_aspect(det, pose_model.net_size())
                     det.scale_detection(1.2)
-                    sample = pt_core.dnn.get_roi_with_padding(frames[i], det.bbox)
+                    sample = pt_core.dnn.get_roi_with_padding(
+                        frames[i], det.bbox)
                     samples.append(sample)
                     sample_boxes.append(det)
                     sample_ids.append(track)
@@ -130,10 +133,13 @@ def pose_task(bpy_data: event_ops.BpyData):
                 all_poses[clip_frame][pose_id] = pose
 
             f_num += len(frames)
-            percent_current = int(max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
-            event_queue.put(events.InfoEvent(f'Estimating poses: {percent_current}% (ESC to cancel)'))
+            percent_current = int(
+                max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
+            event_queue.put(events.InfoEvent(
+                f'Estimating poses: {percent_current}% (ESC to cancel)'))
 
-        event_queue.put(PoseFinishedEvent(all_poses, 'Pose estimation task completed'))
+        event_queue.put(PoseFinishedEvent(
+            all_poses, 'Pose estimation task completed'))
         event_queue.put(InfoEvent('Done'))
     except MemoryError as e:
         event_queue.put(ErrorEvent("Out of memory", str(e)))
@@ -157,8 +163,8 @@ class DetectPosesOperator(EventOperator):
         default=True
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.task_func = pose_task
         self.include_tracking_data = True
         self.selected_tracks_only = True
@@ -184,7 +190,8 @@ class DetectPosesOperator(EventOperator):
                         track_name = f'{pose_id}.{pose_source}{pose_keypoints}.{j}'
                         if (not self.overwrite and scene_frame in self.bpy_data.clip_tracks.detections and
                                 track_name in self.bpy_data.clip_tracks.detections[scene_frame]):
-                            old_conf = self.bpy_data.clip_tracks[scene_frame][track_name].bbox.area() / 100
+                            old_conf = self.bpy_data.clip_tracks[scene_frame][track_name].bbox.area(
+                            ) / 100
                             if old_conf > pose[j].prob:
                                 continue
                         track = tracks.get(track_name)

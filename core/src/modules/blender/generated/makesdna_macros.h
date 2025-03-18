@@ -13,7 +13,9 @@
         return A ( B reinterpret_cast<AnimData4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<AnimData4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<AnimData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<AnimData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<AnimData4_4_0*>(data_ptr)-> C); 
 #define ANIMDATA_RETURN_REF(T, M)    ANIMDATA_BASE_RETURN_BODY(T, &, M)
 #define ANIMDATA_RETURN_AS(T, M)     ANIMDATA_BASE_RETURN_BODY(T,, M)
 #define ANIMDATA_RETURN(M)           ANIMDATA_BASE_RETURN_BODY(,, M)
@@ -29,7 +31,9 @@
         return A ( B reinterpret_cast<ARegion3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<ARegion4_0_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ARegion4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ARegion4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ARegion4_4_0*>(data_ptr)-> C); 
 #define AREGION_RETURN_REF(T, M)    AREGION_BASE_RETURN_BODY(T, &, M)
 #define AREGION_RETURN_AS(T, M)     AREGION_BASE_RETURN_BODY(T,, M)
 #define AREGION_RETURN(M)           AREGION_BASE_RETURN_BODY(,, M)
@@ -121,7 +125,9 @@
 #define BACTIONCHANNEL_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bActionChannel3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bActionChannel4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bActionChannel4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bActionChannel4_4_0*>(data_ptr)-> C); 
 #define BACTIONCHANNEL_RETURN_REF(T, M)    BACTIONCHANNEL_BASE_RETURN_BODY(T, &, M)
 #define BACTIONCHANNEL_RETURN_AS(T, M)     BACTIONCHANNEL_BASE_RETURN_BODY(T,, M)
 #define BACTIONCHANNEL_RETURN(M)           BACTIONCHANNEL_BASE_RETURN_BODY(,, M)
@@ -129,7 +135,9 @@
 #define BACTIONCONSTRAINT_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bActionConstraint3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bActionConstraint4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bActionConstraint4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bActionConstraint4_4_0*>(data_ptr)-> C); 
 #define BACTIONCONSTRAINT_RETURN_REF(T, M)    BACTIONCONSTRAINT_BASE_RETURN_BODY(T, &, M)
 #define BACTIONCONSTRAINT_RETURN_AS(T, M)     BACTIONCONSTRAINT_BASE_RETURN_BODY(T,, M)
 #define BACTIONCONSTRAINT_RETURN(M)           BACTIONCONSTRAINT_BASE_RETURN_BODY(,, M)
@@ -137,7 +145,9 @@
 #define BACTIONGROUP_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bActionGroup3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bActionGroup4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bActionGroup4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bActionGroup4_4_0*>(data_ptr)-> C); 
 #define BACTIONGROUP_RETURN_REF(T, M)    BACTIONGROUP_BASE_RETURN_BODY(T, &, M)
 #define BACTIONGROUP_RETURN_AS(T, M)     BACTIONGROUP_BASE_RETURN_BODY(T,, M)
 #define BACTIONGROUP_RETURN(M)           BACTIONGROUP_BASE_RETURN_BODY(,, M)
@@ -161,7 +171,9 @@
         return A ( B reinterpret_cast<bAction4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bAction4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bAction4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bAction4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bAction4_4_0*>(data_ptr)-> C); 
 #define BACTION_RETURN_REF(T, M)    BACTION_BASE_RETURN_BODY(T, &, M)
 #define BACTION_RETURN_AS(T, M)     BACTION_BASE_RETURN_BODY(T,, M)
 #define BACTION_RETURN(M)           BACTION_BASE_RETURN_BODY(,, M)
@@ -183,7 +195,9 @@
         return A ( B reinterpret_cast<BakeData4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<BakeData4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<BakeData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<BakeData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<BakeData4_4_0*>(data_ptr)-> C); 
 #define BAKEDATA_RETURN_REF(T, M)    BAKEDATA_BASE_RETURN_BODY(T, &, M)
 #define BAKEDATA_RETURN_AS(T, M)     BAKEDATA_BASE_RETURN_BODY(T,, M)
 #define BAKEDATA_RETURN(M)           BAKEDATA_BASE_RETURN_BODY(,, M)
@@ -207,7 +221,9 @@
         return A ( B reinterpret_cast<bArmature4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<bArmature4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bArmature4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bArmature4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bArmature4_4_0*>(data_ptr)-> C); 
 #define BARMATURE_RETURN_REF(T, M)    BARMATURE_BASE_RETURN_BODY(T, &, M)
 #define BARMATURE_RETURN_AS(T, M)     BARMATURE_BASE_RETURN_BODY(T,, M)
 #define BARMATURE_RETURN(M)           BARMATURE_BASE_RETURN_BODY(,, M)
@@ -221,7 +237,9 @@
         return A ( B reinterpret_cast<Base4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Base4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Base4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Base4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Base4_4_0*>(data_ptr)-> C); 
 #define BASE_RETURN_REF(T, M)    BASE_BASE_RETURN_BODY(T, &, M)
 #define BASE_RETURN_AS(T, M)     BASE_BASE_RETURN_BODY(T,, M)
 #define BASE_RETURN(M)           BASE_BASE_RETURN_BODY(,, M)
@@ -285,7 +303,9 @@
         return A ( B reinterpret_cast<bDopeSheet3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<bDopeSheet4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bDopeSheet4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bDopeSheet4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bDopeSheet4_4_0*>(data_ptr)-> C); 
 #define BDOPESHEET_RETURN_REF(T, M)    BDOPESHEET_BASE_RETURN_BODY(T, &, M)
 #define BDOPESHEET_RETURN_AS(T, M)     BDOPESHEET_BASE_RETURN_BODY(T,, M)
 #define BDOPESHEET_RETURN(M)           BDOPESHEET_BASE_RETURN_BODY(,, M)
@@ -345,7 +365,9 @@
         return A ( B reinterpret_cast<bGPdata4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bGPdata4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bGPdata4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPdata4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPdata4_4_0*>(data_ptr)-> C); 
 #define BGPDATA_RETURN_REF(T, M)    BGPDATA_BASE_RETURN_BODY(T, &, M)
 #define BGPDATA_RETURN_AS(T, M)     BGPDATA_BASE_RETURN_BODY(T,, M)
 #define BGPDATA_RETURN(M)           BGPDATA_BASE_RETURN_BODY(,, M)
@@ -359,7 +381,9 @@
         return A ( B reinterpret_cast<bGPdata_Runtime4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bGPdata_Runtime4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bGPdata_Runtime4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPdata_Runtime4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPdata_Runtime4_4_0*>(data_ptr)-> C); 
 #define BGPDATA_RUNTIME_RETURN_REF(T, M)    BGPDATA_RUNTIME_BASE_RETURN_BODY(T, &, M)
 #define BGPDATA_RUNTIME_RETURN_AS(T, M)     BGPDATA_RUNTIME_BASE_RETURN_BODY(T,, M)
 #define BGPDATA_RUNTIME_RETURN(M)           BGPDATA_RUNTIME_BASE_RETURN_BODY(,, M)
@@ -383,19 +407,25 @@
 #define BGPDCURVE_POINT_RETURN(M)           BGPDCURVE_POINT_BASE_RETURN_BODY(,, M)
 
 #define BGPDFRAME_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<bGPDframe3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDframe3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDframe4_4_0*>(data_ptr)-> C); 
 #define BGPDFRAME_RETURN_REF(T, M)    BGPDFRAME_BASE_RETURN_BODY(T, &, M)
 #define BGPDFRAME_RETURN_AS(T, M)     BGPDFRAME_BASE_RETURN_BODY(T,, M)
 #define BGPDFRAME_RETURN(M)           BGPDFRAME_BASE_RETURN_BODY(,, M)
 
 #define BGPDFRAME_RUNTIME_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<bGPDframe_Runtime3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDframe_Runtime3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDframe_Runtime4_4_0*>(data_ptr)-> C); 
 #define BGPDFRAME_RUNTIME_RETURN_REF(T, M)    BGPDFRAME_RUNTIME_BASE_RETURN_BODY(T, &, M)
 #define BGPDFRAME_RUNTIME_RETURN_AS(T, M)     BGPDFRAME_RUNTIME_BASE_RETURN_BODY(T,, M)
 #define BGPDFRAME_RUNTIME_RETURN(M)           BGPDFRAME_RUNTIME_BASE_RETURN_BODY(,, M)
 
 #define BGPDLAYER_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<bGPDlayer3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDlayer3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDlayer4_4_0*>(data_ptr)-> C); 
 #define BGPDLAYER_RETURN_REF(T, M)    BGPDLAYER_BASE_RETURN_BODY(T, &, M)
 #define BGPDLAYER_RETURN_AS(T, M)     BGPDLAYER_BASE_RETURN_BODY(T,, M)
 #define BGPDLAYER_RETURN(M)           BGPDLAYER_BASE_RETURN_BODY(,, M)
@@ -407,7 +437,9 @@
 #define BGPDLAYER_MASK_RETURN(M)           BGPDLAYER_MASK_BASE_RETURN_BODY(,, M)
 
 #define BGPDLAYER_RUNTIME_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<bGPDlayer_Runtime3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDlayer_Runtime3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDlayer_Runtime4_4_0*>(data_ptr)-> C); 
 #define BGPDLAYER_RUNTIME_RETURN_REF(T, M)    BGPDLAYER_RUNTIME_BASE_RETURN_BODY(T, &, M)
 #define BGPDLAYER_RUNTIME_RETURN_AS(T, M)     BGPDLAYER_RUNTIME_BASE_RETURN_BODY(T,, M)
 #define BGPDLAYER_RUNTIME_RETURN(M)           BGPDLAYER_RUNTIME_BASE_RETURN_BODY(,, M)
@@ -425,7 +457,9 @@
 #define BGPDPALETTE_RETURN(M)           BGPDPALETTE_BASE_RETURN_BODY(,, M)
 
 #define BGPDSPOINT_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<bGPDspoint3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDspoint3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDspoint4_4_0*>(data_ptr)-> C); 
 #define BGPDSPOINT_RETURN_REF(T, M)    BGPDSPOINT_BASE_RETURN_BODY(T, &, M)
 #define BGPDSPOINT_RETURN_AS(T, M)     BGPDSPOINT_BASE_RETURN_BODY(T,, M)
 #define BGPDSPOINT_RETURN(M)           BGPDSPOINT_BASE_RETURN_BODY(,, M)
@@ -439,7 +473,9 @@
 #define BGPDSTROKE_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_0_0) \
         return A ( B reinterpret_cast<bGPDstroke3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bGPDstroke4_0_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDstroke4_0_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDstroke4_4_0*>(data_ptr)-> C); 
 #define BGPDSTROKE_RETURN_REF(T, M)    BGPDSTROKE_BASE_RETURN_BODY(T, &, M)
 #define BGPDSTROKE_RETURN_AS(T, M)     BGPDSTROKE_BASE_RETURN_BODY(T,, M)
 #define BGPDSTROKE_RETURN(M)           BGPDSTROKE_BASE_RETURN_BODY(,, M)
@@ -447,7 +483,9 @@
 #define BGPDSTROKE_RUNTIME_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_0_0) \
         return A ( B reinterpret_cast<bGPDstroke_Runtime3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bGPDstroke_Runtime4_0_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bGPDstroke_Runtime4_0_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bGPDstroke_Runtime4_4_0*>(data_ptr)-> C); 
 #define BGPDSTROKE_RUNTIME_RETURN_REF(T, M)    BGPDSTROKE_RUNTIME_BASE_RETURN_BODY(T, &, M)
 #define BGPDSTROKE_RUNTIME_RETURN_AS(T, M)     BGPDSTROKE_RUNTIME_BASE_RETURN_BODY(T,, M)
 #define BGPDSTROKE_RUNTIME_RETURN(M)           BGPDSTROKE_RUNTIME_BASE_RETURN_BODY(,, M)
@@ -565,7 +603,9 @@
         return A ( B reinterpret_cast<bNodeLink4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bNodeLink4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeLink4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeLink4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeLink4_4_0*>(data_ptr)-> C); 
 #define BNODELINK_RETURN_REF(T, M)    BNODELINK_BASE_RETURN_BODY(T, &, M)
 #define BNODELINK_RETURN_AS(T, M)     BNODELINK_BASE_RETURN_BODY(T,, M)
 #define BNODELINK_RETURN(M)           BNODELINK_BASE_RETURN_BODY(,, M)
@@ -601,7 +641,9 @@
         return A ( B reinterpret_cast<bNodeSocketValueImage3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<bNodeSocketValueImage4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeSocketValueImage4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeSocketValueImage4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeSocketValueImage4_4_0*>(data_ptr)-> C); 
 #define BNODESOCKETVALUEIMAGE_RETURN_REF(T, M)    BNODESOCKETVALUEIMAGE_BASE_RETURN_BODY(T, &, M)
 #define BNODESOCKETVALUEIMAGE_RETURN_AS(T, M)     BNODESOCKETVALUEIMAGE_BASE_RETURN_BODY(T,, M)
 #define BNODESOCKETVALUEIMAGE_RETURN(M)           BNODESOCKETVALUEIMAGE_BASE_RETURN_BODY(,, M)
@@ -627,7 +669,9 @@
         return A ( B reinterpret_cast<bNodeSocketValueObject4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bNodeSocketValueObject4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeSocketValueObject4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeSocketValueObject4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeSocketValueObject4_4_0*>(data_ptr)-> C); 
 #define BNODESOCKETVALUEOBJECT_RETURN_REF(T, M)    BNODESOCKETVALUEOBJECT_BASE_RETURN_BODY(T, &, M)
 #define BNODESOCKETVALUEOBJECT_RETURN_AS(T, M)     BNODESOCKETVALUEOBJECT_BASE_RETURN_BODY(T,, M)
 #define BNODESOCKETVALUEOBJECT_RETURN(M)           BNODESOCKETVALUEOBJECT_BASE_RETURN_BODY(,, M)
@@ -649,7 +693,9 @@
         return A ( B reinterpret_cast<bNodeSocketValueTexture3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<bNodeSocketValueTexture4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeSocketValueTexture4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeSocketValueTexture4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeSocketValueTexture4_4_0*>(data_ptr)-> C); 
 #define BNODESOCKETVALUETEXTURE_RETURN_REF(T, M)    BNODESOCKETVALUETEXTURE_BASE_RETURN_BODY(T, &, M)
 #define BNODESOCKETVALUETEXTURE_RETURN_AS(T, M)     BNODESOCKETVALUETEXTURE_BASE_RETURN_BODY(T,, M)
 #define BNODESOCKETVALUETEXTURE_RETURN(M)           BNODESOCKETVALUETEXTURE_BASE_RETURN_BODY(,, M)
@@ -669,7 +715,9 @@
         return A ( B reinterpret_cast<bNodeSocket4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bNodeSocket4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeSocket4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeSocket4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeSocket4_4_0*>(data_ptr)-> C); 
 #define BNODESOCKET_RETURN_REF(T, M)    BNODESOCKET_BASE_RETURN_BODY(T, &, M)
 #define BNODESOCKET_RETURN_AS(T, M)     BNODESOCKET_BASE_RETURN_BODY(T,, M)
 #define BNODESOCKET_RETURN(M)           BNODESOCKET_BASE_RETURN_BODY(,, M)
@@ -689,7 +737,9 @@
         return A ( B reinterpret_cast<bNodeTreePath4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bNodeTreePath4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeTreePath4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeTreePath4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeTreePath4_4_0*>(data_ptr)-> C); 
 #define BNODETREEPATH_RETURN_REF(T, M)    BNODETREEPATH_BASE_RETURN_BODY(T, &, M)
 #define BNODETREEPATH_RETURN_AS(T, M)     BNODETREEPATH_BASE_RETURN_BODY(T,, M)
 #define BNODETREEPATH_RETURN(M)           BNODETREEPATH_BASE_RETURN_BODY(,, M)
@@ -703,7 +753,9 @@
         return A ( B reinterpret_cast<bNodeTree4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bNodeTree4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNodeTree4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNodeTree4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNodeTree4_4_0*>(data_ptr)-> C); 
 #define BNODETREE_RETURN_REF(T, M)    BNODETREE_BASE_RETURN_BODY(T, &, M)
 #define BNODETREE_RETURN_AS(T, M)     BNODETREE_BASE_RETURN_BODY(T,, M)
 #define BNODETREE_RETURN(M)           BNODETREE_BASE_RETURN_BODY(,, M)
@@ -717,7 +769,9 @@
         return A ( B reinterpret_cast<bNode4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bNode4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bNode4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bNode4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bNode4_4_0*>(data_ptr)-> C); 
 #define BNODE_RETURN_REF(T, M)    BNODE_BASE_RETURN_BODY(T, &, M)
 #define BNODE_RETURN_AS(T, M)     BNODE_BASE_RETURN_BODY(T,, M)
 #define BNODE_RETURN(M)           BNODE_BASE_RETURN_BODY(,, M)
@@ -845,7 +899,9 @@
         return A ( B reinterpret_cast<bPoseChannel4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bPoseChannel4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bPoseChannel4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bPoseChannel4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bPoseChannel4_4_0*>(data_ptr)-> C); 
 #define BPOSECHANNEL_RETURN_REF(T, M)    BPOSECHANNEL_BASE_RETURN_BODY(T, &, M)
 #define BPOSECHANNEL_RETURN_AS(T, M)     BPOSECHANNEL_BASE_RETURN_BODY(T,, M)
 #define BPOSECHANNEL_RETURN(M)           BPOSECHANNEL_BASE_RETURN_BODY(,, M)
@@ -869,7 +925,9 @@
         return A ( B reinterpret_cast<bPose4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bPose4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bPose4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bPose4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bPose4_4_0*>(data_ptr)-> C); 
 #define BPOSE_RETURN_REF(T, M)    BPOSE_BASE_RETURN_BODY(T, &, M)
 #define BPOSE_RETURN_AS(T, M)     BPOSE_BASE_RETURN_BODY(T,, M)
 #define BPOSE_RETURN(M)           BPOSE_BASE_RETURN_BODY(,, M)
@@ -887,7 +945,9 @@
         return A ( B reinterpret_cast<BrightContrastModifierData4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<BrightContrastModifierData4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<BrightContrastModifierData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<BrightContrastModifierData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<BrightContrastModifierData4_4_0*>(data_ptr)-> C); 
 #define BRIGHTCONTRASTMODIFIERDATA_RETURN_REF(T, M)    BRIGHTCONTRASTMODIFIERDATA_BASE_RETURN_BODY(T, &, M)
 #define BRIGHTCONTRASTMODIFIERDATA_RETURN_AS(T, M)     BRIGHTCONTRASTMODIFIERDATA_BASE_RETURN_BODY(T,, M)
 #define BRIGHTCONTRASTMODIFIERDATA_RETURN(M)           BRIGHTCONTRASTMODIFIERDATA_BASE_RETURN_BODY(,, M)
@@ -947,7 +1007,9 @@
         return A ( B reinterpret_cast<Brush4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Brush4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Brush4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Brush4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Brush4_4_0*>(data_ptr)-> C); 
 #define BRUSH_RETURN_REF(T, M)    BRUSH_BASE_RETURN_BODY(T, &, M)
 #define BRUSH_RETURN_AS(T, M)     BRUSH_BASE_RETURN_BODY(T,, M)
 #define BRUSH_RETURN(M)           BRUSH_BASE_RETURN_BODY(,, M)
@@ -965,7 +1027,9 @@
         return A ( B reinterpret_cast<bScreen4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<bScreen4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bScreen4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bScreen4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bScreen4_4_0*>(data_ptr)-> C); 
 #define BSCREEN_RETURN_REF(T, M)    BSCREEN_BASE_RETURN_BODY(T, &, M)
 #define BSCREEN_RETURN_AS(T, M)     BSCREEN_BASE_RETURN_BODY(T,, M)
 #define BSCREEN_RETURN(M)           BSCREEN_BASE_RETURN_BODY(,, M)
@@ -993,7 +1057,9 @@
         return A ( B reinterpret_cast<bSound3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<bSound4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bSound4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bSound4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bSound4_4_0*>(data_ptr)-> C); 
 #define BSOUND_RETURN_REF(T, M)    BSOUND_BASE_RETURN_BODY(T, &, M)
 #define BSOUND_RETURN_AS(T, M)     BSOUND_BASE_RETURN_BODY(T,, M)
 #define BSOUND_RETURN(M)           BSOUND_BASE_RETURN_BODY(,, M)
@@ -1013,7 +1079,9 @@
 #define BTOOLREF_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<bToolRef3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<bToolRef4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<bToolRef4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<bToolRef4_4_0*>(data_ptr)-> C); 
 #define BTOOLREF_RETURN_REF(T, M)    BTOOLREF_BASE_RETURN_BODY(T, &, M)
 #define BTOOLREF_RETURN_AS(T, M)     BTOOLREF_BASE_RETURN_BODY(T,, M)
 #define BTOOLREF_RETURN(M)           BTOOLREF_BASE_RETURN_BODY(,, M)
@@ -1131,7 +1199,9 @@
         return A ( B reinterpret_cast<CacheFile3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<CacheFile4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<CacheFile4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<CacheFile4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<CacheFile4_4_0*>(data_ptr)-> C); 
 #define CACHEFILE_RETURN_REF(T, M)    CACHEFILE_BASE_RETURN_BODY(T, &, M)
 #define CACHEFILE_RETURN_AS(T, M)     CACHEFILE_BASE_RETURN_BODY(T,, M)
 #define CACHEFILE_RETURN(M)           CACHEFILE_BASE_RETURN_BODY(,, M)
@@ -1147,7 +1217,9 @@
         return A ( B reinterpret_cast<CameraBGImage3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<CameraBGImage4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<CameraBGImage4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<CameraBGImage4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<CameraBGImage4_4_0*>(data_ptr)-> C); 
 #define CAMERABGIMAGE_RETURN_REF(T, M)    CAMERABGIMAGE_BASE_RETURN_BODY(T, &, M)
 #define CAMERABGIMAGE_RETURN_AS(T, M)     CAMERABGIMAGE_BASE_RETURN_BODY(T,, M)
 #define CAMERABGIMAGE_RETURN(M)           CAMERABGIMAGE_BASE_RETURN_BODY(,, M)
@@ -1173,7 +1245,9 @@
         return A ( B reinterpret_cast<Camera4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Camera4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Camera4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Camera4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Camera4_4_0*>(data_ptr)-> C); 
 #define CAMERA_RETURN_REF(T, M)    CAMERA_BASE_RETURN_BODY(T, &, M)
 #define CAMERA_RETURN_AS(T, M)     CAMERA_BASE_RETURN_BODY(T,, M)
 #define CAMERA_RETURN(M)           CAMERA_BASE_RETURN_BODY(,, M)
@@ -1243,7 +1317,9 @@
         return A ( B reinterpret_cast<CollectionChild4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<CollectionChild4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<CollectionChild4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<CollectionChild4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<CollectionChild4_4_0*>(data_ptr)-> C); 
 #define COLLECTIONCHILD_RETURN_REF(T, M)    COLLECTIONCHILD_BASE_RETURN_BODY(T, &, M)
 #define COLLECTIONCHILD_RETURN_AS(T, M)     COLLECTIONCHILD_BASE_RETURN_BODY(T,, M)
 #define COLLECTIONCHILD_RETURN(M)           COLLECTIONCHILD_BASE_RETURN_BODY(,, M)
@@ -1263,7 +1339,9 @@
         return A ( B reinterpret_cast<Collection4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Collection4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Collection4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Collection4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Collection4_4_0*>(data_ptr)-> C); 
 #define COLLECTION_RETURN_REF(T, M)    COLLECTION_BASE_RETURN_BODY(T, &, M)
 #define COLLECTION_RETURN_AS(T, M)     COLLECTION_BASE_RETURN_BODY(T,, M)
 #define COLLECTION_RETURN(M)           COLLECTION_BASE_RETURN_BODY(,, M)
@@ -1291,7 +1369,9 @@
         return A ( B reinterpret_cast<ColorBalanceModifierData4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<ColorBalanceModifierData4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ColorBalanceModifierData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ColorBalanceModifierData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ColorBalanceModifierData4_4_0*>(data_ptr)-> C); 
 #define COLORBALANCEMODIFIERDATA_RETURN_REF(T, M)    COLORBALANCEMODIFIERDATA_BASE_RETURN_BODY(T, &, M)
 #define COLORBALANCEMODIFIERDATA_RETURN_AS(T, M)     COLORBALANCEMODIFIERDATA_BASE_RETURN_BODY(T,, M)
 #define COLORBALANCEMODIFIERDATA_RETURN(M)           COLORBALANCEMODIFIERDATA_BASE_RETURN_BODY(,, M)
@@ -1441,7 +1521,9 @@
         return A ( B reinterpret_cast<Curves4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Curves4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Curves4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Curves4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Curves4_4_0*>(data_ptr)-> C); 
 #define CURVES_RETURN_REF(T, M)    CURVES_BASE_RETURN_BODY(T, &, M)
 #define CURVES_RETURN_AS(T, M)     CURVES_BASE_RETURN_BODY(T,, M)
 #define CURVES_RETURN(M)           CURVES_BASE_RETURN_BODY(,, M)
@@ -1451,7 +1533,9 @@
         return A ( B reinterpret_cast<Curve3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Curve4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Curve4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Curve4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Curve4_4_0*>(data_ptr)-> C); 
 #define CURVE_RETURN_REF(T, M)    CURVE_BASE_RETURN_BODY(T, &, M)
 #define CURVE_RETURN_AS(T, M)     CURVE_BASE_RETURN_BODY(T,, M)
 #define CURVE_RETURN(M)           CURVE_BASE_RETURN_BODY(,, M)
@@ -1539,7 +1623,9 @@
         return A ( B reinterpret_cast<DriverTarget3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<DriverTarget4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<DriverTarget4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<DriverTarget4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<DriverTarget4_4_0*>(data_ptr)-> C); 
 #define DRIVERTARGET_RETURN_REF(T, M)    DRIVERTARGET_BASE_RETURN_BODY(T, &, M)
 #define DRIVERTARGET_RETURN_AS(T, M)     DRIVERTARGET_BASE_RETURN_BODY(T,, M)
 #define DRIVERTARGET_RETURN(M)           DRIVERTARGET_BASE_RETURN_BODY(,, M)
@@ -1595,7 +1681,9 @@
         return A ( B reinterpret_cast<EditingRuntime3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<EditingRuntime4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<EditingRuntime4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<EditingRuntime4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<EditingRuntime4_4_0*>(data_ptr)-> C); 
 #define EDITINGRUNTIME_RETURN_REF(T, M)    EDITINGRUNTIME_BASE_RETURN_BODY(T, &, M)
 #define EDITINGRUNTIME_RETURN_AS(T, M)     EDITINGRUNTIME_BASE_RETURN_BODY(T,, M)
 #define EDITINGRUNTIME_RETURN(M)           EDITINGRUNTIME_BASE_RETURN_BODY(,, M)
@@ -1609,7 +1697,9 @@
         return A ( B reinterpret_cast<Editing4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Editing4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Editing4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Editing4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Editing4_4_0*>(data_ptr)-> C); 
 #define EDITING_RETURN_REF(T, M)    EDITING_BASE_RETURN_BODY(T, &, M)
 #define EDITING_RETURN_AS(T, M)     EDITING_BASE_RETURN_BODY(T,, M)
 #define EDITING_RETURN(M)           EDITING_BASE_RETURN_BODY(,, M)
@@ -1619,7 +1709,9 @@
         return A ( B reinterpret_cast<EditLatt3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<EditLatt4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<EditLatt4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<EditLatt4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<EditLatt4_4_0*>(data_ptr)-> C); 
 #define EDITLATT_RETURN_REF(T, M)    EDITLATT_BASE_RETURN_BODY(T, &, M)
 #define EDITLATT_RETURN_AS(T, M)     EDITLATT_BASE_RETURN_BODY(T,, M)
 #define EDITLATT_RETURN(M)           EDITLATT_BASE_RETURN_BODY(,, M)
@@ -1665,7 +1757,9 @@
 #define FCURVE_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<FCurve3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<FCurve4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FCurve4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FCurve4_4_0*>(data_ptr)-> C); 
 #define FCURVE_RETURN_REF(T, M)    FCURVE_BASE_RETURN_BODY(T, &, M)
 #define FCURVE_RETURN_AS(T, M)     FCURVE_BASE_RETURN_BODY(T,, M)
 #define FCURVE_RETURN(M)           FCURVE_BASE_RETURN_BODY(,, M)
@@ -1683,7 +1777,9 @@
         return A ( B reinterpret_cast<FileAssetSelectParams4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<FileAssetSelectParams4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<FileAssetSelectParams4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FileAssetSelectParams4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FileAssetSelectParams4_4_0*>(data_ptr)-> C); 
 #define FILEASSETSELECTPARAMS_RETURN_REF(T, M)    FILEASSETSELECTPARAMS_BASE_RETURN_BODY(T, &, M)
 #define FILEASSETSELECTPARAMS_RETURN_AS(T, M)     FILEASSETSELECTPARAMS_BASE_RETURN_BODY(T,, M)
 #define FILEASSETSELECTPARAMS_RETURN(M)           FILEASSETSELECTPARAMS_BASE_RETURN_BODY(,, M)
@@ -1694,6 +1790,14 @@
 #define FILEDIRENTRYARR_RETURN_AS(T, M)     FILEDIRENTRYARR_BASE_RETURN_BODY(T,, M)
 #define FILEDIRENTRYARR_RETURN(M)           FILEDIRENTRYARR_BASE_RETURN_BODY(,, M)
 
+#define FILEDIRENTRY_BASE_RETURN_BODY(A, B, C) \
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FileDirEntry4_2_8*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FileDirEntry4_4_0*>(data_ptr)-> C); 
+#define FILEDIRENTRY_RETURN_REF(T, M)    FILEDIRENTRY_BASE_RETURN_BODY(T, &, M)
+#define FILEDIRENTRY_RETURN_AS(T, M)     FILEDIRENTRY_BASE_RETURN_BODY(T,, M)
+#define FILEDIRENTRY_RETURN(M)           FILEDIRENTRY_BASE_RETURN_BODY(,, M)
+
 #define FILEFOLDERHISTORY_BASE_RETURN_BODY(A, B, C) \
     return A ( B reinterpret_cast<FileFolderHistory3_6_0*>(data_ptr)-> C); 
 #define FILEFOLDERHISTORY_RETURN_REF(T, M)    FILEFOLDERHISTORY_BASE_RETURN_BODY(T, &, M)
@@ -1701,7 +1805,9 @@
 #define FILEFOLDERHISTORY_RETURN(M)           FILEFOLDERHISTORY_BASE_RETURN_BODY(,, M)
 
 #define FILEGLOBAL_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<FileGlobal3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FileGlobal3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FileGlobal4_4_0*>(data_ptr)-> C); 
 #define FILEGLOBAL_RETURN_REF(T, M)    FILEGLOBAL_BASE_RETURN_BODY(T, &, M)
 #define FILEGLOBAL_RETURN_AS(T, M)     FILEGLOBAL_BASE_RETURN_BODY(T,, M)
 #define FILEGLOBAL_RETURN(M)           FILEGLOBAL_BASE_RETURN_BODY(,, M)
@@ -1711,7 +1817,9 @@
         return A ( B reinterpret_cast<FileSelectParams3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<FileSelectParams4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<FileSelectParams4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FileSelectParams4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FileSelectParams4_4_0*>(data_ptr)-> C); 
 #define FILESELECTPARAMS_RETURN_REF(T, M)    FILESELECTPARAMS_BASE_RETURN_BODY(T, &, M)
 #define FILESELECTPARAMS_RETURN_AS(T, M)     FILESELECTPARAMS_BASE_RETURN_BODY(T,, M)
 #define FILESELECTPARAMS_RETURN(M)           FILESELECTPARAMS_BASE_RETURN_BODY(,, M)
@@ -1765,7 +1873,9 @@
 #define FMODIFIER_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<FModifier3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<FModifier4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FModifier4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FModifier4_4_0*>(data_ptr)-> C); 
 #define FMODIFIER_RETURN_REF(T, M)    FMODIFIER_BASE_RETURN_BODY(T, &, M)
 #define FMODIFIER_RETURN_AS(T, M)     FMODIFIER_BASE_RETURN_BODY(T,, M)
 #define FMODIFIER_RETURN(M)           FMODIFIER_BASE_RETURN_BODY(,, M)
@@ -1801,7 +1911,9 @@
 #define FMOD_LIMITS_RETURN(M)           FMOD_LIMITS_BASE_RETURN_BODY(,, M)
 
 #define FMOD_NOISE_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<FMod_Noise3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FMod_Noise3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FMod_Noise4_4_0*>(data_ptr)-> C); 
 #define FMOD_NOISE_RETURN_REF(T, M)    FMOD_NOISE_BASE_RETURN_BODY(T, &, M)
 #define FMOD_NOISE_RETURN_AS(T, M)     FMOD_NOISE_BASE_RETURN_BODY(T,, M)
 #define FMOD_NOISE_RETURN(M)           FMOD_NOISE_BASE_RETURN_BODY(,, M)
@@ -1853,7 +1965,9 @@
         return A ( B reinterpret_cast<FreestyleLineStyle3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<FreestyleLineStyle4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<FreestyleLineStyle4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<FreestyleLineStyle4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<FreestyleLineStyle4_4_0*>(data_ptr)-> C); 
 #define FREESTYLELINESTYLE_RETURN_REF(T, M)    FREESTYLELINESTYLE_BASE_RETURN_BODY(T, &, M)
 #define FREESTYLELINESTYLE_RETURN_AS(T, M)     FREESTYLELINESTYLE_BASE_RETURN_BODY(T,, M)
 #define FREESTYLELINESTYLE_RETURN(M)           FREESTYLELINESTYLE_BASE_RETURN_BODY(,, M)
@@ -1949,7 +2063,9 @@
         return A ( B reinterpret_cast<GP_Sculpt_Guide4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<GP_Sculpt_Guide4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<GP_Sculpt_Guide4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<GP_Sculpt_Guide4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<GP_Sculpt_Guide4_4_0*>(data_ptr)-> C); 
 #define GP_SCULPT_GUIDE_RETURN_REF(T, M)    GP_SCULPT_GUIDE_BASE_RETURN_BODY(T, &, M)
 #define GP_SCULPT_GUIDE_RETURN_AS(T, M)     GP_SCULPT_GUIDE_BASE_RETURN_BODY(T,, M)
 #define GP_SCULPT_GUIDE_RETURN(M)           GP_SCULPT_GUIDE_BASE_RETURN_BODY(,, M)
@@ -1963,7 +2079,9 @@
         return A ( B reinterpret_cast<GP_Sculpt_Settings4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<GP_Sculpt_Settings4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<GP_Sculpt_Settings4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<GP_Sculpt_Settings4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<GP_Sculpt_Settings4_4_0*>(data_ptr)-> C); 
 #define GP_SCULPT_SETTINGS_RETURN_REF(T, M)    GP_SCULPT_SETTINGS_BASE_RETURN_BODY(T, &, M)
 #define GP_SCULPT_SETTINGS_RETURN_AS(T, M)     GP_SCULPT_SETTINGS_BASE_RETURN_BODY(T,, M)
 #define GP_SCULPT_SETTINGS_RETURN(M)           GP_SCULPT_SETTINGS_BASE_RETURN_BODY(,, M)
@@ -2007,7 +2125,9 @@
         return A ( B reinterpret_cast<IdAdtTemplate4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<IdAdtTemplate4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<IdAdtTemplate4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<IdAdtTemplate4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<IdAdtTemplate4_4_0*>(data_ptr)-> C); 
 #define IDADTTEMPLATE_RETURN_REF(T, M)    IDADTTEMPLATE_BASE_RETURN_BODY(T, &, M)
 #define IDADTTEMPLATE_RETURN_AS(T, M)     IDADTTEMPLATE_BASE_RETURN_BODY(T,, M)
 #define IDADTTEMPLATE_RETURN(M)           IDADTTEMPLATE_BASE_RETURN_BODY(,, M)
@@ -2019,7 +2139,9 @@
         return A ( B reinterpret_cast<IDOverrideLibraryPropertyOperation4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<IDOverrideLibraryPropertyOperation4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<IDOverrideLibraryPropertyOperation4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<IDOverrideLibraryPropertyOperation4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<IDOverrideLibraryPropertyOperation4_4_0*>(data_ptr)-> C); 
 #define IDOVERRIDELIBRARYPROPERTYOPERATION_RETURN_REF(T, M)    IDOVERRIDELIBRARYPROPERTYOPERATION_BASE_RETURN_BODY(T, &, M)
 #define IDOVERRIDELIBRARYPROPERTYOPERATION_RETURN_AS(T, M)     IDOVERRIDELIBRARYPROPERTYOPERATION_BASE_RETURN_BODY(T,, M)
 #define IDOVERRIDELIBRARYPROPERTYOPERATION_RETURN(M)           IDOVERRIDELIBRARYPROPERTYOPERATION_BASE_RETURN_BODY(,, M)
@@ -2041,7 +2163,9 @@
         return A ( B reinterpret_cast<IDOverrideLibrary3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<IDOverrideLibrary4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<IDOverrideLibrary4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<IDOverrideLibrary4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<IDOverrideLibrary4_4_0*>(data_ptr)-> C); 
 #define IDOVERRIDELIBRARY_RETURN_REF(T, M)    IDOVERRIDELIBRARY_BASE_RETURN_BODY(T, &, M)
 #define IDOVERRIDELIBRARY_RETURN_AS(T, M)     IDOVERRIDELIBRARY_BASE_RETURN_BODY(T,, M)
 #define IDOVERRIDELIBRARY_RETURN(M)           IDOVERRIDELIBRARY_BASE_RETURN_BODY(,, M)
@@ -2103,7 +2227,9 @@
         return A ( B reinterpret_cast<IDViewerPathElem4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<IDViewerPathElem4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<IDViewerPathElem4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<IDViewerPathElem4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<IDViewerPathElem4_4_0*>(data_ptr)-> C); 
 #define IDVIEWERPATHELEM_RETURN_REF(T, M)    IDVIEWERPATHELEM_BASE_RETURN_BODY(T, &, M)
 #define IDVIEWERPATHELEM_RETURN_AS(T, M)     IDVIEWERPATHELEM_BASE_RETURN_BODY(T,, M)
 #define IDVIEWERPATHELEM_RETURN(M)           IDVIEWERPATHELEM_BASE_RETURN_BODY(,, M)
@@ -2113,7 +2239,9 @@
         return A ( B reinterpret_cast<ID3_6_0*>(data_ptr)-> C); \
     if (get_compatability_mode() < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<ID4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ID4_2_0*>(data_ptr)-> C); 
+    if (get_compatability_mode() < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ID4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ID4_4_0*>(data_ptr)-> C); 
 #define ID_RETURN_REF(T, M)    ID_BASE_RETURN_BODY(T, &, M)
 #define ID_RETURN_AS(T, M)     ID_BASE_RETURN_BODY(T,, M)
 #define ID_RETURN(M)           ID_BASE_RETURN_BODY(,, M)
@@ -2121,7 +2249,9 @@
 #define ID_RUNTIME_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<ID_Runtime3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ID_Runtime4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ID_Runtime4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ID_Runtime4_4_0*>(data_ptr)-> C); 
 #define ID_RUNTIME_RETURN_REF(T, M)    ID_RUNTIME_BASE_RETURN_BODY(T, &, M)
 #define ID_RUNTIME_RETURN_AS(T, M)     ID_RUNTIME_BASE_RETURN_BODY(T,, M)
 #define ID_RUNTIME_RETURN(M)           ID_RUNTIME_BASE_RETURN_BODY(,, M)
@@ -2159,7 +2289,9 @@
         return A ( B reinterpret_cast<ImagePaintSettings4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<ImagePaintSettings4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ImagePaintSettings4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ImagePaintSettings4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ImagePaintSettings4_4_0*>(data_ptr)-> C); 
 #define IMAGEPAINTSETTINGS_RETURN_REF(T, M)    IMAGEPAINTSETTINGS_BASE_RETURN_BODY(T, &, M)
 #define IMAGEPAINTSETTINGS_RETURN_AS(T, M)     IMAGEPAINTSETTINGS_BASE_RETURN_BODY(T,, M)
 #define IMAGEPAINTSETTINGS_RETURN(M)           IMAGEPAINTSETTINGS_BASE_RETURN_BODY(,, M)
@@ -2193,7 +2325,9 @@
         return A ( B reinterpret_cast<Image3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Image4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Image4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Image4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Image4_4_0*>(data_ptr)-> C); 
 #define IMAGE_RETURN_REF(T, M)    IMAGE_BASE_RETURN_BODY(T, &, M)
 #define IMAGE_RETURN_AS(T, M)     IMAGE_BASE_RETURN_BODY(T,, M)
 #define IMAGE_RETURN(M)           IMAGE_BASE_RETURN_BODY(,, M)
@@ -2223,7 +2357,9 @@
         return A ( B reinterpret_cast<Ipo3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Ipo4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Ipo4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Ipo4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Ipo4_4_0*>(data_ptr)-> C); 
 #define IPO_RETURN_REF(T, M)    IPO_BASE_RETURN_BODY(T, &, M)
 #define IPO_RETURN_AS(T, M)     IPO_BASE_RETURN_BODY(T,, M)
 #define IPO_RETURN(M)           IPO_BASE_RETURN_BODY(,, M)
@@ -2245,7 +2381,9 @@
         return A ( B reinterpret_cast<Key3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Key4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Key4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Key4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Key4_4_0*>(data_ptr)-> C); 
 #define KEY_RETURN_REF(T, M)    KEY_BASE_RETURN_BODY(T, &, M)
 #define KEY_RETURN_AS(T, M)     KEY_BASE_RETURN_BODY(T,, M)
 #define KEY_RETURN(M)           KEY_BASE_RETURN_BODY(,, M)
@@ -2255,7 +2393,9 @@
         return A ( B reinterpret_cast<KS_Path3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<KS_Path4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<KS_Path4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<KS_Path4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<KS_Path4_4_0*>(data_ptr)-> C); 
 #define KS_PATH_RETURN_REF(T, M)    KS_PATH_BASE_RETURN_BODY(T, &, M)
 #define KS_PATH_RETURN_AS(T, M)     KS_PATH_BASE_RETURN_BODY(T,, M)
 #define KS_PATH_RETURN(M)           KS_PATH_BASE_RETURN_BODY(,, M)
@@ -2295,7 +2435,9 @@
         return A ( B reinterpret_cast<Lattice3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Lattice4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Lattice4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Lattice4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Lattice4_4_0*>(data_ptr)-> C); 
 #define LATTICE_RETURN_REF(T, M)    LATTICE_BASE_RETURN_BODY(T, &, M)
 #define LATTICE_RETURN_AS(T, M)     LATTICE_BASE_RETURN_BODY(T,, M)
 #define LATTICE_RETURN(M)           LATTICE_BASE_RETURN_BODY(,, M)
@@ -2325,7 +2467,9 @@
         return A ( B reinterpret_cast<Library3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Library4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Library4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Library4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Library4_4_0*>(data_ptr)-> C); 
 #define LIBRARY_RETURN_REF(T, M)    LIBRARY_BASE_RETURN_BODY(T, &, M)
 #define LIBRARY_RETURN_AS(T, M)     LIBRARY_BASE_RETURN_BODY(T,, M)
 #define LIBRARY_RETURN(M)           LIBRARY_BASE_RETURN_BODY(,, M)
@@ -2333,7 +2477,9 @@
 #define LIBRARY_RUNTIME_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Library_Runtime3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Library_Runtime4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Library_Runtime4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Library_Runtime4_4_0*>(data_ptr)-> C); 
 #define LIBRARY_RUNTIME_RETURN_REF(T, M)    LIBRARY_RUNTIME_BASE_RETURN_BODY(T, &, M)
 #define LIBRARY_RUNTIME_RETURN_AS(T, M)     LIBRARY_RUNTIME_BASE_RETURN_BODY(T,, M)
 #define LIBRARY_RUNTIME_RETURN(M)           LIBRARY_RUNTIME_BASE_RETURN_BODY(,, M)
@@ -2419,7 +2565,9 @@
         return A ( B reinterpret_cast<LightProbe4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<LightProbe4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<LightProbe4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<LightProbe4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<LightProbe4_4_0*>(data_ptr)-> C); 
 #define LIGHTPROBE_RETURN_REF(T, M)    LIGHTPROBE_BASE_RETURN_BODY(T, &, M)
 #define LIGHTPROBE_RETURN_AS(T, M)     LIGHTPROBE_BASE_RETURN_BODY(T,, M)
 #define LIGHTPROBE_RETURN(M)           LIGHTPROBE_BASE_RETURN_BODY(,, M)
@@ -2433,7 +2581,9 @@
         return A ( B reinterpret_cast<Light4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Light4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Light4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Light4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Light4_4_0*>(data_ptr)-> C); 
 #define LIGHT_RETURN_REF(T, M)    LIGHT_BASE_RETURN_BODY(T, &, M)
 #define LIGHT_RETURN_AS(T, M)     LIGHT_BASE_RETURN_BODY(T,, M)
 #define LIGHT_RETURN(M)           LIGHT_BASE_RETURN_BODY(,, M)
@@ -2727,7 +2877,9 @@
         return A ( B reinterpret_cast<MaskLayer3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MaskLayer4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MaskLayer4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MaskLayer4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MaskLayer4_4_0*>(data_ptr)-> C); 
 #define MASKLAYER_RETURN_REF(T, M)    MASKLAYER_BASE_RETURN_BODY(T, &, M)
 #define MASKLAYER_RETURN_AS(T, M)     MASKLAYER_BASE_RETURN_BODY(T,, M)
 #define MASKLAYER_RETURN(M)           MASKLAYER_BASE_RETURN_BODY(,, M)
@@ -2745,7 +2897,9 @@
         return A ( B reinterpret_cast<MaskParent3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MaskParent4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MaskParent4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MaskParent4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MaskParent4_4_0*>(data_ptr)-> C); 
 #define MASKPARENT_RETURN_REF(T, M)    MASKPARENT_BASE_RETURN_BODY(T, &, M)
 #define MASKPARENT_RETURN_AS(T, M)     MASKPARENT_BASE_RETURN_BODY(T,, M)
 #define MASKPARENT_RETURN(M)           MASKPARENT_BASE_RETURN_BODY(,, M)
@@ -2767,7 +2921,9 @@
         return A ( B reinterpret_cast<MaskSplinePoint3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MaskSplinePoint4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MaskSplinePoint4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MaskSplinePoint4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MaskSplinePoint4_4_0*>(data_ptr)-> C); 
 #define MASKSPLINEPOINT_RETURN_REF(T, M)    MASKSPLINEPOINT_BASE_RETURN_BODY(T, &, M)
 #define MASKSPLINEPOINT_RETURN_AS(T, M)     MASKSPLINEPOINT_BASE_RETURN_BODY(T,, M)
 #define MASKSPLINEPOINT_RETURN(M)           MASKSPLINEPOINT_BASE_RETURN_BODY(,, M)
@@ -2777,7 +2933,9 @@
         return A ( B reinterpret_cast<MaskSpline3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MaskSpline4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MaskSpline4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MaskSpline4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MaskSpline4_4_0*>(data_ptr)-> C); 
 #define MASKSPLINE_RETURN_REF(T, M)    MASKSPLINE_BASE_RETURN_BODY(T, &, M)
 #define MASKSPLINE_RETURN_AS(T, M)     MASKSPLINE_BASE_RETURN_BODY(T,, M)
 #define MASKSPLINE_RETURN(M)           MASKSPLINE_BASE_RETURN_BODY(,, M)
@@ -2787,7 +2945,9 @@
         return A ( B reinterpret_cast<Mask3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Mask4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Mask4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Mask4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Mask4_4_0*>(data_ptr)-> C); 
 #define MASK_RETURN_REF(T, M)    MASK_BASE_RETURN_BODY(T, &, M)
 #define MASK_RETURN_AS(T, M)     MASK_BASE_RETURN_BODY(T,, M)
 #define MASK_RETURN(M)           MASK_BASE_RETURN_BODY(,, M)
@@ -2809,7 +2969,9 @@
         return A ( B reinterpret_cast<Material3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Material4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Material4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Material4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Material4_4_0*>(data_ptr)-> C); 
 #define MATERIAL_RETURN_REF(T, M)    MATERIAL_BASE_RETURN_BODY(T, &, M)
 #define MATERIAL_RETURN_AS(T, M)     MATERIAL_BASE_RETURN_BODY(T,, M)
 #define MATERIAL_RETURN(M)           MATERIAL_BASE_RETURN_BODY(,, M)
@@ -2899,7 +3061,9 @@
         return A ( B reinterpret_cast<Mesh4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Mesh4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Mesh4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Mesh4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Mesh4_4_0*>(data_ptr)-> C); 
 #define MESH_RETURN_REF(T, M)    MESH_BASE_RETURN_BODY(T, &, M)
 #define MESH_RETURN_AS(T, M)     MESH_BASE_RETURN_BODY(T,, M)
 #define MESH_RETURN(M)           MESH_BASE_RETURN_BODY(,, M)
@@ -2909,7 +3073,9 @@
         return A ( B reinterpret_cast<MetaBall3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MetaBall4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MetaBall4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MetaBall4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MetaBall4_4_0*>(data_ptr)-> C); 
 #define METABALL_RETURN_REF(T, M)    METABALL_BASE_RETURN_BODY(T, &, M)
 #define METABALL_RETURN_AS(T, M)     METABALL_BASE_RETURN_BODY(T,, M)
 #define METABALL_RETURN(M)           METABALL_BASE_RETURN_BODY(,, M)
@@ -2927,7 +3093,9 @@
         return A ( B reinterpret_cast<MetaStack4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<MetaStack4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MetaStack4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MetaStack4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MetaStack4_4_0*>(data_ptr)-> C); 
 #define METASTACK_RETURN_REF(T, M)    METASTACK_BASE_RETURN_BODY(T, &, M)
 #define METASTACK_RETURN_AS(T, M)     METASTACK_BASE_RETURN_BODY(T,, M)
 #define METASTACK_RETURN(M)           METASTACK_BASE_RETURN_BODY(,, M)
@@ -3023,7 +3191,9 @@
         return A ( B reinterpret_cast<MovieClip3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MovieClip4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MovieClip4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MovieClip4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MovieClip4_4_0*>(data_ptr)-> C); 
 #define MOVIECLIP_RETURN_REF(T, M)    MOVIECLIP_BASE_RETURN_BODY(T, &, M)
 #define MOVIECLIP_RETURN_AS(T, M)     MOVIECLIP_BASE_RETURN_BODY(T,, M)
 #define MOVIECLIP_RETURN(M)           MOVIECLIP_BASE_RETURN_BODY(,, M)
@@ -3081,7 +3251,9 @@
         return A ( B reinterpret_cast<MovieTrackingObject3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MovieTrackingObject4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MovieTrackingObject4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MovieTrackingObject4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MovieTrackingObject4_4_0*>(data_ptr)-> C); 
 #define MOVIETRACKINGOBJECT_RETURN_REF(T, M)    MOVIETRACKINGOBJECT_BASE_RETURN_BODY(T, &, M)
 #define MOVIETRACKINGOBJECT_RETURN_AS(T, M)     MOVIETRACKINGOBJECT_BASE_RETURN_BODY(T,, M)
 #define MOVIETRACKINGOBJECT_RETURN(M)           MOVIETRACKINGOBJECT_BASE_RETURN_BODY(,, M)
@@ -3097,7 +3269,9 @@
         return A ( B reinterpret_cast<MovieTrackingPlaneTrack3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MovieTrackingPlaneTrack4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MovieTrackingPlaneTrack4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MovieTrackingPlaneTrack4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MovieTrackingPlaneTrack4_4_0*>(data_ptr)-> C); 
 #define MOVIETRACKINGPLANETRACK_RETURN_REF(T, M)    MOVIETRACKINGPLANETRACK_BASE_RETURN_BODY(T, &, M)
 #define MOVIETRACKINGPLANETRACK_RETURN_AS(T, M)     MOVIETRACKINGPLANETRACK_BASE_RETURN_BODY(T,, M)
 #define MOVIETRACKINGPLANETRACK_RETURN(M)           MOVIETRACKINGPLANETRACK_BASE_RETURN_BODY(,, M)
@@ -3137,7 +3311,9 @@
         return A ( B reinterpret_cast<MovieTracking3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<MovieTracking4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MovieTracking4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MovieTracking4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MovieTracking4_4_0*>(data_ptr)-> C); 
 #define MOVIETRACKING_RETURN_REF(T, M)    MOVIETRACKING_BASE_RETURN_BODY(T, &, M)
 #define MOVIETRACKING_RETURN_AS(T, M)     MOVIETRACKING_BASE_RETURN_BODY(T,, M)
 #define MOVIETRACKING_RETURN(M)           MOVIETRACKING_BASE_RETURN_BODY(,, M)
@@ -3175,7 +3351,9 @@
         return A ( B reinterpret_cast<MTex4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<MTex4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<MTex4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<MTex4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<MTex4_4_0*>(data_ptr)-> C); 
 #define MTEX_RETURN_REF(T, M)    MTEX_BASE_RETURN_BODY(T, &, M)
 #define MTEX_RETURN_AS(T, M)     MTEX_BASE_RETURN_BODY(T,, M)
 #define MTEX_RETURN(M)           MTEX_BASE_RETURN_BODY(,, M)
@@ -3219,7 +3397,9 @@
         return A ( B reinterpret_cast<NlaStrip4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<NlaStrip4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<NlaStrip4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<NlaStrip4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<NlaStrip4_4_0*>(data_ptr)-> C); 
 #define NLASTRIP_RETURN_REF(T, M)    NLASTRIP_BASE_RETURN_BODY(T, &, M)
 #define NLASTRIP_RETURN_AS(T, M)     NLASTRIP_BASE_RETURN_BODY(T,, M)
 #define NLASTRIP_RETURN(M)           NLASTRIP_BASE_RETURN_BODY(,, M)
@@ -3335,7 +3515,9 @@
 #define NODEDEFOCUS_RETURN(M)           NODEDEFOCUS_BASE_RETURN_BODY(,, M)
 
 #define NODEDENOISE_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<NodeDenoise3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<NodeDenoise3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<NodeDenoise4_4_0*>(data_ptr)-> C); 
 #define NODEDENOISE_RETURN_REF(T, M)    NODEDENOISE_BASE_RETURN_BODY(T, &, M)
 #define NODEDENOISE_RETURN_AS(T, M)     NODEDENOISE_BASE_RETURN_BODY(T,, M)
 #define NODEDENOISE_RETURN(M)           NODEDENOISE_BASE_RETURN_BODY(,, M)
@@ -3421,7 +3603,9 @@
 #define NODEGEOMETRYCURVEPRIMITIVEQUAD_RETURN(M)           NODEGEOMETRYCURVEPRIMITIVEQUAD_BASE_RETURN_BODY(,, M)
 
 #define NODEGEOMETRYCURVERESAMPLE_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<NodeGeometryCurveResample3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<NodeGeometryCurveResample3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<NodeGeometryCurveResample4_4_0*>(data_ptr)-> C); 
 #define NODEGEOMETRYCURVERESAMPLE_RETURN_REF(T, M)    NODEGEOMETRYCURVERESAMPLE_BASE_RETURN_BODY(T, &, M)
 #define NODEGEOMETRYCURVERESAMPLE_RETURN_AS(T, M)     NODEGEOMETRYCURVERESAMPLE_BASE_RETURN_BODY(T,, M)
 #define NODEGEOMETRYCURVERESAMPLE_RETURN(M)           NODEGEOMETRYCURVERESAMPLE_BASE_RETURN_BODY(,, M)
@@ -3645,7 +3829,9 @@
 #define NODEGEOMETRYVOLUMETOMESH_RETURN(M)           NODEGEOMETRYVOLUMETOMESH_BASE_RETURN_BODY(,, M)
 
 #define NODEGLARE_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<NodeGlare3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<NodeGlare3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<NodeGlare4_4_0*>(data_ptr)-> C); 
 #define NODEGLARE_RETURN_REF(T, M)    NODEGLARE_BASE_RETURN_BODY(T, &, M)
 #define NODEGLARE_RETURN_AS(T, M)     NODEGLARE_BASE_RETURN_BODY(T,, M)
 #define NODEGLARE_RETURN(M)           NODEGLARE_BASE_RETURN_BODY(,, M)
@@ -3955,7 +4141,9 @@
         return A ( B reinterpret_cast<ObHook4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<ObHook4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ObHook4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ObHook4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ObHook4_4_0*>(data_ptr)-> C); 
 #define OBHOOK_RETURN_REF(T, M)    OBHOOK_BASE_RETURN_BODY(T, &, M)
 #define OBHOOK_RETURN_AS(T, M)     OBHOOK_BASE_RETURN_BODY(T,, M)
 #define OBHOOK_RETURN(M)           OBHOOK_BASE_RETURN_BODY(,, M)
@@ -3975,7 +4163,9 @@
         return A ( B reinterpret_cast<Object4_1_0*>(data_ptr)-> C); \
     if (get_compatability_mode() < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Object4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Object4_3_0*>(data_ptr)-> C); 
+    if (get_compatability_mode() < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Object4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Object4_4_0*>(data_ptr)-> C); 
 #define OBJECT_RETURN_REF(T, M)    OBJECT_BASE_RETURN_BODY(T, &, M)
 #define OBJECT_RETURN_AS(T, M)     OBJECT_BASE_RETURN_BODY(T,, M)
 #define OBJECT_RETURN(M)           OBJECT_BASE_RETURN_BODY(,, M)
@@ -4045,7 +4235,9 @@
         return A ( B reinterpret_cast<PaintCurve3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<PaintCurve4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<PaintCurve4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<PaintCurve4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<PaintCurve4_4_0*>(data_ptr)-> C); 
 #define PAINTCURVE_RETURN_REF(T, M)    PAINTCURVE_BASE_RETURN_BODY(T, &, M)
 #define PAINTCURVE_RETURN_AS(T, M)     PAINTCURVE_BASE_RETURN_BODY(T,, M)
 #define PAINTCURVE_RETURN(M)           PAINTCURVE_BASE_RETURN_BODY(,, M)
@@ -4055,7 +4247,9 @@
         return A ( B reinterpret_cast<PaintModeSettings3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<PaintModeSettings4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<PaintModeSettings4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<PaintModeSettings4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<PaintModeSettings4_4_0*>(data_ptr)-> C); 
 #define PAINTMODESETTINGS_RETURN_REF(T, M)    PAINTMODESETTINGS_BASE_RETURN_BODY(T, &, M)
 #define PAINTMODESETTINGS_RETURN_AS(T, M)     PAINTMODESETTINGS_BASE_RETURN_BODY(T,, M)
 #define PAINTMODESETTINGS_RETURN(M)           PAINTMODESETTINGS_BASE_RETURN_BODY(,, M)
@@ -4095,7 +4289,9 @@
         return A ( B reinterpret_cast<Palette3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Palette4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Palette4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Palette4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Palette4_4_0*>(data_ptr)-> C); 
 #define PALETTE_RETURN_REF(T, M)    PALETTE_BASE_RETURN_BODY(T, &, M)
 #define PALETTE_RETURN_AS(T, M)     PALETTE_BASE_RETURN_BODY(T,, M)
 #define PALETTE_RETURN(M)           PALETTE_BASE_RETURN_BODY(,, M)
@@ -4179,7 +4375,9 @@
         return A ( B reinterpret_cast<ParticleSettings3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<ParticleSettings4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ParticleSettings4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ParticleSettings4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ParticleSettings4_4_0*>(data_ptr)-> C); 
 #define PARTICLESETTINGS_RETURN_REF(T, M)    PARTICLESETTINGS_BASE_RETURN_BODY(T, &, M)
 #define PARTICLESETTINGS_RETURN_AS(T, M)     PARTICLESETTINGS_BASE_RETURN_BODY(T,, M)
 #define PARTICLESETTINGS_RETURN(M)           PARTICLESETTINGS_BASE_RETURN_BODY(,, M)
@@ -4231,7 +4429,9 @@
         return A ( B reinterpret_cast<PointCloud4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<PointCloud4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<PointCloud4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<PointCloud4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<PointCloud4_4_0*>(data_ptr)-> C); 
 #define POINTCLOUD_RETURN_REF(T, M)    POINTCLOUD_BASE_RETURN_BODY(T, &, M)
 #define POINTCLOUD_RETURN_AS(T, M)     POINTCLOUD_BASE_RETURN_BODY(T,, M)
 #define POINTCLOUD_RETURN(M)           POINTCLOUD_BASE_RETURN_BODY(,, M)
@@ -4245,7 +4445,9 @@
         return A ( B reinterpret_cast<PointDensity4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<PointDensity4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<PointDensity4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<PointDensity4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<PointDensity4_4_0*>(data_ptr)-> C); 
 #define POINTDENSITY_RETURN_REF(T, M)    POINTDENSITY_BASE_RETURN_BODY(T, &, M)
 #define POINTDENSITY_RETURN_AS(T, M)     POINTDENSITY_BASE_RETURN_BODY(T,, M)
 #define POINTDENSITY_RETURN(M)           POINTDENSITY_BASE_RETURN_BODY(,, M)
@@ -4287,7 +4489,9 @@
         return A ( B reinterpret_cast<RegionView3D3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_1_0) \
         return A ( B reinterpret_cast<RegionView3D4_0_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<RegionView3D4_1_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<RegionView3D4_1_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<RegionView3D4_4_0*>(data_ptr)-> C); 
 #define REGIONVIEW3D_RETURN_REF(T, M)    REGIONVIEW3D_BASE_RETURN_BODY(T, &, M)
 #define REGIONVIEW3D_RETURN_AS(T, M)     REGIONVIEW3D_BASE_RETURN_BODY(T,, M)
 #define REGIONVIEW3D_RETURN(M)           REGIONVIEW3D_BASE_RETURN_BODY(,, M)
@@ -4353,13 +4557,17 @@
 #define RIGIDBODYOB_SHARED_RETURN(M)           RIGIDBODYOB_SHARED_BASE_RETURN_BODY(,, M)
 
 #define RIGIDBODYWORLD_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<RigidBodyWorld3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<RigidBodyWorld3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<RigidBodyWorld4_4_0*>(data_ptr)-> C); 
 #define RIGIDBODYWORLD_RETURN_REF(T, M)    RIGIDBODYWORLD_BASE_RETURN_BODY(T, &, M)
 #define RIGIDBODYWORLD_RETURN_AS(T, M)     RIGIDBODYWORLD_BASE_RETURN_BODY(T,, M)
 #define RIGIDBODYWORLD_RETURN(M)           RIGIDBODYWORLD_BASE_RETURN_BODY(,, M)
 
 #define RIGIDBODYWORLD_SHARED_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<RigidBodyWorld_Shared3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<RigidBodyWorld_Shared3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<RigidBodyWorld_Shared4_4_0*>(data_ptr)-> C); 
 #define RIGIDBODYWORLD_SHARED_RETURN_REF(T, M)    RIGIDBODYWORLD_SHARED_BASE_RETURN_BODY(T, &, M)
 #define RIGIDBODYWORLD_SHARED_RETURN_AS(T, M)     RIGIDBODYWORLD_SHARED_BASE_RETURN_BODY(T,, M)
 #define RIGIDBODYWORLD_SHARED_RETURN(M)           RIGIDBODYWORLD_SHARED_BASE_RETURN_BODY(,, M)
@@ -4443,7 +4651,9 @@
         return A ( B reinterpret_cast<ScrArea4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<ScrArea4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ScrArea4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ScrArea4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ScrArea4_4_0*>(data_ptr)-> C); 
 #define SCRAREA_RETURN_REF(T, M)    SCRAREA_BASE_RETURN_BODY(T, &, M)
 #define SCRAREA_RETURN_AS(T, M)     SCRAREA_BASE_RETURN_BODY(T,, M)
 #define SCRAREA_RETURN(M)           SCRAREA_BASE_RETURN_BODY(,, M)
@@ -4479,7 +4689,9 @@
         return A ( B reinterpret_cast<Script3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Script4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Script4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Script4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Script4_4_0*>(data_ptr)-> C); 
 #define SCRIPT_RETURN_REF(T, M)    SCRIPT_BASE_RETURN_BODY(T, &, M)
 #define SCRIPT_RETURN_AS(T, M)     SCRIPT_BASE_RETURN_BODY(T,, M)
 #define SCRIPT_RETURN(M)           SCRIPT_BASE_RETURN_BODY(,, M)
@@ -4499,7 +4711,9 @@
         return A ( B reinterpret_cast<Sculpt4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<Sculpt4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Sculpt4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Sculpt4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Sculpt4_4_0*>(data_ptr)-> C); 
 #define SCULPT_RETURN_REF(T, M)    SCULPT_BASE_RETURN_BODY(T, &, M)
 #define SCULPT_RETURN_AS(T, M)     SCULPT_BASE_RETURN_BODY(T,, M)
 #define SCULPT_RETURN(M)           SCULPT_BASE_RETURN_BODY(,, M)
@@ -4515,6 +4729,14 @@
 #define SDEFVERT_RETURN_REF(T, M)    SDEFVERT_BASE_RETURN_BODY(T, &, M)
 #define SDEFVERT_RETURN_AS(T, M)     SDEFVERT_BASE_RETURN_BODY(T,, M)
 #define SDEFVERT_RETURN(M)           SDEFVERT_BASE_RETURN_BODY(,, M)
+
+#define SDNA_BASE_RETURN_BODY(A, B, C) \
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SDNA4_2_8*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SDNA4_4_0*>(data_ptr)-> C); 
+#define SDNA_RETURN_REF(T, M)    SDNA_BASE_RETURN_BODY(T, &, M)
+#define SDNA_RETURN_AS(T, M)     SDNA_BASE_RETURN_BODY(T,, M)
+#define SDNA_RETURN(M)           SDNA_BASE_RETURN_BODY(,, M)
 
 #define SDNA_STRUCTMEMBER_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
@@ -4537,7 +4759,9 @@
         return A ( B reinterpret_cast<SequenceModifierData4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<SequenceModifierData4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SequenceModifierData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SequenceModifierData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SequenceModifierData4_4_0*>(data_ptr)-> C); 
 #define SEQUENCEMODIFIERDATA_RETURN_REF(T, M)    SEQUENCEMODIFIERDATA_BASE_RETURN_BODY(T, &, M)
 #define SEQUENCEMODIFIERDATA_RETURN_AS(T, M)     SEQUENCEMODIFIERDATA_BASE_RETURN_BODY(T,, M)
 #define SEQUENCEMODIFIERDATA_RETURN(M)           SEQUENCEMODIFIERDATA_BASE_RETURN_BODY(,, M)
@@ -4549,7 +4773,9 @@
         return A ( B reinterpret_cast<SequencerMaskModifierData4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<SequencerMaskModifierData4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SequencerMaskModifierData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SequencerMaskModifierData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SequencerMaskModifierData4_4_0*>(data_ptr)-> C); 
 #define SEQUENCERMASKMODIFIERDATA_RETURN_REF(T, M)    SEQUENCERMASKMODIFIERDATA_BASE_RETURN_BODY(T, &, M)
 #define SEQUENCERMASKMODIFIERDATA_RETURN_AS(T, M)     SEQUENCERMASKMODIFIERDATA_BASE_RETURN_BODY(T,, M)
 #define SEQUENCERMASKMODIFIERDATA_RETURN(M)           SEQUENCERMASKMODIFIERDATA_BASE_RETURN_BODY(,, M)
@@ -4579,7 +4805,9 @@
         return A ( B reinterpret_cast<SequencerTonemapModifierData4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<SequencerTonemapModifierData4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SequencerTonemapModifierData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SequencerTonemapModifierData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SequencerTonemapModifierData4_4_0*>(data_ptr)-> C); 
 #define SEQUENCERTONEMAPMODIFIERDATA_RETURN_REF(T, M)    SEQUENCERTONEMAPMODIFIERDATA_BASE_RETURN_BODY(T, &, M)
 #define SEQUENCERTONEMAPMODIFIERDATA_RETURN_AS(T, M)     SEQUENCERTONEMAPMODIFIERDATA_BASE_RETURN_BODY(T,, M)
 #define SEQUENCERTONEMAPMODIFIERDATA_RETURN(M)           SEQUENCERTONEMAPMODIFIERDATA_BASE_RETURN_BODY(,, M)
@@ -4755,7 +4983,9 @@
         return A ( B reinterpret_cast<SpaceAction4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<SpaceAction4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceAction4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceAction4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceAction4_4_0*>(data_ptr)-> C); 
 #define SPACEACTION_RETURN_REF(T, M)    SPACEACTION_BASE_RETURN_BODY(T, &, M)
 #define SPACEACTION_RETURN_AS(T, M)     SPACEACTION_BASE_RETURN_BODY(T,, M)
 #define SPACEACTION_RETURN(M)           SPACEACTION_BASE_RETURN_BODY(,, M)
@@ -4771,7 +5001,9 @@
         return A ( B reinterpret_cast<SpaceClip3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceClip4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceClip4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceClip4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceClip4_4_0*>(data_ptr)-> C); 
 #define SPACECLIP_RETURN_REF(T, M)    SPACECLIP_BASE_RETURN_BODY(T, &, M)
 #define SPACECLIP_RETURN_AS(T, M)     SPACECLIP_BASE_RETURN_BODY(T,, M)
 #define SPACECLIP_RETURN(M)           SPACECLIP_BASE_RETURN_BODY(,, M)
@@ -4791,7 +5023,9 @@
         return A ( B reinterpret_cast<SpaceFile4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceFile4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceFile4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceFile4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceFile4_4_0*>(data_ptr)-> C); 
 #define SPACEFILE_RETURN_REF(T, M)    SPACEFILE_BASE_RETURN_BODY(T, &, M)
 #define SPACEFILE_RETURN_AS(T, M)     SPACEFILE_BASE_RETURN_BODY(T,, M)
 #define SPACEFILE_RETURN(M)           SPACEFILE_BASE_RETURN_BODY(,, M)
@@ -4803,7 +5037,9 @@
         return A ( B reinterpret_cast<SpaceGraph4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceGraph4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceGraph4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceGraph4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceGraph4_4_0*>(data_ptr)-> C); 
 #define SPACEGRAPH_RETURN_REF(T, M)    SPACEGRAPH_BASE_RETURN_BODY(T, &, M)
 #define SPACEGRAPH_RETURN_AS(T, M)     SPACEGRAPH_BASE_RETURN_BODY(T,, M)
 #define SPACEGRAPH_RETURN(M)           SPACEGRAPH_BASE_RETURN_BODY(,, M)
@@ -4825,7 +5061,9 @@
         return A ( B reinterpret_cast<SpaceImage3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceImage4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceImage4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceImage4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceImage4_4_0*>(data_ptr)-> C); 
 #define SPACEIMAGE_RETURN_REF(T, M)    SPACEIMAGE_BASE_RETURN_BODY(T, &, M)
 #define SPACEIMAGE_RETURN_AS(T, M)     SPACEIMAGE_BASE_RETURN_BODY(T,, M)
 #define SPACEIMAGE_RETURN(M)           SPACEIMAGE_BASE_RETURN_BODY(,, M)
@@ -4849,7 +5087,9 @@
         return A ( B reinterpret_cast<SpaceNla4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceNla4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceNla4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceNla4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceNla4_4_0*>(data_ptr)-> C); 
 #define SPACENLA_RETURN_REF(T, M)    SPACENLA_BASE_RETURN_BODY(T, &, M)
 #define SPACENLA_RETURN_AS(T, M)     SPACENLA_BASE_RETURN_BODY(T,, M)
 #define SPACENLA_RETURN(M)           SPACENLA_BASE_RETURN_BODY(,, M)
@@ -4871,7 +5111,9 @@
         return A ( B reinterpret_cast<SpaceNode4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<SpaceNode4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceNode4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceNode4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceNode4_4_0*>(data_ptr)-> C); 
 #define SPACENODE_RETURN_REF(T, M)    SPACENODE_BASE_RETURN_BODY(T, &, M)
 #define SPACENODE_RETURN_AS(T, M)     SPACENODE_BASE_RETURN_BODY(T,, M)
 #define SPACENODE_RETURN(M)           SPACENODE_BASE_RETURN_BODY(,, M)
@@ -4891,7 +5133,9 @@
         return A ( B reinterpret_cast<SpaceProperties4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceProperties4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceProperties4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceProperties4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceProperties4_4_0*>(data_ptr)-> C); 
 #define SPACEPROPERTIES_RETURN_REF(T, M)    SPACEPROPERTIES_BASE_RETURN_BODY(T, &, M)
 #define SPACEPROPERTIES_RETURN_AS(T, M)     SPACEPROPERTIES_BASE_RETURN_BODY(T,, M)
 #define SPACEPROPERTIES_RETURN(M)           SPACEPROPERTIES_BASE_RETURN_BODY(,, M)
@@ -4901,7 +5145,9 @@
         return A ( B reinterpret_cast<SpaceScript3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<SpaceScript4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<SpaceScript4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<SpaceScript4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<SpaceScript4_4_0*>(data_ptr)-> C); 
 #define SPACESCRIPT_RETURN_REF(T, M)    SPACESCRIPT_BASE_RETURN_BODY(T, &, M)
 #define SPACESCRIPT_RETURN_AS(T, M)     SPACESCRIPT_BASE_RETURN_BODY(T,, M)
 #define SPACESCRIPT_RETURN(M)           SPACESCRIPT_BASE_RETURN_BODY(,, M)
@@ -4971,7 +5217,9 @@
         return A ( B reinterpret_cast<Speaker3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Speaker4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Speaker4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Speaker4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Speaker4_4_0*>(data_ptr)-> C); 
 #define SPEAKER_RETURN_REF(T, M)    SPEAKER_BASE_RETURN_BODY(T, &, M)
 #define SPEAKER_RETURN_AS(T, M)     SPEAKER_BASE_RETURN_BODY(T,, M)
 #define SPEAKER_RETURN(M)           SPEAKER_BASE_RETURN_BODY(,, M)
@@ -5049,7 +5297,9 @@
 #define STRIPTRANSFORM_RETURN(M)           STRIPTRANSFORM_BASE_RETURN_BODY(,, M)
 
 #define STRIP_BASE_RETURN_BODY(A, B, C) \
-    return A ( B reinterpret_cast<Strip3_6_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Strip3_6_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Strip4_4_0*>(data_ptr)-> C); 
 #define STRIP_RETURN_REF(T, M)    STRIP_BASE_RETURN_BODY(T, &, M)
 #define STRIP_RETURN_AS(T, M)     STRIP_BASE_RETURN_BODY(T,, M)
 #define STRIP_RETURN(M)           STRIP_BASE_RETURN_BODY(,, M)
@@ -5105,7 +5355,9 @@
         return A ( B reinterpret_cast<TexMapping4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<TexMapping4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<TexMapping4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<TexMapping4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<TexMapping4_4_0*>(data_ptr)-> C); 
 #define TEXMAPPING_RETURN_REF(T, M)    TEXMAPPING_BASE_RETURN_BODY(T, &, M)
 #define TEXMAPPING_RETURN_AS(T, M)     TEXMAPPING_BASE_RETURN_BODY(T,, M)
 #define TEXMAPPING_RETURN(M)           TEXMAPPING_BASE_RETURN_BODY(,, M)
@@ -5143,7 +5395,9 @@
 #define TEXTVARS_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<TextVars3_6_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<TextVars4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<TextVars4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<TextVars4_4_0*>(data_ptr)-> C); 
 #define TEXTVARS_RETURN_REF(T, M)    TEXTVARS_BASE_RETURN_BODY(T, &, M)
 #define TEXTVARS_RETURN_AS(T, M)     TEXTVARS_BASE_RETURN_BODY(T,, M)
 #define TEXTVARS_RETURN(M)           TEXTVARS_BASE_RETURN_BODY(,, M)
@@ -5153,7 +5407,9 @@
         return A ( B reinterpret_cast<Text3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Text4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Text4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Text4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Text4_4_0*>(data_ptr)-> C); 
 #define TEXT_RETURN_REF(T, M)    TEXT_BASE_RETURN_BODY(T, &, M)
 #define TEXT_RETURN_AS(T, M)     TEXT_BASE_RETURN_BODY(T,, M)
 #define TEXT_RETURN(M)           TEXT_BASE_RETURN_BODY(,, M)
@@ -5163,7 +5419,9 @@
         return A ( B reinterpret_cast<Tex3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Tex4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Tex4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Tex4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Tex4_4_0*>(data_ptr)-> C); 
 #define TEX_RETURN_REF(T, M)    TEX_BASE_RETURN_BODY(T, &, M)
 #define TEX_RETURN_AS(T, M)     TEX_BASE_RETURN_BODY(T,, M)
 #define TEX_RETURN(M)           TEX_BASE_RETURN_BODY(,, M)
@@ -5183,7 +5441,9 @@
         return A ( B reinterpret_cast<ThemeSpace4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<ThemeSpace4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ThemeSpace4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ThemeSpace4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ThemeSpace4_4_0*>(data_ptr)-> C); 
 #define THEMESPACE_RETURN_REF(T, M)    THEMESPACE_BASE_RETURN_BODY(T, &, M)
 #define THEMESPACE_RETURN_AS(T, M)     THEMESPACE_BASE_RETURN_BODY(T,, M)
 #define THEMESPACE_RETURN(M)           THEMESPACE_BASE_RETURN_BODY(,, M)
@@ -5237,7 +5497,9 @@
         return A ( B reinterpret_cast<TimeMarker4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<TimeMarker4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<TimeMarker4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<TimeMarker4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<TimeMarker4_4_0*>(data_ptr)-> C); 
 #define TIMEMARKER_RETURN_REF(T, M)    TIMEMARKER_BASE_RETURN_BODY(T, &, M)
 #define TIMEMARKER_RETURN_AS(T, M)     TIMEMARKER_BASE_RETURN_BODY(T,, M)
 #define TIMEMARKER_RETURN(M)           TIMEMARKER_BASE_RETURN_BODY(,, M)
@@ -5277,7 +5539,9 @@
         return A ( B reinterpret_cast<TreeStoreElem3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<TreeStoreElem4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<TreeStoreElem4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<TreeStoreElem4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<TreeStoreElem4_4_0*>(data_ptr)-> C); 
 #define TREESTOREELEM_RETURN_REF(T, M)    TREESTOREELEM_BASE_RETURN_BODY(T, &, M)
 #define TREESTOREELEM_RETURN_AS(T, M)     TREESTOREELEM_BASE_RETURN_BODY(T,, M)
 #define TREESTOREELEM_RETURN(M)           TREESTOREELEM_BASE_RETURN_BODY(,, M)
@@ -5287,7 +5551,9 @@
         return A ( B reinterpret_cast<TreeStore3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<TreeStore4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<TreeStore4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<TreeStore4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<TreeStore4_4_0*>(data_ptr)-> C); 
 #define TREESTORE_RETURN_REF(T, M)    TREESTORE_BASE_RETURN_BODY(T, &, M)
 #define TREESTORE_RETURN_AS(T, M)     TREESTORE_BASE_RETURN_BODY(T,, M)
 #define TREESTORE_RETURN(M)           TREESTORE_BASE_RETURN_BODY(,, M)
@@ -5381,7 +5647,9 @@
         return A ( B reinterpret_cast<UserDef_Experimental4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<UserDef_Experimental4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<UserDef_Experimental4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<UserDef_Experimental4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<UserDef_Experimental4_4_0*>(data_ptr)-> C); 
 #define USERDEF_EXPERIMENTAL_RETURN_REF(T, M)    USERDEF_EXPERIMENTAL_BASE_RETURN_BODY(T, &, M)
 #define USERDEF_EXPERIMENTAL_RETURN_AS(T, M)     USERDEF_EXPERIMENTAL_BASE_RETURN_BODY(T,, M)
 #define USERDEF_EXPERIMENTAL_RETURN(M)           USERDEF_EXPERIMENTAL_BASE_RETURN_BODY(,, M)
@@ -5471,7 +5739,9 @@
         return A ( B reinterpret_cast<VFont3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<VFont4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<VFont4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<VFont4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<VFont4_4_0*>(data_ptr)-> C); 
 #define VFONT_RETURN_REF(T, M)    VFONT_BASE_RETURN_BODY(T, &, M)
 #define VFONT_RETURN_AS(T, M)     VFONT_BASE_RETURN_BODY(T,, M)
 #define VFONT_RETURN(M)           VFONT_BASE_RETURN_BODY(,, M)
@@ -5559,7 +5829,9 @@
         return A ( B reinterpret_cast<ViewLayer4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<ViewLayer4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<ViewLayer4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ViewLayer4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ViewLayer4_4_0*>(data_ptr)-> C); 
 #define VIEWLAYER_RETURN_REF(T, M)    VIEWLAYER_BASE_RETURN_BODY(T, &, M)
 #define VIEWLAYER_RETURN_AS(T, M)     VIEWLAYER_BASE_RETURN_BODY(T,, M)
 #define VIEWLAYER_RETURN(M)           VIEWLAYER_BASE_RETURN_BODY(,, M)
@@ -5597,7 +5869,9 @@
         return A ( B reinterpret_cast<Volume3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<Volume4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<Volume4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<Volume4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<Volume4_4_0*>(data_ptr)-> C); 
 #define VOLUME_RETURN_REF(T, M)    VOLUME_BASE_RETURN_BODY(T, &, M)
 #define VOLUME_RETURN_AS(T, M)     VOLUME_BASE_RETURN_BODY(T,, M)
 #define VOLUME_RETURN(M)           VOLUME_BASE_RETURN_BODY(,, M)
@@ -5711,7 +5985,9 @@
         return A ( B reinterpret_cast<WhiteBalanceModifierData4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<WhiteBalanceModifierData4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<WhiteBalanceModifierData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<WhiteBalanceModifierData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<WhiteBalanceModifierData4_4_0*>(data_ptr)-> C); 
 #define WHITEBALANCEMODIFIERDATA_RETURN_REF(T, M)    WHITEBALANCEMODIFIERDATA_BASE_RETURN_BODY(T, &, M)
 #define WHITEBALANCEMODIFIERDATA_RETURN_AS(T, M)     WHITEBALANCEMODIFIERDATA_BASE_RETURN_BODY(T,, M)
 #define WHITEBALANCEMODIFIERDATA_RETURN(M)           WHITEBALANCEMODIFIERDATA_BASE_RETURN_BODY(,, M)
@@ -5789,7 +6065,9 @@
         return A ( B reinterpret_cast<wmWindowManager4_2_1*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<wmWindowManager4_2_4*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<wmWindowManager4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<wmWindowManager4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<wmWindowManager4_4_0*>(data_ptr)-> C); 
 #define WMWINDOWMANAGER_RETURN_REF(T, M)    WMWINDOWMANAGER_BASE_RETURN_BODY(T, &, M)
 #define WMWINDOWMANAGER_RETURN_AS(T, M)     WMWINDOWMANAGER_BASE_RETURN_BODY(T,, M)
 #define WMWINDOWMANAGER_RETURN(M)           WMWINDOWMANAGER_BASE_RETURN_BODY(,, M)
@@ -5801,7 +6079,9 @@
         return A ( B reinterpret_cast<wmWindow4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<wmWindow4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<wmWindow4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<wmWindow4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<wmWindow4_4_0*>(data_ptr)-> C); 
 #define WMWINDOW_RETURN_REF(T, M)    WMWINDOW_BASE_RETURN_BODY(T, &, M)
 #define WMWINDOW_RETURN_AS(T, M)     WMWINDOW_BASE_RETURN_BODY(T,, M)
 #define WMWINDOW_RETURN(M)           WMWINDOW_BASE_RETURN_BODY(,, M)
@@ -5815,7 +6095,9 @@
         return A ( B reinterpret_cast<wmXrData4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<wmXrData4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<wmXrData4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<wmXrData4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<wmXrData4_4_0*>(data_ptr)-> C); 
 #define WMXRDATA_RETURN_REF(T, M)    WMXRDATA_BASE_RETURN_BODY(T, &, M)
 #define WMXRDATA_RETURN_AS(T, M)     WMXRDATA_BASE_RETURN_BODY(T,, M)
 #define WMXRDATA_RETURN(M)           WMXRDATA_BASE_RETURN_BODY(,, M)
@@ -5831,7 +6113,9 @@
         return A ( B reinterpret_cast<WorkSpaceInstanceHook3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<WorkSpaceInstanceHook4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<WorkSpaceInstanceHook4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<WorkSpaceInstanceHook4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<WorkSpaceInstanceHook4_4_0*>(data_ptr)-> C); 
 #define WORKSPACEINSTANCEHOOK_RETURN_REF(T, M)    WORKSPACEINSTANCEHOOK_BASE_RETURN_BODY(T, &, M)
 #define WORKSPACEINSTANCEHOOK_RETURN_AS(T, M)     WORKSPACEINSTANCEHOOK_BASE_RETURN_BODY(T,, M)
 #define WORKSPACEINSTANCEHOOK_RETURN(M)           WORKSPACEINSTANCEHOOK_BASE_RETURN_BODY(,, M)
@@ -5847,7 +6131,9 @@
         return A ( B reinterpret_cast<WorkSpace3_6_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<WorkSpace4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<WorkSpace4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<WorkSpace4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<WorkSpace4_4_0*>(data_ptr)-> C); 
 #define WORKSPACE_RETURN_REF(T, M)    WORKSPACE_BASE_RETURN_BODY(T, &, M)
 #define WORKSPACE_RETURN_AS(T, M)     WORKSPACE_BASE_RETURN_BODY(T,, M)
 #define WORKSPACE_RETURN(M)           WORKSPACE_BASE_RETURN_BODY(,, M)
@@ -5859,7 +6145,9 @@
         return A ( B reinterpret_cast<World4_0_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<World4_1_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<World4_2_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<World4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<World4_4_0*>(data_ptr)-> C); 
 #define WORLD_RETURN_REF(T, M)    WORLD_BASE_RETURN_BODY(T, &, M)
 #define WORLD_RETURN_AS(T, M)     WORLD_BASE_RETURN_BODY(T,, M)
 #define WORLD_RETURN(M)           WORLD_BASE_RETURN_BODY(,, M)
@@ -5897,7 +6185,9 @@
         return A ( B reinterpret_cast<XrSessionSettings4_1_0*>(data_ptr)-> C); \
     if (blender_ver < BlenderVersion::VER_4_3_0) \
         return A ( B reinterpret_cast<XrSessionSettings4_2_0*>(data_ptr)-> C); \
-    return A ( B reinterpret_cast<XrSessionSettings4_3_0*>(data_ptr)-> C); 
+    if (blender_ver < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<XrSessionSettings4_3_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<XrSessionSettings4_4_0*>(data_ptr)-> C); 
 #define XRSESSIONSETTINGS_RETURN_REF(T, M)    XRSESSIONSETTINGS_BASE_RETURN_BODY(T, &, M)
 #define XRSESSIONSETTINGS_RETURN_AS(T, M)     XRSESSIONSETTINGS_BASE_RETURN_BODY(T,, M)
 #define XRSESSIONSETTINGS_RETURN(M)           XRSESSIONSETTINGS_BASE_RETURN_BODY(,, M)

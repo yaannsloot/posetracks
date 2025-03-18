@@ -887,6 +887,17 @@ struct SpaceAction_Runtime3_6_0 {
     char _pad0[7];
 };
 
+struct GPUDOFSettings3_6_0 {
+    float focus_distance;
+    float fstop;
+    float focal_length;
+    float sensor;
+    float rotation;
+    float ratio;
+    int num_blades;
+    int high_quality;
+};
+
 struct CameraDOFSettings3_6_0 {
     void *focus_object;
     char focus_subtarget[64];
@@ -897,17 +908,6 @@ struct CameraDOFSettings3_6_0 {
     int aperture_blades;
     short flag;
     char _pad[2];
-};
-
-struct GPUDOFSettings3_6_0 {
-    float focus_distance;
-    float fstop;
-    float focal_length;
-    float sensor;
-    float rotation;
-    float ratio;
-    int num_blades;
-    int high_quality;
 };
 
 struct Camera_Runtime3_6_0 {
@@ -1254,14 +1254,14 @@ struct FileGlobal3_6_0 {
     char filepath[1024];
 };
 
-struct ColorManagedColorspaceSettings3_6_0 {
-    char name[64];
-};
-
 struct Image_Runtime3_6_0 {
     void *cache_mutex;
     void *partial_update_register;
     void *partial_update_user;
+};
+
+struct ColorManagedColorspaceSettings3_6_0 {
+    char name[64];
 };
 
 struct KeyBlock3_6_0 {
@@ -1447,16 +1447,6 @@ struct EditingRuntime3_6_0 {
     void *sequence_lookup;
 };
 
-struct SequencerTimelineOverlay3_6_0 {
-    int flag;
-    char _pad0[4];
-};
-
-struct SequencerPreviewOverlay3_6_0 {
-    int flag;
-    char _pad0[4];
-};
-
 struct SequencerScopes3_6_0 {
     void *reference_ibuf;
     void *zebra_ibuf;
@@ -1466,25 +1456,14 @@ struct SequencerScopes3_6_0 {
     void *histogram_ibuf;
 };
 
-struct ImageUser3_6_0 {
-    void *scene;
-    int framenr;
-    int frames;
-    int offset;
-    int sfra;
-    char cycl;
-    char multiview_eye;
-    short pass;
-    int tile;
-    short multi_index;
-    short view;
-    short layer;
-    short flag;
+struct SequencerTimelineOverlay3_6_0 {
+    int flag;
+    char _pad0[4];
 };
 
-struct SpaceImageOverlay3_6_0 {
+struct SequencerPreviewOverlay3_6_0 {
     int flag;
-    char _pad[4];
+    char _pad0[4];
 };
 
 struct MaskSpaceInfo3_6_0 {
@@ -1510,6 +1489,27 @@ struct Histogram3_6_0 {
     short flag;
     int height;
     float co[2][2];
+};
+
+struct SpaceImageOverlay3_6_0 {
+    int flag;
+    char _pad[4];
+};
+
+struct ImageUser3_6_0 {
+    void *scene;
+    int framenr;
+    int frames;
+    int offset;
+    int sfra;
+    char cycl;
+    char multiview_eye;
+    short pass;
+    int tile;
+    short multi_index;
+    short view;
+    short layer;
+    short flag;
 };
 
 struct MTex3_6_0 {
@@ -1600,41 +1600,6 @@ struct TextLine3_6_0 {
     char _pad0[4];
 };
 
-struct View3DShading3_6_0 {
-    char type;
-    char prev_type;
-    char prev_type_wire;
-    char color_type;
-    short flag;
-    char light;
-    char background_type;
-    char cavity_type;
-    char wire_color_type;
-    char use_compositor;
-    char _pad;
-    char studio_light[256];
-    char lookdev_light[256];
-    char matcap[256];
-    float shadow_intensity;
-    float single_color[3];
-    float studiolight_rot_z;
-    float studiolight_background;
-    float studiolight_intensity;
-    float studiolight_blur;
-    float object_outline_color[3];
-    float xray_alpha;
-    float xray_alpha_wire;
-    float cavity_valley_factor;
-    float cavity_ridge_factor;
-    float background_color[3];
-    float curvature_ridge_factor;
-    float curvature_valley_factor;
-    int render_pass;
-    char aov_name[64];
-    struct IDProperty3_6_0 *prop;
-    void *_pad2;
-};
-
 struct View3D_Runtime3_6_0 {
     void *properties_storage;
     int flag;
@@ -1671,6 +1636,41 @@ struct View3DOverlay3_6_0 {
     char _pad[4];
 };
 
+struct View3DShading3_6_0 {
+    char type;
+    char prev_type;
+    char prev_type_wire;
+    char color_type;
+    short flag;
+    char light;
+    char background_type;
+    char cavity_type;
+    char wire_color_type;
+    char use_compositor;
+    char _pad;
+    char studio_light[256];
+    char lookdev_light[256];
+    char matcap[256];
+    float shadow_intensity;
+    float single_color[3];
+    float studiolight_rot_z;
+    float studiolight_background;
+    float studiolight_intensity;
+    float studiolight_blur;
+    float object_outline_color[3];
+    float xray_alpha;
+    float xray_alpha_wire;
+    float cavity_valley_factor;
+    float cavity_ridge_factor;
+    float background_color[3];
+    float curvature_ridge_factor;
+    float curvature_valley_factor;
+    int render_pass;
+    char aov_name[64];
+    struct IDProperty3_6_0 *prop;
+    void *_pad2;
+};
+
 struct AudioData3_6_0 {
     int mixrate;
     float main;
@@ -1698,20 +1698,6 @@ struct Panel_Runtime3_6_0 {
     void *context;
 };
 
-struct uiWidgetColors3_6_0 {
-    unsigned char outline[4];
-    unsigned char inner[4];
-    unsigned char inner_sel[4];
-    unsigned char item[4];
-    unsigned char text[4];
-    unsigned char text_sel[4];
-    unsigned char shaded;
-    char _pad0[7];
-    short shadetop;
-    short shadedown;
-    float roundness;
-};
-
 struct uiWidgetStateColors3_6_0 {
     unsigned char inner_anim[4];
     unsigned char inner_anim_sel[4];
@@ -1725,6 +1711,20 @@ struct uiWidgetStateColors3_6_0 {
     unsigned char inner_changed_sel[4];
     float blend;
     char _pad0[4];
+};
+
+struct uiWidgetColors3_6_0 {
+    unsigned char outline[4];
+    unsigned char inner[4];
+    unsigned char inner_sel[4];
+    unsigned char item[4];
+    unsigned char text[4];
+    unsigned char text_sel[4];
+    unsigned char shaded;
+    char _pad0[7];
+    short shadetop;
+    short shadedown;
+    float roundness;
 };
 
 struct uiPanelColors3_6_0 {
@@ -2652,6 +2652,15 @@ struct bGPDlayer_Runtime3_6_0 {
     struct bGPDlayer3_6_0 *gpl_orig;
 };
 
+struct bGPgrid3_6_0 {
+    float color[3];
+    float scale[2];
+    float offset[2];
+    char _pad1[4];
+    int lines;
+    char _pad[4];
+};
+
 struct bGPdata_Runtime3_6_0 {
     void *sbuffer;
     void *sbuffer_position_buf;
@@ -2676,15 +2685,6 @@ struct bGPdata_Runtime3_6_0 {
     void *gpencil_cache;
     void *lineart_cache;
     void *update_cache;
-};
-
-struct bGPgrid3_6_0 {
-    float color[3];
-    float scale[2];
-    float offset[2];
-    char _pad1[4];
-    int lines;
-    char _pad[4];
 };
 
 struct MLoopCol3_6_0 {
@@ -3480,6 +3480,18 @@ struct MovieClipProxy3_6_0 {
     short build_tc_flag;
 };
 
+struct Stereo3dFormat3_6_0 {
+    short flag;
+    char display_mode;
+    char anaglyph_type;
+    char interlace_type;
+    char _pad[3];
+};
+
+struct ColorManagedDisplaySettings3_6_0 {
+    char display_device[64];
+};
+
 struct ColorManagedViewSettings3_6_0 {
     int flag;
     char _pad[4];
@@ -3489,18 +3501,6 @@ struct ColorManagedViewSettings3_6_0 {
     float gamma;
     void *curve_mapping;
     void *_pad2;
-};
-
-struct ColorManagedDisplaySettings3_6_0 {
-    char display_device[64];
-};
-
-struct Stereo3dFormat3_6_0 {
-    short flag;
-    char display_mode;
-    char anaglyph_type;
-    char interlace_type;
-    char _pad[3];
 };
 
 struct NodeShaderAttribute3_6_0 {

@@ -7,7 +7,6 @@ from blender.
 """
 
 import argparse
-import json
 import pickle
 import bisect
 import os

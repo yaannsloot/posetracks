@@ -13,7 +13,9 @@
 #include "makesdna_4_2_0.h"
 #include "makesdna_4_2_1.h"
 #include "makesdna_4_2_4.h"
+#include "makesdna_4_2_8.h"
 #include "makesdna_4_3_0.h"
+#include "makesdna_4_4_0.h"
 #include "makesdna_macros.h"
 
 enum class BlenderVersion {
@@ -24,7 +26,9 @@ enum class BlenderVersion {
     VER_4_2_0,
     VER_4_2_1,
     VER_4_2_4,
+    VER_4_2_8,
     VER_4_3_0,
+    VER_4_4_0,
 };
 
 #define BLENDVER_ENUM_BINDINGS(enum_class, mod_name) \
@@ -36,7 +40,9 @@ enum class BlenderVersion {
     .value("VER_4_2_0", enum_class::VER_4_2_0) \
     .value("VER_4_2_1", enum_class::VER_4_2_1) \
     .value("VER_4_2_4", enum_class::VER_4_2_4) \
+    .value("VER_4_2_8", enum_class::VER_4_2_8) \
     .value("VER_4_3_0", enum_class::VER_4_3_0) \
+    .value("VER_4_4_0", enum_class::VER_4_4_0) \
     .export_values();
 
 #endif

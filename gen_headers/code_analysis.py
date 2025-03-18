@@ -490,7 +490,8 @@ class Struct:
 
     def uses_stdint(self):
         for field in self.fields:
-            if (isinstance(field, Struct) and field.uses_stdint()) or field.type.is_stdint():
+            if ((isinstance(field, Struct) and field.uses_stdint()) or
+                    (isinstance(field, Variable) and field.type.is_stdint())):
                 return True
         return False
 

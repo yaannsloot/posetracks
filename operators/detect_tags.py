@@ -65,23 +65,28 @@ def tag_task(bpy_data: event_ops.BpyData):
                                               bpy_data.ui_props['exe_tag_detector_ml_enum'])
         else:
             tag_model = pt_core.dnn.CVTagDetector()
-            tag_model.set_dict_type(bpy_data.ui_props['tag_detector_cv_dict_list_enum'])
+            tag_model.set_dict_type(
+                bpy_data.ui_props['tag_detector_cv_dict_list_enum'])
             if bpy_data.ui_props['tag_detector_cv_resample_toggle']:
                 tag_model.set_preprocess_size((224, 224))
         det_model, det_model_sel = load_model_by_criteria('object_detection',
                                                           bpy_data.ui_props['exe_det_tag_enum'],
-                                                          values={'classes': ['Tag']},
+                                                          values={
+                                                              'classes': ['Tag']},
                                                           sorting_criteria=det_sorting_criteria[
                                                               bpy_data.ui_props['det_tag_simple_sel_enum']])
         try:
             target_cid = det_model_sel['classes'].index('Tag')
         except ValueError:
             target_cid = 0
-        clip = setup_frame_provider(bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
+        clip = setup_frame_provider(
+            bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
         tag_batch_size = 32
         det_batch_size = 32
-        first_frame = max(bpy_data.clip_info.scene_to_true(bpy_data.scene_first_frame), 0)
-        last_frame = min(bpy_data.clip_info.scene_to_true(bpy_data.scene_last_frame), clip.frame_count())
+        first_frame = max(bpy_data.clip_info.scene_to_true(
+            bpy_data.scene_first_frame), 0)
+        last_frame = min(bpy_data.clip_info.scene_to_true(
+            bpy_data.scene_last_frame), clip.frame_count())
         clip.set_frame(first_frame)
         f_num = first_frame
         all_tags = {}
@@ -98,7 +103,7 @@ def tag_task(bpy_data: event_ops.BpyData):
                 f_num += len(frames)
                 continue
             detections = pt_core.dnn.fix_detection_coordinates(detections, det_model.net_size(), clip.frame_size(),
-                                                          pt_core.dnn.AUTO)
+                                                               pt_core.dnn.AUTO)
             samples = []
             sample_frames = []
             sample_regions = []
@@ -108,13 +113,15 @@ def tag_task(bpy_data: event_ops.BpyData):
                     if (pt_core.dnn.is_roi_outside_image(clip.frame_size(), det.bbox)
                             or det.class_id != target_cid):
                         continue
-                    samples.append(pt_core.dnn.get_roi_no_padding(frames[f], det.bbox))
+                    samples.append(
+                        pt_core.dnn.get_roi_no_padding(frames[f], det.bbox))
                     sample_frames.append(f)
                     sample_regions.append(det)
             if isinstance(tag_model, pt_core.dnn.CVTagDetector):
                 tags = tag_model.infer(samples)
             else:
-                tags, tag_batch_size = batch_infer(tag_batch_size, tag_model, samples)
+                tags, tag_batch_size = batch_infer(
+                    tag_batch_size, tag_model, samples)
             for i, tag in enumerate(tags):
                 if not tag:
                     continue
@@ -132,9 +139,12 @@ def tag_task(bpy_data: event_ops.BpyData):
                     all_tags[true_frame] = {}
                 all_tags[true_frame][tag.id] = out_tag
             f_num += len(frames)
-            percent_current = int(max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
-            event_queue.put(InfoEvent(f'Detecting tags: {percent_current}% (ESC to cancel)'))
-        event_queue.put((TagFinishedEvent(all_tags, 'Tag detection task complete')))
+            percent_current = int(
+                max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
+            event_queue.put(
+                InfoEvent(f'Detecting tags: {percent_current}% (ESC to cancel)'))
+        event_queue.put(
+            (TagFinishedEvent(all_tags, 'Tag detection task complete')))
         event_queue.put(InfoEvent('Done'))
     except MemoryError as e:
         event_queue.put(ErrorEvent("Out of memory", str(e)))
@@ -152,8 +162,8 @@ class DetectTagsOperator(EventOperator):
     bl_idname = "posetracks.detect_tags_operator"
     bl_label = "Detect Tags"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.task_func = tag_task
 
     def execute(self, context):
@@ -177,14 +187,17 @@ class DetectTagsOperator(EventOperator):
                     track = tracks.get(tag_track_name)
                     if tag_track_name not in track_list:
                         if track is None:
-                            track = tracks.new(name=tag_track_name, frame=actual_frame)
+                            track = tracks.new(
+                                name=tag_track_name, frame=actual_frame)
                         else:
-                            track_frames = [a for (a, _) in track.markers.items()]
+                            track_frames = [
+                                a for (a, _) in track.markers.items()]
                             for tf in track_frames:
                                 track.markers.delete_frame(tf)
                             track = tracks.get(tag_track_name)
                             if track is None:
-                                track = tracks.new(name=tag_track_name, frame=actual_frame)
+                                track = tracks.new(
+                                    name=tag_track_name, frame=actual_frame)
                         track_list.append(tag_track_name)
                     center_x = 0
                     center_y = 0
@@ -192,15 +205,18 @@ class DetectTagsOperator(EventOperator):
                     for c in range(4):
                         center_x += tag[c].x
                         center_y += tag[c].y
-                        corners.append((tag[c].x / clip_size[0], (clip_size[1] - tag[c].y) / clip_size[1]))
+                        corners.append(
+                            (tag[c].x / clip_size[0], (clip_size[1] - tag[c].y) / clip_size[1]))
                     center_x /= 4
                     center_y /= 4
                     norm_center_x = center_x / clip_size[0]
                     norm_center_y = (clip_size[1] - center_y) / clip_size[1]
-                    corners = [(x - norm_center_x, y - norm_center_y) for (x, y) in corners]
+                    corners = [(x - norm_center_x, y - norm_center_y)
+                               for (x, y) in corners]
                     corners.reverse()
                     markers = track.markers
-                    marker = markers.insert_frame(actual_frame, co=(norm_center_x, norm_center_y))
+                    marker = markers.insert_frame(
+                        actual_frame, co=(norm_center_x, norm_center_y))
                     marker.pattern_corners = tuple(corners)
                     marker.search_max *= 1.2
                     marker.search_min *= 1.2

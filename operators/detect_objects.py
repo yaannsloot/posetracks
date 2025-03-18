@@ -59,23 +59,30 @@ def detection_task(bpy_data):
     try:
         det_model, det_model_sel = load_model_by_criteria('object_detection',
                                                           bpy_data.ui_props['exe_det_enum'],
-                                                          values={'classes': [bpy_data.ui_props['det_class_enum']]},
+                                                          values={'classes': [
+                                                              bpy_data.ui_props['det_class_enum']]},
                                                           sorting_criteria=sorting_criteria[
                                                               bpy_data.ui_props['det_simple_sel_enum']])
         try:
-            target_cid = det_model_sel['classes'].index(bpy_data.ui_props['det_class_enum'])
+            target_cid = det_model_sel['classes'].index(
+                bpy_data.ui_props['det_class_enum'])
         except ValueError:
             target_cid = 0
         feat_model, _ = load_model_by_name('feature_extraction', 'basic_conv_person_64',
                                            bpy_data.ui_props['exe_track_enum'])
-        clip = setup_frame_provider(bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
-        event_queue.put(InfoEvent('Initializing tracker...', 'Obtaining feature length from model...'))
-        init_result = feat_model.infer(pt_core.rand_img_rgb(feat_model.net_size()))
+        clip = setup_frame_provider(
+            bpy_data.clip_info.abs_path, bpy_data.clip_info.source_type)
+        event_queue.put(InfoEvent('Initializing tracker...',
+                        'Obtaining feature length from model...'))
+        init_result = feat_model.infer(
+            pt_core.rand_img_rgb(feat_model.net_size()))
         tracker = pt_core.dnn.FeatureTracker(len(init_result))
         det_batch_size = 32
         feat_batch_size = 32
-        first_frame = max(bpy_data.clip_info.scene_to_true(bpy_data.scene_first_frame), 0)
-        last_frame = min(bpy_data.clip_info.scene_to_true(bpy_data.scene_last_frame), clip.frame_count())
+        first_frame = max(bpy_data.clip_info.scene_to_true(
+            bpy_data.scene_first_frame), 0)
+        last_frame = min(bpy_data.clip_info.scene_to_true(
+            bpy_data.scene_last_frame), clip.frame_count())
         clip.set_frame(first_frame)
         f_num = first_frame
         all_detections = {}
@@ -92,7 +99,7 @@ def detection_task(bpy_data):
                 f_num += len(frames)
                 continue
             detections = pt_core.dnn.fix_detection_coordinates(detections, det_model.net_size(), clip.frame_size(),
-                                                          pt_core.dnn.AUTO)
+                                                               pt_core.dnn.AUTO)
             roi_detections = []
             roi_samples = []
             splits = []
@@ -102,11 +109,13 @@ def detection_task(bpy_data):
                     if (not pt_core.dnn.is_roi_outside_image(clip.frame_size(), det.bbox)
                             and det.class_id == target_cid):
                         roi_detections.append(det)
-                        roi_samples.append(pt_core.dnn.get_roi_with_padding(frames[i], det.bbox))
+                        roi_samples.append(
+                            pt_core.dnn.get_roi_with_padding(frames[i], det.bbox))
                 if detections[i]:
                     splits.append(len(roi_detections))
                     split_frames.append(i)
-            features, feat_batch_size = batch_infer(feat_batch_size, feat_model, roi_samples)
+            features, feat_batch_size = batch_infer(
+                feat_batch_size, feat_model, roi_samples)
             beg = 0
             s = 0
             for i in range(len(detections)):
@@ -126,9 +135,12 @@ def detection_task(bpy_data):
                 beg = splits[s]
                 s += 1
             f_num += len(frames)
-            percent_current = int(max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
-            event_queue.put(InfoEvent(f'Detecting objects: {percent_current}% (ESC to cancel)'))
-        event_queue.put(DetectionFinishedEvent(all_detections, 'Detection task completed'))
+            percent_current = int(
+                max(0, min(100 * ((f_num - first_frame) / (last_frame - first_frame)), 100)))
+            event_queue.put(
+                InfoEvent(f'Detecting objects: {percent_current}% (ESC to cancel)'))
+        event_queue.put(DetectionFinishedEvent(
+            all_detections, 'Detection task completed'))
         event_queue.put(InfoEvent('Done'))
     except MemoryError as e:
         event_queue.put(ErrorEvent("Out of memory", str(e)))
@@ -152,8 +164,8 @@ class DetectObjectsOperator(EventOperator):
         default=True
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.task_func = detection_task
 
     def execute(self, context):
@@ -174,14 +186,16 @@ class DetectObjectsOperator(EventOperator):
                     detection = frame_detections[det_id]
                     bbox = detection.bbox
                     if det_id not in init_dict:
-                        init_dict[det_id] = get_track_name_for_detection(clip, class_id)
+                        init_dict[det_id] = get_track_name_for_detection(
+                            clip, class_id)
                     det_name = init_dict[det_id]
                     track = tracks.get(det_name)
                     if track is None:
                         track = tracks.new(name=det_name, frame=actual_frame)
                     markers = track.markers
                     x = (bbox.x + bbox.width / 2) / clip_size[0]
-                    y = (clip_size[1] - (bbox.y + bbox.height / 2)) / clip_size[1]
+                    y = (clip_size[1] - (bbox.y +
+                         bbox.height / 2)) / clip_size[1]
                     marker = markers.insert_frame(actual_frame, co=(x, y))
                     x1 = -1 * (bbox.width / 2) / clip_size[0]
                     x2 = (bbox.width / 2) / clip_size[0]
