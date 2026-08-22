@@ -370,3 +370,367 @@ person26 = {
         }
     ]
 }
+
+person133 = {
+    'name': 'Hips',
+    'head': (11, 12),
+    'tail': (5, 6, 11, 12),
+    'tail_direction': Z,
+    'constraints': [
+        11, 12,
+        (11, X), (12, N_X),
+        (5, X, Y), (6, X, Y)
+    ],
+    'children': [
+        {
+            'name': 'Chest',
+            'tail': (5, 6),
+            'tail_direction': Z,
+            'constraints': [
+                (5, Y), (6, Y),
+                (5, Y, X), (6, Y, N_X)
+            ],
+            'children': [
+                {
+                    'name': 'Head',
+                    'tail': (3, 4),
+                    'tail_direction': Z,
+                    'rotation': [
+                        3, 4,
+                        (5, N_Y), (6, N_Y),
+                        (0, Y, Z), (1, Y, Z), (2, Y, Z)
+                    ],
+                    'children': [
+                        # Lip center nodes
+                        {
+                            'name': 'LB_Lip_C',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                80
+                            ]
+                        },
+                        {
+                            'name': 'UB_Lip_C',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                89
+                            ]
+                        },
+                        {
+                            'name': 'LT_Lip_C',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                85
+                            ]
+                        },
+                        {
+                            'name': 'UT_Lip_C',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                74
+                            ]
+                        },
+
+                        # Lip corner nodes
+                        {
+                            'name': 'Lip_OCorner.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                77
+                            ]
+                        },
+                        {
+                            'name': 'Lip_ICorner.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                87
+                            ]
+                        },
+                        {
+                            'name': 'Lip_OCorner.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                71
+                            ]
+                        },
+                        {
+                            'name': 'Lip_ICorner.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                83
+                            ]
+                        },
+
+                        # Other lip nodes
+                        {
+                            'name': 'LB_Lip1.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                79
+                            ]
+                        },
+                        {
+                            'name': 'LB_Lip2.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                78
+                            ]
+                        },
+                        {
+                            'name': 'UB_Lip1.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                88
+                            ]
+                        },
+                        {
+                            'name': 'LT_Lip1.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                86
+                            ]
+                        },
+                        {
+                            'name': 'UT_Lip1.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                75
+                            ]
+                        },
+                        {
+                            'name': 'UT_Lip2.L',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                76
+                            ]
+                        },
+                        {
+                            'name': 'LB_Lip1.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                81
+                            ]
+                        },
+                        {
+                            'name': 'LB_Lip2.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                82
+                            ]
+                        },
+                        {
+                            'name': 'UB_Lip1.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                90
+                            ]
+                        },
+                        {
+                            'name': 'LT_Lip1.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                84
+                            ]
+                        },
+                        {
+                            'name': 'UT_Lip1.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                73
+                            ]
+                        },
+                        {
+                            'name': 'UT_Lip2.R',
+                            'head': 80,
+                            'head_direction': N_Y,
+                            'tail': 79,
+                            'tail_direction': N_Y,
+                            'constraints': [
+                                72
+                            ]
+                        },
+                    ]
+                },
+                {
+                    'name': 'Shoulder.L',
+                    'tail': 5,
+                    'tail_direction': X,
+                    'constraints': [
+                        (5, Y)
+                    ],
+                    'children': [
+                        {
+                            'name': 'Arm1.L',
+                            'tail': 7,
+                            'tail_direction': X,
+                            'constraints': [
+                                (7, Y)
+                            ],
+                            'children': [
+                                {
+                                    'name': 'Arm2.L',
+                                    'tail': 9,
+                                    'tail_direction': X,
+                                    'constraints': [
+                                        (9, Y)
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    'name': 'Shoulder.R',
+                    'tail': 6,
+                    'tail_direction': N_X,
+                    'constraints': [
+                        (6, Y)
+                    ],
+                    'children': [
+                        {
+                            'name': 'Arm1.R',
+                            'tail': 8,
+                            'tail_direction': N_X,
+                            'constraints': [
+                                (8, Y)
+                            ],
+                            'children': [
+                                {
+                                    'name': 'Arm2.R',
+                                    'tail': 10,
+                                    'tail_direction': N_X,
+                                    'constraints': [
+                                        (10, Y)
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            'name': 'Leg1.L',
+            'head': 11,
+            'head_direction': X,
+            'tail': 13,
+            'tail_direction': N_Z,
+            'constraints': [
+                (13, Y)
+            ],
+            'children': [
+                {
+                    'name': 'Leg2.L',
+                    'tail': 15,
+                    'tail_direction': N_Z,
+                    'constraints': [
+                        (15, Y),
+                        (17, Y, N_Z), (18, Y, N_Z)
+                    ],
+                    'children': [
+                        {
+                            'name': 'Foot.L',
+                            'tail': (20, 22),
+                            'tail_direction': N_Y,
+                            'rotation': [
+                                15,
+                                (17, Y), (18, Y),
+                                (19, Y, N_Z), (17, Y, X), (18, Y, N_X)
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            'name': 'Leg1.R',
+            'head': 12,
+            'head_direction': N_X,
+            'tail': 14,
+            'tail_direction': N_Z,
+            'constraints': [
+                (14, Y)
+            ],
+            'children': [
+                {
+                    'name': 'Leg2.R',
+                    'tail': 16,
+                    'tail_direction': N_Z,
+                    'constraints': [
+                        (16, Y),
+                        (20, Y, N_Z), (21, Y, N_Z)
+                    ],
+                    'children': [
+                        {
+                            'name': 'Foot.R',
+                            'tail': (20, 21),
+                            'tail_direction': N_Y,
+                            'rotation': [
+                                16,
+                                (20, Y), (21, Y),
+                                (22, Y, N_Z), (20, Y, N_X), (21, Y, X)
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -7,8 +7,10 @@
 #pragma once
 
 #include <string>
+#include <cstdint>
 #include "generated/makesdna_3_6_0.h"
 #include "generated/makesdna_types.hpp"
+#include "modules/blender/generated/makesdna_macros.h"
 
 void set_compatibility_mode(BlenderVersion version);
 
@@ -276,7 +278,13 @@ template <typename T>
 unsigned int ID<T>::recalc() const { ID_RETURN(recalc) }
 
 template <typename T>
-unsigned int ID<T>::session_uuid() const { ID_RETURN(session_uuid) }
+unsigned int ID<T>::session_uuid() const {
+	if (get_compatability_mode() < BlenderVersion::VER_4_1_0) {
+		ID_RETURN_LEGACY(session_uuid)
+	} else {
+		ID_RETURN_NEW(session_uid)
+	}
+}
 
 template <typename T>
 IDProperty ID<T>::properties() const { ID_RETURN_AS(IDProperty, properties) }

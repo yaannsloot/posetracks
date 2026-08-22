@@ -1,34 +1,19 @@
 '''
 Copyright (C) 2023 Ian Sloat
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>.
 '''
 
 import os
 import sys
 import json
+import importlib
 import urllib.request
 
 _vmin = sys.version_info.minor
-if _vmin == 9:
-    from . import ptcore_cp39 as _pyc
-elif _vmin == 10:
-    from . import ptcore_cp310 as _pyc
-elif _vmin == 11:
-    from . import ptcore_cp311 as _pyc
-else:
-    raise ImportError("python version not supported")
+try:
+    _pyc = importlib.import_module(f".{"lib" if os.name == 'posix' else ''}ptcore_cp3{_vmin}", __name__)
+except ImportError as e:
+    raise e
 
 _model_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models")
 

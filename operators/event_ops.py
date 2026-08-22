@@ -210,8 +210,8 @@ def do_nothing(bpy_data):
 class EventOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._dispatch = events.EventDispatcher()
         self._base_listener = events.EventListener()
         self._info_listener = events.InfoEventListener()

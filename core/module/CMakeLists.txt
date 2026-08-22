@@ -16,7 +16,8 @@ target_compile_definitions(${MOD_NAME} PRIVATE PYBIND_MODULE_NAME=${MOD_NAME})
 if(UNIX AND NOT APPLE)
     set_target_properties(${MOD_NAME} PROPERTIES
         SUFFIX ".so"
-        INSTALL_RPATH "$ORIGIN/lib"
+        BUILD_RPATH "\$ORIGIN/lib"
+        INSTALL_RPATH "\$ORIGIN/lib"
     )
     install(TARGETS ${MOD_NAME} LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/redis)
 else()

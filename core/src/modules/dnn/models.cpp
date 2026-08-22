@@ -16,11 +16,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "models.hpp"
+#include "modules/dnn/dnn.hpp"
 #include <cpu_provider_factory.h>
 #include <thread>
 #include <limits>
 
 bool checkForProvider(const std::string provider_str) {
+	// NOTE FOR WINDOWS BUILDS
 	// ONNXRuntime is now set to delay load following support for blender 4.3.
 	// It must be initialized manually to ensure proper loading of dependencies.
 	Ort::InitApi();
@@ -41,6 +43,10 @@ void ModelImpl::load(const std::string& model_path, Executor target_executor) {
 
 	this->env = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_ERROR, this->logid.c_str());
 
+
+#ifndef PCORE_TENSORRT_ENABLED
+	target_executor = (target_executor == Executor::TENSORRT) ? Executor::CUDA : target_executor;
+#endif 
 #ifndef PCORE_CUDA_ENABLED
 	target_executor = Executor::CPU;
 #endif 

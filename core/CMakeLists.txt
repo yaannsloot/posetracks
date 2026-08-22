@@ -28,58 +28,23 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
         -mavx2
         -O2
     )
+    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 endif()
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/scripts")
 
 # Required packages
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
-
-# Find onnxruntime which has no cmake support
-message("Looking for ONNXRuntime...")
-find_path(ONNXRUNTIME_ROOT_DIR NO_DEFAULT_PATH REQUIRED)
-find_path(ONNXRUNTIME_INCLUDE_DIR ${ONNXRUNTIME_ROOT_DIR}/include REQUIRED)
-find_library(ONNXRUNTIME_LIBRARY_BASE
-    NAMES onnxruntime
-    HINTS ${ONNXRUNTIME_ROOT_DIR}/lib ${ONNXRUNTIME_ROOT_DIR}/lib/x64 ${ONNXRUNTIME_ROOT_DIR}/lib/x86
-    REQUIRED
-)
-find_library(ONNXRUNTIME_LIBRARY_SHARED
-    NAMES onnxruntime_providers_shared
-    HINTS ${ONNXRUNTIME_ROOT_DIR}/lib ${ONNXRUNTIME_ROOT_DIR}/lib/x64 ${ONNXRUNTIME_ROOT_DIR}/lib/x86
-    REQUIRED
-)
-set(ONNXRUNTIME_LIBRARIES
-    ${ONNXRUNTIME_LIBRARY_BASE}
-    ${ONNXRUNTIME_LIBRARY_SHARED}
-)
-
-option(USING_CUDA ON)
-
-if(USING_CUDA)
-    message("Looking for ONNXRuntime CUDA extensions...")
-    find_library(ONNXRUNTIME_LIBRARY_CUDA
-        NAMES onnxruntime_providers_cuda
-        HINTS ${ONNXRUNTIME_ROOT_DIR}/lib ${ONNXRUNTIME_ROOT_DIR}/lib/x64 ${ONNXRUNTIME_ROOT_DIR}/lib/x86
-        REQUIRED
-    )
-    find_library(ONNXRUNTIME_LIBRARY_TENSORRT
-        NAMES onnxruntime_providers_tensorrt
-        HINTS ${ONNXRUNTIME_ROOT_DIR}/lib ${ONNXRUNTIME_ROOT_DIR}/lib/x64 ${ONNXRUNTIME_ROOT_DIR}/lib/x86
-        REQUIRED
-    )
-    set(ONNXRUNTIME_LIBRARIES
-        ${ONNXRUNTIME_LIBRARIES}
-        ${ONNXRUNTIME_LIBRARY_CUDA}
-        ${ONNXRUNTIME_LIBRARY_TENSORRT}
-    )
-endif()
+find_package(OpenEXR REQUIRED)
+find_package(ONNXRuntime REQUIRED)
 
 # include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
-include_directories(${OpenCV_INCLUDE_DIRS})
-include_directories(${ONNXRUNTIME_INCLUDE_DIR})
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${OpenCV_INCLUDE_DIRS}
+    ${ONNXRuntime_INCLUDE_DIR}
+)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
@@ -100,7 +65,7 @@ endforeach()
 
 set(LINK_LIST_BASE
     ${OpenCV_LIBS}
-    ${ONNXRUNTIME_LIBRARIES}
+    ONNXRuntime::onnxruntime
     pcore_objects
 )
 
@@ -112,10 +77,10 @@ endif()
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/module/
     DESTINATION ${CMAKE_BINARY_DIR}/redis
     PATTERN "CMakeLists.txt" EXCLUDE
-    
 )
+
 # Pybind Subdirectory
-set(PYTHON_VERSIONS 3.9 3.10 3.11)
+set(PYTHON_VERSIONS 3.9 3.10 3.11 3.12 3.13)
 add_subdirectory(module)
 
 # INSTALL Target setup
@@ -125,3 +90,5 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/module/
 )
 
 install(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION ${CMAKE_BINARY_DIR}/redis)
+install(FILES ${ONNXRuntime_SHARED_LIBS} DESTINATION ${CMAKE_BINARY_DIR}/redis/lib)
+install(FILES ${ONNXRuntime_PROVIDERS} DESTINATION ${CMAKE_BINARY_DIR}/redis/lib)

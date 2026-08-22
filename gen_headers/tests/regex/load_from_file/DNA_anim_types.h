@@ -1117,7 +1117,7 @@ typedef struct AnimOverride {
   /** RNA-path to use to resolve data-access. */
   char *rna_path;
   /** If applicable, the index of the RNA-array item to get. */
-  int array_index;
+  int array_index = 1;
 
   /** Value to override setting with. */
   float value;

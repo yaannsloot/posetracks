@@ -533,7 +533,11 @@ class Struct:
         fields = []
         for field in cursor.get_children():
             if field.kind == clang.cindex.CursorKind.FIELD_DECL:
-                fields.append(Variable.from_cursor(field))
+                try:
+                    fields.append(Variable.from_cursor(field))
+                except:
+                    print(field.)
+                    exit()
             elif field.kind == clang.cindex.CursorKind.STRUCT_DECL:
                 struct = cls.from_cursor(field)
                 if struct.fields:

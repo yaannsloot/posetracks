@@ -19,7 +19,7 @@ copyright = [
    "2010 Blender Foundation",
 ]
 
-platforms = ["windows-x64"] # Change to target platform before redistribution
+platforms = ["windows-x64", "linux-x64"] # Change to target platform before redistribution
 
 [permissions]
 files = "Needed for tracking functionality in the clip editor"

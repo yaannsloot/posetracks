@@ -12,5 +12,9 @@ if(USING_CUDA)
     target_compile_definitions(${module_name} PRIVATE PCORE_CUDA_ENABLED)
 endif()
 
+if(USING_TENSORRT)
+    target_compile_definitions(${module_name} PRIVATE PCORE_TENSORRT_ENABLED)
+endif()
+
 set(MODULE_LIST ${MODULE_LIST} ${module_name})
 set(MODULE_LIST ${MODULE_LIST} PARENT_SCOPE)

@@ -2246,6 +2246,22 @@
 #define ID_RETURN_AS(T, M)     ID_BASE_RETURN_BODY(T,, M)
 #define ID_RETURN(M)           ID_BASE_RETURN_BODY(,, M)
 
+#define ID_BASE_RETURN_BODY_LEGACY(A, B, C) \
+    return A ( B reinterpret_cast<ID3_6_0*>(data_ptr)-> C);
+#define ID_RETURN_REF_LEGACY(T, M)    ID_BASE_RETURN_BODY_LEGACY(T, &, M)
+#define ID_RETURN_AS_LEGACY(T, M)     ID_BASE_RETURN_BODY_LEGACY(T,, M)
+#define ID_RETURN_LEGACY(M)           ID_BASE_RETURN_BODY_LEGACY(,, M)
+
+#define ID_BASE_RETURN_BODY_NEW(A, B, C) \
+    if (get_compatability_mode() < BlenderVersion::VER_4_2_0) \
+        return A ( B reinterpret_cast<ID4_1_0*>(data_ptr)-> C); \
+    if (get_compatability_mode() < BlenderVersion::VER_4_4_0) \
+        return A ( B reinterpret_cast<ID4_2_0*>(data_ptr)-> C); \
+    return A ( B reinterpret_cast<ID4_4_0*>(data_ptr)-> C);
+#define ID_RETURN_REF_NEW(T, M)    ID_BASE_RETURN_BODY_NEW(T, &, M)
+#define ID_RETURN_AS_NEW(T, M)     ID_BASE_RETURN_BODY_NEW(T,, M)
+#define ID_RETURN_NEW(M)           ID_BASE_RETURN_BODY_NEW(,, M)
+
 #define ID_RUNTIME_BASE_RETURN_BODY(A, B, C) \
     if (blender_ver < BlenderVersion::VER_4_2_0) \
         return A ( B reinterpret_cast<ID_Runtime3_6_0*>(data_ptr)-> C); \

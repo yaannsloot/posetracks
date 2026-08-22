@@ -40,7 +40,7 @@ public:
 		if (n_scale == noise_scale)
 			return;
 		noise_scale = n_scale;
-		R.at(0) = safe_noise_scale();
+		R.at<float>(0) = safe_noise_scale();
 		recalc_q();
 	}
 
@@ -71,14 +71,16 @@ public:
 		{
 			for (int i = 0; i < N; ++i)
 			{
-				output[i] = kf[i].predict().at<float>(0);
+				cv::Mat p = kf[i].predict();
+				output[i] = p.at<float>(0);
 			}
 		}
 		else
 		{
 			for (int i = 0; i < N; ++i)
 			{
-				output[i] = kf[i].statePre.at<float>(0);
+				cv::Mat sp = kf[i].statePre;
+				output[i] = sp.at<float>(0);
 			}
 			p = true;
 		}
@@ -153,7 +155,7 @@ public:
 		if (n_scale == noise_scale)
 			return;
 		noise_scale = n_scale;
-		R.at(0) = safe_noise_scale();
+		R.at<float>(0) = safe_noise_scale();
 		recalc_q();
 	}
 
@@ -184,14 +186,14 @@ public:
 		{
 			for (int i = 0; i < N; ++i)
 			{
-				output[i] = kf[i].predict().at<float>(0);
+				output[i] = kf[i].predict().at(0);
 			}
 		}
 		else
 		{
 			for (int i = 0; i < N; ++i)
 			{
-				output[i] = kf[i].statePre.at<float>(0);
+				output[i] = kf[i].statePre.at(0);
 			}
 			p = true;
 		}

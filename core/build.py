@@ -1,25 +1,15 @@
 '''
-Copyright (C) 2024 Ian Sloat
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
+Copyright (C) 2025 Ian Sloat
+Licensed under the GNU GPLv3 or later. See <https://www.gnu.org/licenses/>.
 '''
 
 import io
 import os
+import sys
 import shutil
 import zipfile
 import tarfile
+import argparse
 import platform
 import subprocess
 import urllib.request
@@ -30,8 +20,8 @@ download_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), download
 
 # Download links to required packages and tools
 vswhere_dl = "https://github.com/microsoft/vswhere/releases/download/3.1.7/vswhere.exe"
-onnxruntime_dl_win = "https://github.com/microsoft/onnxruntime/releases/download/v1.18.0/onnxruntime-win-x64-gpu-cuda12-1.18.0.zip"
-onnxruntime_dl_linux = "https://github.com/microsoft/onnxruntime/releases/download/v1.18.0/onnxruntime-linux-x64-gpu-cuda12-1.18.0.tgz"
+onnxruntime_dl_win = "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-win-x64-gpu-1.22.0.zip"
+onnxruntime_dl_linux = "https://github.com/microsoft/onnxruntime/releases/download/v1.22.0/onnxruntime-linux-x64-gpu-1.22.0.tgz"
 opencv_dl = "https://github.com/opencv/opencv/archive/refs/tags/4.10.0.tar.gz"
 opencv_contrib_dl = "https://github.com/opencv/opencv_contrib/archive/refs/tags/4.10.0.tar.gz"
 eigen_dl = "https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz"
@@ -50,6 +40,15 @@ elif platform.system() == 'Windows':
 else:
     build_platform = 'mac'
 
+parser = argparse.ArgumentParser(
+    prog="PoseTracks Core Automated Build Script",
+)
+parser.add_argument('--skip_build_deps', action='store_true')
+args = parser.parse_args()
+
+def abort(msg):
+    print(msg, file=sys.stderr)
+    exit()
 
 def fullpath(path):
     path = os.path.expanduser(path)
@@ -181,55 +180,59 @@ def check_ceres(cmake_generator):
     glog_path, glog_build_path = find_package('glog', glog_dl)
     gflags_path, gflags_build_path = find_package('gflags', gflags_dl)
     ceres_path, ceres_build_path = find_package('ceres', ceres_dl)
-    print('Building GLog...')
-    invoke_command('cmake', '-S', glog_path, '-B', glog_build_path, '-G', cmake_generator,
-                   '-DBUILD_SHARED_LIBS=OFF')
-    invoke_command('cmake', '--build', glog_build_path, '--config', 'Release')
-    invoke_command('cmake', '--install', glog_build_path, '--prefix',
-                   os.path.join(glog_build_path, 'install'))
-    print('Building GFlags...')
-    invoke_command('cmake', '-S', gflags_path, '-B', gflags_build_path, '-G', cmake_generator,
-                   '-DBUILD_SHARED_LIBS=OFF')
-    invoke_command('cmake', '--build', gflags_build_path, '--config', 'Release')
-    invoke_command('cmake', '--install', gflags_build_path, '--prefix',
-                   os.path.join(gflags_build_path, 'install'))
-    print('Setting up Eigen...')
-    invoke_command('cmake', '-S', eigen_path, '-B', eigen_build_path, '-G', cmake_generator,
-                   '-DBUILD_TESTING=OFF')
-    invoke_command('cmake', '--build', eigen_build_path, '--config', 'Release')
-    invoke_command('cmake', '--install', eigen_build_path, '--prefix',
-                   os.path.join(eigen_build_path, 'install'))
+    if not args.skip_build_deps:
+        print('Building GLog...')
+        invoke_command('cmake', '-S', glog_path, '-B', glog_build_path, '-G', cmake_generator,
+                    '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
+        invoke_command('cmake', '--build', glog_build_path, '--config', 'Release')
+        invoke_command('cmake', '--install', glog_build_path, '--prefix',
+                    os.path.join(glog_build_path, 'install'))
+        print('Building GFlags...')
+        invoke_command('cmake', '-S', gflags_path, '-B', gflags_build_path, '-G', cmake_generator,
+                    '-DBUILD_SHARED_LIBS=OFF', '-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
+        invoke_command('cmake', '--build', gflags_build_path, '--config', 'Release')
+        invoke_command('cmake', '--install', gflags_build_path, '--prefix',
+                    os.path.join(gflags_build_path, 'install'))
+        print('Setting up Eigen...')
+        invoke_command('cmake', '-S', eigen_path, '-B', eigen_build_path, '-G', cmake_generator,
+                    '-DBUILD_TESTING=OFF', '-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
+        invoke_command('cmake', '--build', eigen_build_path, '--config', 'Release')
+        invoke_command('cmake', '--install', eigen_build_path, '--prefix',
+                    os.path.join(eigen_build_path, 'install'))
     eigen_cmake_dir = os.path.join(eigen_build_path, 'install', 'share', 'eigen3', 'cmake')
     glog_cmake_dir = os.path.join(glog_build_path, 'install', 'lib', 'cmake', 'glog')
     gflags_cmake_dir = os.path.join(gflags_build_path, 'install', 'lib', 'cmake', 'gflags')
-    print('Building Ceres Solver...')
     ceres_prefix_path = ';'.join([eigen_cmake_dir, glog_cmake_dir, gflags_cmake_dir])
-    invoke_command('cmake', '-S', ceres_path, '-B', ceres_build_path, '-G', cmake_generator,
-                   '-DBUILD_SHARED_LIBS=OFF', f'-DCMAKE_PREFIX_PATH={ceres_prefix_path}',
-                   '-DBUILD_BENCHMARKS=OFF', '-DBUILD_DOCUMENTATION=OFF', '-DBUILD_EXAMPLES=OFF',
-                   '-DBUILD_TESTING=OFF', '-DUSE_CUDA=OFF')
-    invoke_command('cmake', '--build', ceres_build_path, '--config', 'Release')
-    invoke_command('cmake', '--install', ceres_build_path, '--prefix',
-                   os.path.join(ceres_build_path, 'install'))
+    if not args.skip_build_deps:
+        print('Building Ceres Solver...')
+        invoke_command('cmake', '-S', ceres_path, '-B', ceres_build_path, '-G', cmake_generator,
+                    '-DBUILD_SHARED_LIBS=OFF', f'-DCMAKE_PREFIX_PATH={ceres_prefix_path}',
+                    '-DBUILD_BENCHMARKS=OFF', '-DBUILD_DOCUMENTATION=OFF', '-DBUILD_EXAMPLES=OFF',
+                    '-DBUILD_TESTING=OFF', '-DUSE_CUDA=OFF', '-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
+        invoke_command('cmake', '--build', ceres_build_path, '--config', 'Release')
+        invoke_command('cmake', '--install', ceres_build_path, '--prefix',
+                    os.path.join(ceres_build_path, 'install'))
     ceres_cmake_dir = os.path.join(ceres_build_path, 'install', 'lib', 'cmake', 'Ceres')
     return ';'.join([ceres_cmake_dir, ceres_prefix_path])
 
 
-def check_opencv(cmake_generator, ceres_cmake):
+def check_opencv(cmake_generator, ceres_cmake, skip_build=False):
     opencv_path, opencv_build_path = find_package('opencv-4.10.0', opencv_dl)
     opencv_contrib_path, _ = find_package('opencv_contrib-4.10.0', opencv_contrib_dl)
-    print('Building OpenCV...')
-    invoke_command('cmake', '-S', opencv_path, '-B', opencv_build_path, '-G', cmake_generator,
-                   f'-DCMAKE_PREFIX_PATH={ceres_cmake}',
-                   '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_WITH_STATIC_CRT=OFF',
-                   '-DBUILD_opencv_world=OFF', '-DBUILD_DOCS=OFF', '-DBUILD_EXAMPLES=OFF',
-                   f'-DOPENCV_EXTRA_MODULES_PATH={os.path.join(opencv_contrib_path, "modules")}',
-                   '-DBUILD_JAVA=OFF', '-DBUILD_opencv_python3=OFF', '-DBUILD_opencv_python_bindings_generator=OFF',
-                   '-DBUILD_opencv_python_tests=OFF', '-DWITH_CUDA=OFF', '-DBUILD_PERF_TESTS=OFF', '-DBUILD_TESTS=OFF',
-                   '-DBUILD_opencv_apps=OFF', '-DBUILD_opencv_wechat_qrcode=OFF')
-    invoke_command('cmake', '--build', opencv_build_path, '--config', 'Release')
-    invoke_command('cmake', '--install', opencv_build_path, '--prefix',
-                   os.path.join(opencv_build_path, 'install'))
+    if not args.skip_build_deps:
+        print('Building OpenCV...')
+        invoke_command('cmake', '-S', opencv_path, '-B', opencv_build_path, '-G', cmake_generator,
+                    f'-DCMAKE_PREFIX_PATH={ceres_cmake}',
+                    '-DBUILD_SHARED_LIBS=OFF', '-DBUILD_WITH_STATIC_CRT=OFF',
+                    '-DBUILD_opencv_world=OFF', '-DBUILD_DOCS=OFF', '-DBUILD_EXAMPLES=OFF',
+                    f'-DOPENCV_EXTRA_MODULES_PATH={os.path.join(opencv_contrib_path, "modules")}',
+                    '-DBUILD_JAVA=OFF', '-DBUILD_opencv_python3=OFF', '-DBUILD_opencv_python_bindings_generator=OFF',
+                    '-DBUILD_opencv_python_tests=OFF', '-DWITH_CUDA=OFF', '-DBUILD_PERF_TESTS=OFF', '-DBUILD_TESTS=OFF', 
+                    '-DBUILD_LIST=core,imgproc,highgui,videoio,dnn,tracking,aruco,sfm', '-D WITH_ADE=OFF',
+                    '-DBUILD_opencv_apps=OFF', '-DBUILD_opencv_wechat_qrcode=OFF', '-DCMAKE_POLICY_VERSION_MINIMUM=3.5')
+        invoke_command('cmake', '--build', opencv_build_path, '--config', 'Release')
+        invoke_command('cmake', '--install', opencv_build_path, '--prefix',
+                    os.path.join(opencv_build_path, 'install'))
     if build_platform == 'windows':
         opencv_install_dir = os.path.join(opencv_build_path, 'install', 'x64')
         return os.path.join(opencv_install_dir, os.listdir(opencv_install_dir)[0], 'staticlib')
@@ -244,40 +247,11 @@ def check_onnx():
         onnx_path, _ = find_package('onnxruntime', onnxruntime_dl_win)
     elif build_platform == 'linux':
         onnx_path, _ = find_package('onnxruntime', onnxruntime_dl_linux)
-    onnx_path_lib = os.path.join(onnx_path, 'lib')
-    onnx_path_include = os.path.join(onnx_path, 'include')
-    if build_platform == 'windows':
-        onnxruntime_dll = os.path.join(onnx_path_lib, 'onnxruntime.dll')
-        onnxruntime_lib = os.path.join(onnx_path_lib, 'onnxruntime.lib')
-        onnxruntime_providers_cuda_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_cuda.dll')
-        onnxruntime_providers_cuda_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_cuda.lib')
-        onnxruntime_providers_shared_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_shared.dll')
-        onnxruntime_providers_shared_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_shared.lib')
-        onnxruntime_providers_tensorrt_dll = os.path.join(onnx_path_lib, 'onnxruntime_providers_tensorrt.dll')
-        onnxruntime_providers_tensorrt_lib = os.path.join(onnx_path_lib, 'onnxruntime_providers_tensorrt.lib')
-    # For linux just set the .so files for both lib and dll vars
-    elif build_platform == 'linux':
-        onnxruntime_dll = os.path.join(onnx_path_lib, 'libonnxruntime.so.1.18.0')
-        onnxruntime_lib = os.path.join(onnx_path_lib, 'libonnxruntime.so.1.18.0')
-        onnxruntime_providers_cuda_dll = os.path.join(onnx_path_lib, 'libonnxruntime_providers_cuda.so')
-        onnxruntime_providers_cuda_lib = os.path.join(onnx_path_lib, 'libonnxruntime_providers_cuda.so')
-        onnxruntime_providers_shared_dll = os.path.join(onnx_path_lib, 'libonnxruntime_providers_shared.so')
-        onnxruntime_providers_shared_lib = os.path.join(onnx_path_lib, 'libonnxruntime_providers_shared.so')
-        onnxruntime_providers_tensorrt_dll = os.path.join(onnx_path_lib, 'libonnxruntime_providers_tensorrt.so')
-        onnxruntime_providers_tensorrt_lib = os.path.join(onnx_path_lib, 'libonnxruntime_providers_tensorrt.so')
-    include_check = os.path.exists(onnx_path_include)
-    base_lib_check = os.path.exists(onnxruntime_dll) and os.path.exists(onnxruntime_lib)
-    cuda_lib_check = os.path.exists(onnxruntime_providers_cuda_dll) and os.path.exists(onnxruntime_providers_cuda_lib)
-    shared_lib_check = (os.path.exists(onnxruntime_providers_shared_dll) and
-                        os.path.exists(onnxruntime_providers_shared_lib))
-    tensorrt_lib_check = (os.path.exists(onnxruntime_providers_tensorrt_dll) and
-                          os.path.exists(onnxruntime_providers_tensorrt_lib))
-    success = include_check and base_lib_check and cuda_lib_check and shared_lib_check and tensorrt_lib_check
-    if not success:
-        raise FileNotFoundError('Some files were missing from onnxruntime')
-    return (onnx_path, onnx_path_include, onnxruntime_dll, onnxruntime_lib, onnxruntime_providers_shared_dll,
-            onnxruntime_providers_shared_lib, onnxruntime_providers_cuda_dll, onnxruntime_providers_cuda_lib,
-            onnxruntime_providers_tensorrt_dll, onnxruntime_providers_tensorrt_lib)
+    else:
+        abort(f"Detected build platform ({build_platform}) not supported. Aborting...")
+    return onnx_path
+
+
 
 
 def main():
@@ -287,7 +261,7 @@ def main():
         print('Checking for MSVC...')
         msvc_vers = get_msvc_versions()
         if len(msvc_vers) == 0:
-            print('ERROR: Could not find MSVC build tools. Aborting...')
+            abort('Could not find MSVC build tools. Aborting...')
         msvc = msvc_vers[0]
         generator = msvc[1]['cmake_generator']
         print(f'Found {msvc[0]}')
@@ -298,7 +272,7 @@ def main():
     print('Checking for OpenCV...')
     opencv_cmake = check_opencv(generator, ceres_cmake)
     print('Checking for ONNX Runtime...')
-    onnx_vars = check_onnx()
+    onnx_path = check_onnx()
     pybind_path, pybind_build_path = find_package('pybind', pybind_dl)
     print('Setting up pybind11...')
     invoke_command('cmake', '-S', pybind_path, '-B', pybind_build_path, '-G', generator,
@@ -320,21 +294,8 @@ def main():
     pt_prefix_path = ';'.join([opencv_cmake, ceres_cmake, pybind_cmake])
     print(pt_prefix_path)
     invoke_command('cmake', '-S', pt_path, '-B', pt_build_path, '-G', generator,
-                   f'-DCMAKE_PREFIX_PATH={pt_prefix_path}', f'-DONNXRUNTIME_ROOT_DIR={onnx_vars[0]}',
-                   f'-DONNXRUNTIME_INCLUDE_DIR={onnx_vars[1]}', '-DUSING_CUDA=ON')
+                   f'-DCMAKE_PREFIX_PATH={pt_prefix_path}', f'-DONNXRuntime_DIR={onnx_path}')
     invoke_command('cmake', '--build', pt_build_path, '--config', 'RelWithDebInfo', '--target', 'install')
-    pt_redis_path = os.path.join(pt_build_path, 'redis')
-    if build_platform == 'windows':
-        pt_redis_bin_path = os.path.join(pt_redis_path, 'bin')
-    else:
-        pt_redis_bin_path = os.path.join(pt_redis_path, 'lib')
-    prepare_directory(pt_redis_bin_path)
-    shutil.copy(onnx_vars[2], pt_redis_bin_path)
-    shutil.copy(onnx_vars[4], pt_redis_bin_path)
-    shutil.copy(onnx_vars[6], pt_redis_bin_path)
-    shutil.copy(onnx_vars[8], pt_redis_bin_path)
-    if build_platform == 'windows':
-        shutil.copy(zlib_shared_path, pt_redis_bin_path)
     print('Build complete!')
 
 
