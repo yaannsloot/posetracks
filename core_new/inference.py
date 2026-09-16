@@ -1,4 +1,6 @@
-from . import datatypes, utils, apply
+from . import apply
+from . import datatypes
+from . import utils
 from .datatypes import Image
 
 def prepare_context_rgb(input):

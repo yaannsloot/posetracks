@@ -1,4 +1,5 @@
-from . import gpu, register
+from . import register
+from . import gpu
 from .datatypes import Array, Tensor, Image, DType, Number
 import numpy as np
 from onnxruntime import OrtValue
@@ -71,28 +72,50 @@ def cast(input: Tensor, /, dtype: DType, scale: Optional[float] = None):
 
 
 @register
-def normalize(input: Tensor, mean=0.5, std=0.5, layout="nchw", cast_out=False, **kwargs) -> Tensor:
-    mean, std = (float(v) if isinstance(v, Number) else v for v in (mean, std))
+def sub(input: Tensor, /, other: Tensor, **kwargs):
+    other = other.to(input.device)
     if input.is_ort():
-        return gpu.normalize(input, mean, std, layout, cast_out)
-    if not any(isinstance(a, float) for a in (mean, std)) and len(mean) != len(std):
-        raise ValueError(
-            "List of means and std dev must not differ in length.")
-    shape = input.shape
-    if len(layout) != len(shape):
-        raise ValueError("Layout does not match input shape.")
-    data = input.data
-    orig_dtype = data.dtype
-    channel_idx = layout.index("c")
-    channels = shape[channel_idx]
-    reshape_full = [channels if a == "c" else 1 for a in layout]
-    reshape_single = [1 for _ in layout]
-    mean = np.array(mean, dtype=np.float32).reshape(
-        *(reshape_single if isinstance(mean, float) else reshape_full))
-    std = np.array(std, dtype=np.float32).reshape(
-        *(reshape_single if isinstance(std, float) else reshape_full))
-    data = (data.astype(np.float32) - mean) / std
-    return Tensor(data.astype(orig_dtype) if cast_out else data)
+        return gpu.sub(input, other)
+    return Tensor(np.subtract(input.data, other.data))
+
+
+@register
+def add(input: Tensor, /, other: Tensor, **kwargs):
+    other = other.to(input.device)
+    if input.is_ort():
+        return gpu.add(input, other)
+    return Tensor(np.add(input.data, other.data))
+
+
+@register
+def div(input: Tensor, /, other: Tensor, **kwargs):
+    other = other.to(input.device)
+    if input.is_ort():
+        return gpu.div(input, other)
+    return Tensor(np.divide(input.data, other.data))
+
+
+@register
+def mul(input: Tensor, /, other: Tensor, **kwargs):
+    other = other.to(input.device)
+    if input.is_ort():
+        return gpu.mul(input, other)
+    return Tensor(np.multiply(input.data, other.data))
+
+
+@register
+def normalize(input: Tensor, mean=0.5, std=0.5, layout="nchw", **kwargs) -> Tensor:
+    if "int8" in input.dtype.value:
+        input = input.cast("float32").div(Tensor(255).cast("float32"))
+    mean, std = Tensor(mean), Tensor(std)
+    m, s = mean.data.size, std.data.size
+    n_dim = len(input.shape)
+    channel_axis = layout.lower().index('c')
+    mean = Tensor(mean.data.reshape(
+        [m if n == channel_axis else 1 for n in range(n_dim)])).cast("float32").to(input.device)
+    std = Tensor(std.data.reshape(
+        [s if n == channel_axis else 1 for n in range(n_dim)])).cast("float32").to(input.device)
+    return input.sub(mean).div(std)
 
 
 # ------------------------------  Image Ops  ------------------------------
@@ -113,12 +136,12 @@ def resize_image(input: Image, mode, w: int = None, h: int = None,
         dims = input.shape
         sizes = {"w": w, "h": h}
         sizes = ([dims[i] if v not in sizes else sizes[v]
-                   for i, v in enumerate(input.layout)]
-                  if w and h else None)
+                  for i, v in enumerate(input.layout)]
+                 if w and h else None)
         scales = {"w": fx, "h": fy}
         scales = ([1.0 if v not in scales else scales[v]
                   for i, v in enumerate(input.layout)]
-                 if fx and fy else None)
+                  if fx and fy else None)
         return Image(gpu.resize(input, mode, scales, sizes), input.color_format, input.layout)
     if mode not in cv2_interp:
         raise ValueError(f"Mode '{mode}' not supported.")

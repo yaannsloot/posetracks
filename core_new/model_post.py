@@ -47,8 +47,8 @@ def accumulate_yolox(model_out: dict[str, Tensor], /,
         scores = arr[:, 4] * arr[:, 6]
         mask = scores > threshold
         arr = arr[mask]
-        arr[:, (0, 2)] *= dims[0]
-        arr[:, (1, 3)] *= dims[1]
+        arr[:, (0, 2)] *= dims[1]
+        arr[:, (1, 3)] *= dims[0]
         final.append(arr)
 
     return final
@@ -82,8 +82,8 @@ def accumulate_rfdetr(model_out: dict[str, Tensor], /,
     for i in range(boxes_raw.shape[0]):
         dims = img_dims[i]
         boxes = boxes_all[i][valid[i]]
-        boxes[:, (0, 2)] *= dims[0]
-        boxes[:, (1, 3)] *= dims[1]
+        boxes[:, (0, 2)] *= dims[1]
+        boxes[:, (1, 3)] *= dims[0]
         boxes = [BoundingBox(*box) for box in boxes]
         final.append(boxes)
 

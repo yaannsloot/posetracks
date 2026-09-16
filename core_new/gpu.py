@@ -80,7 +80,7 @@ def _create_transpose_graph(axes: Sequence[int], dtype: DType):
 def transpose(input: Tensor, axes: Sequence[int]):
     assert (input.is_ort())
     dtype = input.dtype
-    graph_id = ("transpose", axes, dtype)
+    graph_id = ("transpose", tuple(axes), dtype)
     session = get_session(graph_id)
     if session is None:
         graph = _create_transpose_graph(axes, dtype)
@@ -180,61 +180,6 @@ def concat(input: Sequence[Tensor], axis: int):
     return out
 
 
-def _create_normalization_graph(layout: str, mean: float | Sequence[float],
-                                std: float | Sequence[float], channels: int,
-                                cast_out: bool, dtype: DType):
-    dtype = dtype.as_onnx()
-    X = make_tensor_value_info("X", dtype, [*layout])
-    Y = make_tensor_value_info(
-        "Y", dtype if cast_out else TensorProto.FLOAT, [*layout])
-    reshape_full = [channels if a == "c" else 1 for a in layout]
-    reshape_single = [1 for _ in layout]
-    mean = np.array(mean, dtype=np.float32).reshape(
-        *(reshape_single if isinstance(mean, float) else reshape_full))
-    std = np.array(std, dtype=np.float32).reshape(
-        *(reshape_single if isinstance(std, float) else reshape_full))
-    mean = from_array(mean, "mean")
-    std = from_array(std, "std")
-    nodes = []
-    nodes.append(make_node("Cast", ["X"], ["X_fp"], to=TensorProto.FLOAT))
-    nodes.append(make_node("Sub", ["X_fp", "mean"], ["X_sub"]))
-    nodes.append(make_node("Div", ["X_sub", "std"], [
-                 "Y_fp" if cast_out else "Y"]))
-    if cast_out:
-        nodes.append(make_node("Cast", ["Y_fp"], ["Y"], to=dtype))
-    graph = make_graph(nodes, "normalize", [X], [Y], [mean, std])
-    model = make_model(graph, opset_imports=[make_opsetid("", 17)])
-    check_model(model)
-    return model
-
-
-def normalize(input: Tensor, mean: float | Sequence[float], std: float | Sequence[float],
-              layout: str = "nchw", cast_out: bool = False):
-    if not input.is_ort():
-        raise ValueError("Input must be an ORT tensor.")
-    if not any(isinstance(a, float) for a in (mean, std)) and len(mean) != len(std):
-        raise ValueError(
-            "List of means and std dev must not differ in length.")
-    shape = input.shape
-    if len(layout) != len(shape):
-        raise ValueError("Layout does not match input shape.")
-    layout = layout.lower()
-    channel_axis = layout.find("c")
-    if any(not isinstance(a, float) and len(a) != shape[channel_axis] for a in (mean, std)):
-        raise ValueError(
-            "List of values for mean/std must match number of channels.")
-    dtype = input.dtype
-    mean, std = (v if isinstance(v, float) else tuple(v) for v in (mean, std))
-    graph_id = ("normalize", mean, std, layout, cast_out, dtype)
-    session = get_session(graph_id)
-    if session is None:
-        graph = _create_normalization_graph(
-            layout, mean, std, shape[channel_axis], cast_out, dtype)
-        session = prepare_session(graph_id, graph.SerializeToString())
-    out = session.run(None, {"X": input})[0]
-    return out
-
-
 def _create_cast_graph(n_dim: int, input_dtype: DType,
                        output_dtype: DType):
     input_dtype = input_dtype.as_onnx()
@@ -264,34 +209,51 @@ def cast(input: Tensor, dtype: DType):
     return out
 
 
-def _create_sub_graph(n_dim_min: int, n_dim_sub: int, min_dtype: DType, sub_dtype: DType):
-    op_dtype = DType.promote(min_dtype, sub_dtype).as_onnx()
-    min_dtype = min_dtype.as_onnx()
-    sub_dtype = sub_dtype.as_onnx()
-    layout_min = [str(a) for a in range(n_dim_min)]
-    layout_sub = [str(a) for a in range(n_dim_sub)]
-    min = make_tensor_value_info("MIN", min_dtype, layout_min)
-    sub = make_tensor_value_info("SUB", sub_dtype, layout_sub)
-    out = make_tensor_value_info("OUT", op_dtype, layout_min)
+def _create_binary_op_graph(op: str, n_dim_a: int, n_dim_b: int, dtype_a: DType, dtype_b: DType):
+    op_dtype = DType.promote(dtype_a, dtype_b).as_onnx()
+    dtype_a = dtype_a.as_onnx()
+    dtype_b = dtype_b.as_onnx()
+    layout_a = [str(a) for a in range(n_dim_a)]
+    layout_b = [str(a) for a in range(n_dim_b)]
+    A = make_tensor_value_info("A", dtype_a, layout_a)
+    B = make_tensor_value_info("B", dtype_b, layout_b)
+    out = make_tensor_value_info(
+        "OUT", op_dtype, layout_a if n_dim_a > n_dim_b else layout_b)
     nodes = []
-    nodes.append(make_node("Cast", ["MIN"], ["MIN_op"], to=op_dtype))
-    nodes.append(make_node("Cast", ["SUB"], ["SUB_op"], to=op_dtype))
-    nodes.append(make_node("Sub", ["MIN_op", "SUB_op"], ["OUT"]))
-    graph = make_graph(nodes, "sub", [min, sub], [out])
+    nodes.append(make_node("Cast", ["A"], ["A_op"], to=op_dtype))
+    nodes.append(make_node("Cast", ["B"], ["B_op"], to=op_dtype))
+    nodes.append(make_node(op.capitalize(), ["A_op", "B_op"], ["OUT"]))
+    graph = make_graph(nodes, op.lower(), [A, B], [out])
     model = make_model(graph, opset_imports=[make_opsetid("", 17)])
     check_model(model)
     return model
 
 
-def sub(min: Tensor, sub: Tensor):
-    min_dtype = min.dtype
-    sub_dtype = sub.dtype
-    n_dim_min = len(min.shape)
-    n_dim_sub = len(sub.shape)
-    graph_id = ("sub", n_dim_min, n_dim_sub, min_dtype, sub_dtype)
+def _execute_binary_op(op: str, a: Tensor, b: Tensor):
+    dtype_a = a.dtype
+    dtype_b = b.dtype
+    n_dim_a = len(a.shape)
+    n_dim_b = len(b.shape)
+    graph_id = (op.lower(), n_dim_a, n_dim_b, dtype_a, dtype_b)
     session = get_session(graph_id)
     if session is None:
-        graph = _create_sub_graph(n_dim_min, n_dim_sub, min_dtype, sub_dtype)
+        graph = _create_binary_op_graph(op, n_dim_a, n_dim_b, dtype_a, dtype_b)
         session = prepare_session(graph_id, graph.SerializeToString())
-    out = session.run(None, {"MIN": min, "SUB": sub})[0]
+    out = session.run(None, {"A": a, "B": b})[0]
     return out
+
+
+def sub(a: Tensor, b: Tensor):
+    return _execute_binary_op("sub", a, b)
+
+
+def add(a: Tensor, b: Tensor):
+    return _execute_binary_op("add", a, b)
+
+
+def div(a: Tensor, b: Tensor):
+    return _execute_binary_op("div", a, b)
+
+
+def mul(a: Tensor, b: Tensor):
+    return _execute_binary_op("mul", a, b)

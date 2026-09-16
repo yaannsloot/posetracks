@@ -102,6 +102,11 @@ class Array:
     def to_numpy(self) -> Self:
         return apply(self, "to_cpu")
 
+    def to(self, device: str) -> Self:
+        if device in ("ort", "gpu"):
+            return self.to_ort()
+        return self.to_numpy()
+
     @property
     def dtype(self):
         if self.is_numpy():
@@ -114,6 +119,14 @@ class Array:
             return tuple(self.data.shape())
         return self.data.shape
 
+    @property
+    def device(self):
+        return "gpu" if self.is_ort() else "cpu"
+
+    @property
+    def backend(self):
+        return "ort" if self.is_ort() else "numpy"
+
 
 class Tensor(Array):
     """Indicates an array that is meant for inference.
@@ -121,25 +134,37 @@ class Tensor(Array):
     """
 
     @staticmethod
-    def batch_arrays(data: Sequence[Array]) -> Tensor:
+    def batch_arrays(data: Sequence[Array]) -> Self:
         return apply(data, "batch_arrays")
 
     @staticmethod
-    def concat(data: Sequence[Array], axis: int) -> Tensor:
+    def concat(data: Sequence[Array], axis: int) -> Self:
         return apply(data, "concat", axis=axis)
 
-    def transpose(self, axes: Sequence[int]):
+    def transpose(self, axes: Sequence[int]) -> Self:
         return apply(self, "transpose", axes=axes)
 
     def normalize(self, axis: int, mean: float | Sequence[float] = 0.5,
-                  std: float | Sequence[float] = 0.5, cast_out=True):
+                  std: float | Sequence[float] = 0.5, cast_out=True) -> Self:
         layout = [str(i) for i in range(len(self.shape))]
         layout[axis] = 'c'
         return apply(self, "normalize", mean=mean, std=std,
                      layout=layout, cast_out=cast_out)
 
-    def cast(self, dtype: DType):
+    def cast(self, dtype: DType) -> Self:
         return apply(self, "cast", dtype=DType(dtype))
+
+    def sub(self, other: Tensor) -> Self:
+        return apply(self, "sub", other=other)
+
+    def add(self, other: Tensor) -> Self:
+        return apply(self, "add", other=other)
+
+    def div(self, other: Tensor) -> Self:
+        return apply(self, "div", other=other)
+
+    def mul(self, other: Tensor) -> Self:
+        return apply(self, "mul", other=other)
 
 
 @dataclass
@@ -182,7 +207,7 @@ class Image(Array):
         return h, w
 
     @classmethod
-    def open(cls, path: str):
+    def open(cls, path: str) -> Self:
         buf = oiio.ImageBuf(path)
         if buf.has_error:
             raise IOError(buf.geterror())
@@ -196,16 +221,16 @@ class Image(Array):
             color_format = "gray"
         return cls(pixels, color_format, "hwc")
 
-    def channel_swap(self) -> Image:
+    def channel_swap(self) -> Self:
         return apply(self, "channel_swap")
 
-    def normalize(self, mean: float | Sequence[float] = 0.5, std: float | Sequence[float] = 0.5):
+    def normalize(self, mean: float | Sequence[float] = 0.5, std: float | Sequence[float] = 0.5) -> Self:
         return Image(apply(self, "normalize", mean=mean, std=std, layout=self.layout),
                      self.color_format, self.layout)
 
-    def to_tensor(self, dtype: np.dtype | str):
+    def to_tensor(self, dtype: np.dtype | str) -> Tensor:
         return apply(self, "img_to_tensor", dtype)
 
     def resize(self, mode: str, scale: Optional[tuple[float, float]] = None,
-               size: Optional[tuple[int, int]] = None):
+               size: Optional[tuple[int, int]] = None) -> Self:
         return apply([self], "resize", mode=mode, scale=scale, size=size)[0]
