@@ -1,0 +1,125 @@
+{
+    "name": "yolox_l",
+    "rel_path": "yolox/standard_models/yolox_l.onnx",
+    "metadata": {
+        "model_family": "YOLOX",
+        "classes": [
+            "Person",
+            "Bicycle",
+            "Car",
+            "Motorbike",
+            "Aeroplane",
+            "Bus",
+            "Train",
+            "Truck",
+            "Boat",
+            "Traffic light",
+            "Fire hydrant",
+            "Stop sign",
+            "Parking meter",
+            "Bench",
+            "Bird",
+            "Cat",
+            "Dog",
+            "Horse",
+            "Sheep",
+            "Cow",
+            "Elephant",
+            "Bear",
+            "Zebra",
+            "Giraffe",
+            "Backpack",
+            "Umbrella",
+            "Handbag",
+            "Tie",
+            "Suitcase",
+            "Frisbee",
+            "Skis",
+            "Snowboard",
+            "Sports ball",
+            "Kite",
+            "Baseball bat",
+            "Baseball glove",
+            "Skateboard",
+            "Surfboard",
+            "Tennis racket",
+            "Bottle",
+            "Wine glass",
+            "Cup",
+            "Fork",
+            "Knife",
+            "Spoon",
+            "Bowl",
+            "Banana",
+            "Apple",
+            "Sandwich",
+            "Orange",
+            "Broccoli",
+            "Carrot",
+            "Hot dog",
+            "Pizza",
+            "Donut",
+            "Cake",
+            "Chair",
+            "Sofa",
+            "Pottedplant",
+            "Bed",
+            "Diningtable",
+            "Toilet",
+            "Tvmonitor",
+            "Laptop",
+            "Mouse",
+            "Remote",
+            "Keyboard",
+            "Cell phone",
+            "Microwave",
+            "Oven",
+            "Toaster",
+            "Sink",
+            "Refrigerator",
+            "Book",
+            "Clock",
+            "Vase",
+            "Scissors",
+            "Teddy bear",
+            "Hair drier",
+            "Toothbrush"
+        ],
+        "in": "images",
+        "out": "output"
+    },
+    "input_type": "image",
+    "output_type": "bbox",
+    "batch": true,
+    "preprocess": [
+        {
+            "op": "resize",
+            "method": "lanczos",
+            "dims": [
+                640,
+                640
+            ]
+        },
+        {
+            "op": "img_to_tensor"
+        },
+        {
+            "op": "normalize",
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ]
+        }
+    ],
+    "postprocess": [
+        {
+            "op": "accumulate_yolox"
+        }
+    ]
+}

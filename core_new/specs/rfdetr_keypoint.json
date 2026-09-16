@@ -1,0 +1,48 @@
+{
+    "name": "rfdetr_keypoint",
+    "rel_path": "rfdetr/rfdetr-keypoint-preview.onnx",
+    "metadata": {
+        "model_family": "RF-DETR",
+        "in": "input",
+        "out": [
+            "dets",
+            "labels",
+            "keypoints"
+        ]
+    },
+    "input_type": "image",
+    "output_type": "pose",
+    "batch": true,
+    "preprocess": [
+        {
+            "op": "resize",
+            "mode": "nearest",
+            "dims": [
+                576,
+                576
+            ]
+        },
+        {
+            "op": "img_to_tensor"
+        },
+        {
+            "op": "normalize",
+            "mean": [
+                0.485,
+                0.456,
+                0.406
+            ],
+            "std": [
+                0.229,
+                0.224,
+                0.225
+            ]
+        }
+    ],
+    "postprocess": [
+        {
+            "op": "accumulate_rfdetr_pose",
+            "threshold": 0.5
+        }
+    ]
+}
