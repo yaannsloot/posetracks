@@ -35,8 +35,8 @@ def accumulate_yolox(model_out: dict[str, Tensor], /,
 
     decoded = np.concatenate([
         boxes_raw[:, :, 0:5],
+        class_conf[:, :, None],
         class_ids[:, :, None].astype(np.float32),
-        class_conf[:, :, None]
     ], axis=-1)
 
     final = []
@@ -44,12 +44,14 @@ def accumulate_yolox(model_out: dict[str, Tensor], /,
     for i in range(decoded.shape[0]):
         arr = decoded[i]
         dims = img_dims[i]
-        scores = arr[:, 4] * arr[:, 6]
+        scores = arr[:, 4] * arr[:, 5]
         mask = scores > threshold
         arr = arr[mask]
+        scores = scores[mask]
         arr[:, (0, 2)] *= dims[1]
         arr[:, (1, 3)] *= dims[0]
-        final.append(arr)
+        boxes = [BoundingBox(*arr[j, :4], scores[j], arr[j, 6]) for j in range(arr.shape[0])]
+        final.append(boxes)
 
     return final
 
@@ -88,3 +90,7 @@ def accumulate_rfdetr(model_out: dict[str, Tensor], /,
         final.append(boxes)
 
     return final
+
+@register
+def accumulate_rfdetr_pose(model_):
+    ...

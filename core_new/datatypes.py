@@ -84,9 +84,9 @@ class Array:
         elif isinstance(data, (np.ndarray, OrtValue)):
             self.data = data
         elif isinstance(data, Number):
-            self.data = np.array(data)
-        elif isinstance(data, Sequence):
             self.data = np.array([data])
+        elif isinstance(data, Sequence):
+            self.data = np.array(data)
         else:
             raise ValueError("Input type not supported.")
 
@@ -97,10 +97,10 @@ class Array:
         return isinstance(self.data, OrtValue)
 
     def to_ort(self) -> Self:
-        return apply(self, "to_gpu")
+        return apply("to_gpu", Context(self)).value
 
     def to_numpy(self) -> Self:
-        return apply(self, "to_cpu")
+        return apply("to_cpu", Context(self)).value
 
     def to(self, device: str) -> Self:
         if device in ("ort", "gpu"):
@@ -135,36 +135,46 @@ class Tensor(Array):
 
     @staticmethod
     def batch_arrays(data: Sequence[Array]) -> Self:
-        return apply(data, "batch_arrays")
+        return apply("batch_arrays", Context(data)).value
 
     @staticmethod
     def concat(data: Sequence[Array], axis: int) -> Self:
-        return apply(data, "concat", axis=axis)
+        return apply("concat", Context(data), axis=axis).value
 
     def transpose(self, axes: Sequence[int]) -> Self:
-        return apply(self, "transpose", axes=axes)
+        return apply("transpose", Context(self), axes=axes).value
 
     def normalize(self, axis: int, mean: float | Sequence[float] = 0.5,
                   std: float | Sequence[float] = 0.5, cast_out=True) -> Self:
         layout = [str(i) for i in range(len(self.shape))]
         layout[axis] = 'c'
-        return apply(self, "normalize", mean=mean, std=std,
-                     layout=layout, cast_out=cast_out)
+        return apply("normalize", Context(self), mean=mean, std=std,
+                     layout=layout, cast_out=cast_out).value
+
+    def gather(self, indices: Sequence[int], axis: int) -> Self:
+        return apply("gather", Context(self), indices=indices, axis=axis).value
+
+    def slice(self, starts: Sequence[int], ends: Sequence[int],
+              axes: Sequence[int], steps: Sequence[int]) -> Self:
+        return apply("slice", Context(self), starts=starts, ends=ends, axes=axes, steps=steps).value
 
     def cast(self, dtype: DType) -> Self:
-        return apply(self, "cast", dtype=DType(dtype))
+        return apply("cast", Context(self), dtype=DType(dtype)).value
 
     def sub(self, other: Tensor) -> Self:
-        return apply(self, "sub", other=other)
+        return apply("sub", Context(self, other=other)).value
 
     def add(self, other: Tensor) -> Self:
-        return apply(self, "add", other=other)
+        return apply("add", Context(self, other=other)).value
 
     def div(self, other: Tensor) -> Self:
-        return apply(self, "div", other=other)
+        return apply("div", Context(self, other=other)).value
 
     def mul(self, other: Tensor) -> Self:
-        return apply(self, "mul", other=other)
+        return apply("mul", Context(self, other=other)).value
+
+    def __getitem__(self, key):
+        print(key)
 
 
 @dataclass
@@ -222,15 +232,72 @@ class Image(Array):
         return cls(pixels, color_format, "hwc")
 
     def channel_swap(self) -> Self:
-        return apply(self, "channel_swap")
+        return apply("channel_swap", Context(self)).value
 
     def normalize(self, mean: float | Sequence[float] = 0.5, std: float | Sequence[float] = 0.5) -> Self:
-        return Image(apply(self, "normalize", mean=mean, std=std, layout=self.layout),
+        return Image(apply("normalize", Context(self), mean=mean, std=std, layout=self.layout).value,
                      self.color_format, self.layout)
 
     def to_tensor(self, dtype: np.dtype | str) -> Tensor:
-        return apply(self, "img_to_tensor", dtype)
+        return apply("img_to_tensor", Context(self), dtype).value
 
-    def resize(self, mode: str, scale: Optional[tuple[float, float]] = None,
+    def resize(self, method: str, scale: Optional[tuple[float, float]] = None,
                size: Optional[tuple[int, int]] = None) -> Self:
-        return apply([self], "resize", mode=mode, scale=scale, size=size)[0]
+        return apply("resize", Context(self), method=method, scale=scale, size=size).value
+
+    def cast(self, dtype: DType, scale: Number | str = "auto") -> Self:
+        return apply("img_cast", Context(self), dtype=DType(dtype), scale=scale).value
+
+
+class Context:
+    def __init__(self, /, value: Optional[any] = None, **kwargs):
+        self._prev = value
+        for k, v in kwargs.items():
+            self[k] = v
+        self._in = "_prev"
+        self._out = "_prev"
+
+    def __setitem__(self, key, value):
+        if not isinstance(key, str):
+            raise KeyError("Key must be a string")
+        setattr(self, key, value)
+
+    def __getitem__(self, key):
+        if not isinstance(key, str):
+            raise KeyError("Key must be a string")
+        return getattr(self, key)
+
+    def __contains__(self, key):
+        if not isinstance(key, str):
+            raise KeyError("Key must be a string")
+        return hasattr(self, key)
+
+    @property
+    def value(self):
+        return self[self._in]
+
+    def update(self, value: any):
+        self[self._out] = value
+
+    def expect(self, *args):
+        for key in args:
+            if key not in self:
+                raise ValueError(f'Context missing expected value "{key}"')
+
+    def expect_type(self, **kwargs):
+        for k, v in kwargs.items():
+            self.expect(k)
+            if not isinstance(self[k], v):
+                raise TypeError(f'Expected type {str(v)} for context value "{k}"'
+                                f', got {str(type(self[k]))}')
+
+    def expect_seq_type(self, **kwargs):
+        for k, v in kwargs.items():
+            self.expect_type(**{k: Sequence})
+            if isinstance(self[k], str):
+                raise ValueError(
+                    f'Context value "{k}" must be a non-string sequence')
+            for item in self[k]:
+                if not isinstance(item, v):
+                    raise TypeError(f'Type mismatch for value sequence "{str(k)}" in context:'
+                                    f' expected {str(v)}, got {str(type(item))}')

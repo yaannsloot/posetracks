@@ -1,4 +1,4 @@
-# ORT is the only gpu compute backend and it requires ONNX graphs as input.
+# ORT is the only supported gpu compute backend and it requires ONNX graphs as input.
 # These functions help create graphs for pre/post processing purposes.
 
 from .utils import prepare_session, get_session
@@ -204,6 +204,62 @@ def cast(input: Tensor, dtype: DType):
     session = get_session(graph_id)
     if session is None:
         graph = _create_cast_graph(n_dim, input_dtype, output_dtype)
+        session = prepare_session(graph_id, graph.SerializeToString())
+    out = session.run(None, {"X": input})[0]
+    return out
+
+
+def _create_gather_graph(n_dim: int, indices: Sequence[int], axis: int, dtype: DType):
+    dtype = dtype.as_onnx()
+    layout = [str(a) for a in range(n_dim)]
+    X = make_tensor_value_info("X", dtype, layout)
+    Y = make_tensor_value_info("Y", dtype, layout)
+    idx = from_array(np.array(indices, dtype=np.int64), "idx")
+    node = make_node("Gather", ["X", "idx"], ["Y"], axis=axis)
+    graph = make_graph([node], "gather", [X], [Y], [idx])
+    model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+    check_model(model)
+    return model
+
+
+def gather(input: Tensor, indices: Sequence[int], axis: int):
+    dtype = input.dtype
+    n_dim = len(input.shape)
+    graph_id = ("gather", n_dim, hash(tuple(indices)), axis, dtype)
+    session = get_session(graph_id)
+    if session is None:
+        graph = _create_gather_graph(n_dim, indices, axis, dtype)
+        session = prepare_session(graph_id, graph.SerializeToString())
+    out = session.run(None, {"X": input})[0]
+    return out
+
+
+def _create_slice_graph(n_dim: int, starts: Sequence[int], ends: Sequence[int],
+                        axes: Sequence[int], steps: Sequence[int], dtype: DType):
+    dtype = dtype.as_onnx()
+    layout = [str(a) for a in range(n_dim)]
+    X = make_tensor_value_info("X", dtype, layout)
+    Y = make_tensor_value_info("Y", dtype, layout)
+    starts = from_array(np.array(starts, dtype=np.int64), "starts")
+    ends = from_array(np.array(ends, dtype=np.int64), "ends")
+    axes = from_array(np.array(axes, dtype=np.int64), "axes")
+    steps = from_array(np.array(steps, dtype=np.int64), "steps")
+    node = make_node("Slice", ["X", "starts", "ends", "axes", "steps"], ["Y"])
+    graph = make_graph([node], "slice", [X], [Y], [starts, ends, axes, steps])
+    model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+    check_model(model)
+    return model
+
+
+def slice(input: Tensor, starts: Sequence[int], ends: Sequence[int],
+          axes: Sequence[int], steps: Sequence[int]):
+    dtype = input.dtype
+    n_dim = len(input.shape)
+    graph_id = ("slice", n_dim, hash(tuple(starts)), hash(tuple(ends)),
+                hash(tuple(axes)), hash(tuple(steps)), dtype)
+    session = get_session(graph_id)
+    if session is None:
+        graph = _create_slice_graph(n_dim, starts, ends, axes, steps, dtype)
         session = prepare_session(graph_id, graph.SerializeToString())
     out = session.run(None, {"X": input})[0]
     return out
