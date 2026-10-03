@@ -87,5 +87,5 @@ def infer(model, input):
     else:
         output_type = final_names
         context.expect(*final_names)
-
+        
     return {k: context[v] for k, v in zip(output_type, final_names)}

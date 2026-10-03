@@ -265,6 +265,54 @@ def slice(input: Tensor, starts: Sequence[int], ends: Sequence[int],
     return out
 
 
+def _create_argmax_graph(n_dim: int, axis: int, dtype: DType):
+    dtype = dtype.as_onnx()
+    layout = [str(a) for a in range(n_dim)]
+    X = make_tensor_value_info("X", dtype, layout)
+    Y = make_tensor_value_info("Y", TensorProto.INT64, layout)
+    node = make_node("ArgMax", ["X"], ["Y"], axis=axis)
+    graph = make_graph([node], "argmax", [X], [Y])
+    model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+    check_model(model)
+    return model
+
+
+def argmax(input: Tensor, axis: int):
+    dtype = input.dtype
+    n_dim = len(input.shape)
+    graph_id = ("argmax", n_dim, axis, dtype)
+    session = get_session(graph_id)
+    if session is None:
+        graph = _create_argmax_graph(n_dim, axis, dtype)
+        session = prepare_session(graph_id, graph.SerializeToString())
+    out = session.run(None, {"X": input})[0]
+    return out
+
+
+def _create_reducemax_graph(n_dim: int, axes: Sequence[int], dtype: DType):
+    dtype = dtype.as_onnx()
+    layout = [str(a) for a in range(n_dim)]
+    X = make_tensor_value_info("X", dtype, layout)
+    Y = make_tensor_value_info("Y", dtype, layout)
+    node = make_node("ReduceMax", ["X"], ["Y"], axes=axes)
+    graph = make_graph([node], "reducemax", [X], [Y])
+    model = make_model(graph, opset_imports=[make_opsetid("", 17)])
+    check_model(model)
+    return model
+
+
+def reducemax(input: Tensor, axes: Sequence[int]):
+    dtype = input.dtype
+    n_dim = len(input.shape)
+    graph_id = ("reducemax", n_dim, hash(tuple(axes)), dtype)
+    session = get_session(graph_id)
+    if session is None:
+        graph = _create_reducemax_graph(n_dim, axes, dtype)
+        session = prepare_session(graph_id, graph.SerializeToString())
+    out = session.run(None, {"X": input})[0]
+    return out
+
+
 def _create_binary_op_graph(op: str, n_dim_a: int, n_dim_b: int, dtype_a: DType, dtype_b: DType):
     op_dtype = DType.promote(dtype_a, dtype_b).as_onnx()
     dtype_a = dtype_a.as_onnx()

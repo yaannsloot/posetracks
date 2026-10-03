@@ -1,7 +1,6 @@
 from . import apply
 from numpy.typing import NDArray
 import numpy as np
-from dataclasses import dataclass
 from onnxruntime import OrtValue
 import OpenImageIO as oiio
 from typing import Sequence, Self, Optional
@@ -32,6 +31,248 @@ ORT_TYPE_TO_NP_TYPE = {
 NP_TYPE_TO_ORT_TYPE = {
     str(np.dtype(v)): k for k, v in ORT_TYPE_TO_NP_TYPE.items()
 }
+
+
+def _assert_type(value, T, /):
+    if not isinstance(value, T):
+        raise TypeError(f"Value must be of type {str(T)}")
+
+
+class BoundingBox:
+    """TLWH bounding box from object detection operations.
+    """
+
+    # Raw data should be [lx, ty, w, h, score, id]
+    def __init__(self, data: NDArray):
+        _assert_type(data, np.ndarray)
+        if not (data.ndim == 1 and data.shape[0] == 6):
+            raise ValueError(
+                "Bounding box data must be a flat array of length 6")
+        self._data = data
+
+    @property
+    def x(self) -> Number:
+        """X component of top left corner"""
+        return self._data[0]
+
+    @property
+    def y(self) -> Number:
+        """Y component of top left corner"""
+        return self._data[1]
+
+    @property
+    def width(self) -> Number:
+        """Width of box"""
+        return self._data[2]
+
+    @property
+    def height(self) -> Number:
+        """Height of box"""
+        return self._data[3]
+
+    @property
+    def score(self) -> Number:
+        """Confidence score of detection"""
+        return self._data[4]
+
+    @property
+    def id(self) -> int:
+        """Class id of detection"""
+        return int(self._data[5])
+
+    @x.setter
+    def x(self, value: Number):
+        self._data[0] = value
+
+    @y.setter
+    def y(self, value: Number):
+        self._data[1] = value
+
+    @width.setter
+    def width(self, value: Number):
+        self._data[2] = value
+
+    @height.setter
+    def height(self, value: Number):
+        self._data[3] = value
+
+    @score.setter
+    def score(self, value: Number):
+        self._data[4] = value
+
+    @id.setter
+    def id(self, value: Number):
+        self._data[5] = int(value)
+
+    def __iter__(self):
+        for i in range(6):
+            yield self._data[i] if i < 5 else int(self._data[i])
+
+
+class Boxes:
+    def __init__(self, data: NDArray):
+        _assert_type(data, np.ndarray)
+        if not (data.ndim == 2 and data.shape[1] == 6):
+            raise ValueError(
+                "Bounding boxes data must be a 2D array of shape N, 6")
+        self._data = data
+
+    def __delitem__(self, idx: int):
+        self._data[idx] = self._data[-1]
+        self._data = self._data[:-1]
+
+    def __getitem__(self, idx: int):
+        return BoundingBox(self._data[idx])
+
+    def __setitem__(self, idx: int, value: BoundingBox):
+        _assert_type(value, BoundingBox)
+        self._data[idx] = value._data
+
+    def __iter__(self):
+        for box in self._data:
+            yield BoundingBox(box)
+
+    def __len__(self):
+        return self._data.shape[0]
+
+    def add(self, x: float, y: float, width: float, height: float, score: float, id: int):
+        """This function will most likely disrupt writeback on any existing BBoxes.
+        USE ONLY IF EXPLICITLY NECESSARY."""
+        self._data = np.concat((self._data, np.array([[x, y, width, height, score, id]],
+                                                     dtype=self._data.dtype)))
+
+    def append(self, box: BoundingBox, /):
+        _assert_type(box, BoundingBox)
+        self.add(*box)
+
+    def threshold(self, score: float, /) -> Boxes:
+        return Boxes(self._data[self._data[:, 4] > score])
+
+    def scaled(self, width: float, height: float) -> Boxes:
+        new_data = self._data.copy()
+        new_data[:, :4] *= np.array([width, height, width, height])
+        return Boxes(new_data)
+
+    def normalized(self, width: float, height: float) -> Boxes:
+        new_data = self._data.copy()
+        new_data[:, :4] /= np.array([width, height, width, height])
+        return Boxes(new_data)
+
+
+class BatchOfBoxes:
+    def __init__(self, data: Array | NDArray):
+        _assert_type(data, (Array, np.ndarray))
+        if not (len(data.shape) == 3 and data.shape[2] == 6):
+            raise ValueError(
+                "Batch of boxes data must be a Tensor of shape B, N, 6")
+        self._data = Array(data).to_numpy().data
+        self._data = {i: Boxes(boxes) for i, boxes in enumerate(self._data)}
+
+    def __delitem__(self, key: int):
+        del self._data[key]
+
+    def __getitem__(self, key: int) -> Boxes:
+        return self._data[key]
+
+    def __setitem__(self, key: int, value: Boxes):
+        _assert_type(value, Boxes)
+        self._data[key] = value
+
+    def pop(self, key: int, /):
+        self._data.pop(key)
+
+    def get(self, key: int, default: any = None, /) -> Boxes | any:
+        return self._data.get(key, default)
+
+    def setdefault(self, key: int, default: Optional[Boxes] = None, /) -> Boxes:
+        _assert_type(default, Boxes)
+        return self._data.setdefault(key, default)
+
+    def __iter__(self):
+        for boxes in self._data.values():
+            yield boxes
+
+    def __len__(self):
+        return len(self._data)
+
+    def overwrite(self, other: BatchOfBoxes, /, start_idx: Optional[int] = None):
+        if start_idx is None:
+            start_idx = sorted(self._data.keys())[-1]
+        for i, boxes in enumerate(other):
+            self[i + start_idx] = boxes
+
+
+class Keypoint:
+    """Keypoint from pose estimation operations"""
+
+    # raw data should be x, y, score, id
+    # cholesky should be a 3 val array for parameters Lxx, Lxy, and Lyy, if applicable
+    def __init__(self, data: NDArray, cholesky: Optional[NDArray] = None):
+        if not (data.ndim == 1 and data.shape[0] == 4):
+            raise ValueError(
+                "Bounding box data must be a flat array of length 4")
+        self._data = data
+        if cholesky and not (cholesky.ndim == 1 and cholesky.shape[0] == 3):
+            raise ValueError(
+                "Cholesky parameters must be a flat array of length 3")
+        self._cholesky = cholesky
+
+    @property
+    def x(self) -> Number:
+        return self._data[0]
+
+    @property
+    def y(self) -> Number:
+        return self._data[1]
+
+    @property
+    def score(self) -> Number:
+        return self._data[2]
+
+    @property
+    def id(self) -> int:
+        return int(self._data[3])
+
+    @x.setter
+    def x(self, value: Number):
+        self._data[0] = value
+
+    @y.setter
+    def y(self, value: Number):
+        self._data[1] = value
+
+    @score.setter
+    def score(self, value: Number):
+        self._data[2] = value
+
+    @id.setter
+    def id(self, value: Number):
+        self._data[3] = int(value)
+
+    def __iter__(self):
+        for i in range(4):
+            yield self._data[i] if i < 3 else int(self._data[i])
+
+    # Do something with cholesky later
+
+
+class Pose:
+    """Collection of keypoints from pose estimation operations"""
+
+    def __init__(self, data: NDArray, cholesky: Optional[NDArray] = None):
+        if not (data.ndim == 2 and data.shape[1] == 4):
+            raise ValueError(
+                "Pose data must be a 2D array of shape N, 4")
+        self._data = data
+        if cholesky and not (cholesky.ndim == 2 and cholesky.shape[1] == 3
+                             and cholesky.shape[0] == data.shape[0]):
+            raise ValueError(
+                f"Cholesky parameters must be a 2D array of shape {data.shape[0]}, 3")
+        self._cholesky = cholesky
+        self._idx_map = {}
+
+    def __getitem__(self, key) -> Keypoint:
+        ...
 
 
 class DType:
@@ -177,34 +418,6 @@ class Tensor(Array):
         print(key)
 
 
-@dataclass
-class BoundingBox:
-    """TLWH bounding box from object detection operations.
-    """
-    x: float
-    y: float
-    width: float
-    height: float
-    score: float
-    id: int
-
-    def __post_init__(self):
-        self.x = float(self.x)
-        self.y = float(self.y)
-        self.width = float(self.width)
-        self.height = float(self.height)
-        self.score = float(self.score)
-        self.id = int(self.id)
-
-    def __iter__(self):
-        yield self.x
-        yield self.y
-        yield self.width
-        yield self.height
-        yield self.score
-        yield self.id
-
-
 class Image(Array):
     def __init__(self, data: NDArray | OrtValue, color_format: str, layout: str):
         super().__init__(data)
@@ -257,19 +470,21 @@ class Context:
         self._in = "_prev"
         self._out = "_prev"
 
-    def __setitem__(self, key, value):
+    @staticmethod
+    def _check_key(key):
         if not isinstance(key, str):
             raise KeyError("Key must be a string")
+
+    def __setitem__(self, key, value):
+        self._check_key(key)
         setattr(self, key, value)
 
     def __getitem__(self, key):
-        if not isinstance(key, str):
-            raise KeyError("Key must be a string")
+        self._check_key(key)
         return getattr(self, key)
 
     def __contains__(self, key):
-        if not isinstance(key, str):
-            raise KeyError("Key must be a string")
+        self._check_key(key)
         return hasattr(self, key)
 
     @property
@@ -278,6 +493,7 @@ class Context:
 
     def update(self, value: any):
         self[self._out] = value
+        self._in = self._out
 
     def expect(self, *args):
         for key in args:

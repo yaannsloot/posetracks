@@ -1,6 +1,6 @@
 from . import register
 from . import gpu
-from .datatypes import Array, Tensor, Image, DType, Number, Context
+from .datatypes import Array, Tensor, Image, DType, BatchOfBoxes, Number, Context
 import numpy as np
 from onnxruntime import OrtValue
 from typing import Sequence, Optional
@@ -8,6 +8,7 @@ import cv2
 
 
 # ------------------------------  Array Ops  ------------------------------
+
 
 @register
 def to_gpu(ctx: Context, /, **kwargs):
@@ -131,6 +132,7 @@ def transpose(ctx: Context, /, axes: Sequence[int], **kwargs):
 
 @register
 def cast(ctx: Context, /, dtype: DType, **kwargs):
+    dtype = DType(dtype)
     ctx.expect_type(value=Tensor)
     if ctx.value.is_ort():
         ctx.update(gpu.cast(ctx.value, dtype))
@@ -154,7 +156,7 @@ _slice = slice
 
 @register
 def slice(ctx: Context, /, starts: Sequence[int], ends: Sequence[int],
-          axes: Sequence[int], steps: Sequence[int]):
+          axes: Sequence[int], steps: Sequence[int], **kwargs):
     ctx.expect_type(value=Tensor)
     if ctx.value.is_ort():
         ctx.update(gpu.slice(ctx.value, starts, ends, axes, steps))
@@ -167,10 +169,35 @@ def slice(ctx: Context, /, starts: Sequence[int], ends: Sequence[int],
 
 
 @register
-def sub(ctx: Context, /, other: str = "other", **kwargs):
-    ctx.expect_type(**{"value": Tensor, other: Tensor})
+def argmax(ctx: Context, /, axis: int, **kwargs):
+    ctx.expect_type(value=Tensor)
+    if ctx.value.is_ort():
+        ctx.update(gpu.argmax(ctx.value, axis))
+    else:
+        ctx.update(Tensor(np.argmax(ctx.value.data, axis, keepdims=True)))
+    return ctx
+
+
+@register
+def reducemax(ctx: Context, /, axes: Sequence[int], **kwargs):
+    ctx.expect_type(value=Tensor)
+    if ctx.value.is_ort():
+        ctx.update(gpu.reducemax(ctx.value, axes))
+    else:
+        ctx.update(Tensor(np.maximum.reduce(
+            ctx.value.data, tuple(axes), keepdims=True)))
+    return ctx
+
+
+@register
+def sub(ctx: Context, /, other: str | Sequence[Number] | Number = "other", **kwargs):
+    ctx.expect_type(value=Tensor)
+    if isinstance(other, str):
+        ctx.expect_type(**{other: Tensor})
+        other = ctx[other]
+    else:
+        other = Tensor(other)
     input = ctx.value
-    other = ctx[other]
     other = other.to(input.device)
     if input.is_ort():
         ctx.update(gpu.sub(input, other))
@@ -181,9 +208,13 @@ def sub(ctx: Context, /, other: str = "other", **kwargs):
 
 @register
 def add(ctx: Context, /, other: str = "other", **kwargs):
-    ctx.expect_type(**{"value": Tensor, other: Tensor})
+    ctx.expect_type(value=Tensor)
+    if isinstance(other, str):
+        ctx.expect_type(**{other: Tensor})
+        other = ctx[other]
+    else:
+        other = Tensor(other)
     input = ctx.value
-    other = ctx[other]
     other = other.to(input.device)
     if input.is_ort():
         ctx.update(gpu.add(input, other))
@@ -194,9 +225,13 @@ def add(ctx: Context, /, other: str = "other", **kwargs):
 
 @register
 def div(ctx: Context, /, other: str = "other", **kwargs):
-    ctx.expect_type(**{"value": Tensor, other: Tensor})
+    ctx.expect_type(value=Tensor)
+    if isinstance(other, str):
+        ctx.expect_type(**{other: Tensor})
+        other = ctx[other]
+    else:
+        other = Tensor(other)
     input = ctx.value
-    other = ctx[other]
     other = other.to(input.device)
     if input.is_ort():
         ctx.update(gpu.div(input, other))
@@ -207,9 +242,13 @@ def div(ctx: Context, /, other: str = "other", **kwargs):
 
 @register
 def mul(ctx: Context, /, other: str = "other", **kwargs):
-    ctx.expect_type(**{"value": Tensor, other: Tensor})
+    ctx.expect_type(value=Tensor)
+    if isinstance(other, str):
+        ctx.expect_type(**{other: Tensor})
+        other = ctx[other]
+    else:
+        other = Tensor(other)
     input = ctx.value
-    other = ctx[other]
     other = other.to(input.device)
     if input.is_ort():
         ctx.update(gpu.mul(input, other))
@@ -363,4 +402,14 @@ def img_cast(ctx: Context, /, dtype: DType, scale: Number | str = "auto", **kwar
         img = Image(img.cast(dtype).div(Tensor(scale)), color_format, layout)
         output.append(img)
     ctx.update(output[0] if single_val else output)
+    return ctx
+
+
+# ------------------------------  Outputs  ------------------------------
+
+
+@register
+def to_boxes(ctx: Context, /, **kwargs):
+    ctx.expect_type(value=Tensor)
+    ctx.update(BatchOfBoxes(ctx.value))
     return ctx

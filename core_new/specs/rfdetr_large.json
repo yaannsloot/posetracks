@@ -2,49 +2,98 @@
     "name": "rfdetr_large",
     "rel_path": "rfdetr/rfdetr-large.onnx",
     "metadata": {
-        "model_family": "RF-DETR",
-        "in": "input",
-        "out": [
-            "dets",
-            "labels"
-        ]
+        "model_family": "RF-DETR"
     },
     "input_type": "image",
     "output_type": "bbox",
+    "model_in": "input",
+    "model_out": [
+        "dets",
+        "labels"
+    ],
     "batch": true,
     "preprocess": [
         {
             "op": "resize",
-            "mode": "nearest",
-            "size": [
-                704,
-                704
-            ]
+            "method": "nearest",
+            "size": [704, 704]
         },
         {
-            "op": "all_to_gpu"
+            "op": "to_gpu"
         },
         {
             "op": "img_to_tensor"
         },
         {
             "op": "normalize",
-            "mean": [
-                0.485,
-                0.456,
-                0.406
-            ],
-            "std": [
-                0.229,
-                0.224,
-                0.225
-            ]
+            "mean": [0.485, 0.456, 0.406],
+            "std": [0.229, 0.224, 0.225]
         }
     ],
     "postprocess": [
         {
-            "op": "accumulate_rfdetr",
-            "threshold": 0.5
+            "op": "slice",
+            "starts": [2],
+            "ends": [4],
+            "axes": [2],
+            "steps": [1],
+            "in": "dets",
+            "out": "dims"
+        },
+        {
+            "op": "slice",
+            "starts": [0],
+            "ends": [2],
+            "axes": [2],
+            "steps": [1],
+            "in": "dets",
+            "out": "coords"
+        },
+        {
+            "op": "div",
+            "in": "dims",
+            "out": "offset",
+            "other": 2
+        },
+        {
+            "op": "cast",
+            "in": "offset",
+            "out": "offset",
+            "dtype": "float32"
+        },
+        {
+            "op": "sub",
+            "in": "coords",
+            "out": "coords",
+            "other": "offset"
+        },
+        {
+            "op": "argmax",
+            "axis": 2,
+            "in": "labels",
+            "out": "ids"
+        },
+        {
+            "op": "cast",
+            "in": "ids",
+            "out": "ids",
+            "dtype": "float32"
+        },
+        {
+            "op": "reducemax",
+            "axes": [2],
+            "in": "labels",
+            "out": "scores"
+        },
+        {
+            "op": "concat",
+            "axis": 2,
+            "inputs": ["coords", "dims", "scores", "ids"],
+            "out": "boxes"
+        },
+        {
+            "op": "to_boxes",
+            "in": "boxes"
         }
     ]
 }
