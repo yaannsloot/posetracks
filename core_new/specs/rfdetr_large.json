@@ -68,6 +68,11 @@
             "other": "offset"
         },
         {
+            "op": "sigmoid",
+            "in": "labels",
+            "out": "labels"
+        },
+        {
             "op": "argmax",
             "axis": 2,
             "in": "labels",

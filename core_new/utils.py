@@ -42,29 +42,31 @@ class AutoIOSession(ort.InferenceSession):
 
 
 def load_spec(file, model_dir):
-    with open(file, "r") as f:
-        model_spec = json.load(f)
-    if "rel_path" in model_spec:
-        model_path = model_dir / model_spec["rel_path"]
-    else:
-        model_path = Path(model_spec["path"])
-    if not model_path.exists():
-        raise RuntimeError(
-            f"Error parsing {file.name}. Could not locate {model_path}. File does not exist.")
-    if "input_type" not in model_spec:
-        raise RuntimeError(
-            f"Error parsing {file.name}. Input type is undefined.")
-    if "output_type" not in model_spec:
-        raise RuntimeError(
-            f"Error parsing {file.name}. Output type is undefined.")
-    for call in model_spec["preprocess"] + model_spec["postprocess"]:
-        if call["op"] not in _REGISTRY:
+    try:
+        with open(file, "r") as f:
+            model_spec = json.load(f)
+        if "rel_path" in model_spec:
+            model_path = model_dir / model_spec["rel_path"]
+        else:
+            model_path = Path(model_spec["path"])
+        if not model_path.exists():
             raise RuntimeError(
-                f"Error parsing {file.name}. Unknown operator {call["op"]}.")
-    model_spec["path"] = model_path
-    model_spec["name"] = model_spec.get("name", file.stem)
-    return model_spec
-
+                f"Could not locate {model_path}. File does not exist.")
+        if "input_type" not in model_spec:
+            raise RuntimeError(
+                f"Input type is undefined.")
+        if "output_type" not in model_spec:
+            raise RuntimeError(
+                f"Output type is undefined.")
+        for call in model_spec["preprocess"] + model_spec["postprocess"]:
+            if call["op"] not in _REGISTRY:
+                raise RuntimeError(
+                    f"Unknown operator {call["op"]}.")
+        model_spec["path"] = model_path
+        model_spec["name"] = model_spec.get("name", file.stem)
+        return model_spec
+    except Exception as e:
+        raise Exception(f"Error parsing {file.name}. {e}")
 
 def load_model_defs(defs_dir, model_dir):
     defs_dir = Path(defs_dir)

@@ -1,6 +1,6 @@
 from . import register
 from . import gpu
-from .datatypes import Array, Tensor, Image, DType, BatchOfBoxes, Number, Context
+from .datatypes import Array, Tensor, Image, DType, BatchOfBoxes, BatchOfPoses, Number, Context
 import numpy as np
 from onnxruntime import OrtValue
 from typing import Sequence, Optional
@@ -131,6 +131,16 @@ def transpose(ctx: Context, /, axes: Sequence[int], **kwargs):
 
 
 @register
+def unsqueeze(ctx: Context, /, axes: Sequence[int], **kwargs):
+    ctx.expect_type(value=Tensor)
+    if ctx.value.is_ort():
+        ctx.update(gpu.unsqueeze(ctx.value, axes))
+    else:
+        ctx.update(Tensor(np.expand_dims(ctx.value.data, axis=tuple(axes))))
+    return ctx
+
+
+@register
 def cast(ctx: Context, /, dtype: DType, **kwargs):
     dtype = DType(dtype)
     ctx.expect_type(value=Tensor)
@@ -186,6 +196,16 @@ def reducemax(ctx: Context, /, axes: Sequence[int], **kwargs):
     else:
         ctx.update(Tensor(np.maximum.reduce(
             ctx.value.data, tuple(axes), keepdims=True)))
+    return ctx
+
+
+@register
+def sigmoid(ctx: Context, /, **kwargs):
+    ctx.expect_type(value=Tensor)
+    if ctx.value.is_ort():
+        ctx.update(gpu.sigmoid(ctx.value))
+    else:
+        ctx.update(Tensor(1 / (1 + np.exp(-ctx.value.data))))
     return ctx
 
 
@@ -411,5 +431,16 @@ def img_cast(ctx: Context, /, dtype: DType, scale: Number | str = "auto", **kwar
 @register
 def to_boxes(ctx: Context, /, **kwargs):
     ctx.expect_type(value=Tensor)
-    ctx.update(BatchOfBoxes(ctx.value))
+    ctx.update(BatchOfBoxes.from_arrays(data=ctx.value))
     return ctx
+
+
+@register
+def to_poses(ctx: Context, /, cholesky: Optional[str] = None, **kwargs):
+    ctx.expect_type(value=Tensor)
+    if cholesky is not None:
+        ctx.expect_type(**{cholesky: Tensor})
+        cholesky = ctx[cholesky]
+    ctx.update(BatchOfPoses.from_arrays(data=ctx.value, cholesky=cholesky))
+    return ctx
+
